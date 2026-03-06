@@ -117,24 +117,29 @@ Client (React)
 
 ```env
 # .env.local（ローカル開発）
-DATABASE_URL="postgresql://..."   # Neon の接続文字列（開発ブランチ）
+DATABASE_URL="postgresql://..."   # Neon の接続プール URL（?pgbouncer=true&connection_limit=1 付き）
+DIRECT_URL="postgresql://..."     # Neon の直接接続 URL（prisma migrate 用）
 NEXTAUTH_SECRET="..."             # openssl rand -base64 32 で生成
 NEXTAUTH_URL="http://localhost:3000"
 
 # Vercel 環境変数（本番）
-DATABASE_URL="postgresql://..."   # Neon の接続文字列（本番ブランチ）
+DATABASE_URL="postgresql://..."   # 本番の接続プール URL
+DIRECT_URL="postgresql://..."     # 本番の直接接続 URL
 NEXTAUTH_SECRET="..."
 NEXTAUTH_URL="https://<your-app>.vercel.app"
 ```
 
-## Neon の接続プール設定
+## Prisma 7 の接続構成
 
-Vercel Functions（サーバーレス）は接続が都度生成されるため、Neon の **connection pooling URL** を使う。
+Prisma 7 では URL の設定箇所が分離された。
 
-```typescript
-// src/lib/prisma.ts
-// DATABASE_URL には ?pgbouncer=true&connection_limit=1 付きの pooling URL を使用
-```
+| 設定箇所 | URL | 用途 |
+|----------|-----|------|
+| `prisma.config.ts` → `datasource.url` | `DIRECT_URL` | CLI（migrate / generate） |
+| `src/lib/prisma.ts` → `PrismaClient` adapter | `DATABASE_URL` | ランタイム（クエリ） |
+
+- `DATABASE_URL`：Neon の **接続プール URL**（`?pgbouncer=true&connection_limit=1` 付き）。Vercel Functions のサーバーレス環境で接続数を節約するために使用。`@prisma/adapter-pg` 経由で渡す。
+- `DIRECT_URL`：Neon の **直接接続 URL**。`prisma migrate` は接続プール非対応のため直接接続が必要。
 
 ## デプロイフロー
 
