@@ -4,14 +4,18 @@
 
 | レイヤー | 技術 | 理由 |
 |----------|------|------|
-| フレームワーク | Next.js 14 (App Router) | フロント・APIを一体管理、TypeScript標準対応 |
+| フレームワーク | Next.js 16 (App Router) | フロント・APIを一体管理、TypeScript標準対応 |
 | 言語 | TypeScript (strict) | 型安全、補完が効く |
-| スタイリング | Tailwind CSS | 素早いUI構築、クラスベースで管理しやすい |
+| スタイリング | Tailwind CSS v4 | 素早いUI構築、クラスベースで管理しやすい |
+| Lint / Format | Biome | ESLint + Prettier を1ツールで代替、高速 |
 | ORM | Prisma | 型安全なDBアクセス、マイグレーション管理 |
 | DB（開発） | PostgreSQL (Neon) | 開発・本番で同一DBエンジンを使い環境差異をなくす |
 | DB（本番） | PostgreSQL (Neon) | サーバーレスPostgreSQL、無料枠で運用可能 |
 | 認証 | NextAuth.js v5 | Next.jsとの統合が容易、Credentials providerで実装 |
 | ホスティング | Vercel (Hobby) | Next.jsの開発元、無料枠・無期限、デプロイが最も簡単 |
+| ユニットテスト | Vitest + Testing Library | 高速、Vite互換、React コンポーネントテスト対応 |
+| E2Eテスト | Playwright | ブラウザ操作・認証フロー・フォーム送信の自動テスト |
+| 開発サーバー | Turbopack | Next.js 16 デフォルト、HMR が高速 |
 | パッケージ管理 | npm | devcontainerのデフォルト環境に合わせる |
 
 ## ディレクトリ構成
@@ -49,7 +53,11 @@ daily-hub/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
 │   │   └── auth.ts     # NextAuth設定
 │   └── types/          # 共通型定義
+├── e2e/                # Playwright E2Eテスト
 ├── CLAUDE.md
+├── biome.json          # Biome 設定
+├── vitest.config.ts    # Vitest 設定
+├── playwright.config.ts # Playwright 設定
 └── package.json
 ```
 

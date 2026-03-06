@@ -8,8 +8,8 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T01 | `[ ]` Next.js プロジェクト初期化（TypeScript + Tailwind CSS + App Router） | — |
-| T02 | `[ ]` Prisma セットアップ・SQLite 接続確認 | T01 |
+| T01 | `[x]` Next.js プロジェクト初期化（TypeScript + Tailwind CSS + App Router + Turbopack + Biome + Vitest + Playwright） | — |
+| T02 | `[ ]` Prisma セットアップ・Neon (PostgreSQL) 接続確認 | T01 |
 | T03 | `[ ]` `prisma/schema.prisma` に User / Report / Comment モデルを定義 | T02 |
 | T04 | `[ ]` 初回マイグレーション実行（`prisma migrate dev`） | T03 |
 | T05 | `[ ]` NextAuth.js インストール・Credentials Provider 設定 | T01 |
