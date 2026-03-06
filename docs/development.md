@@ -80,16 +80,14 @@ npx prisma migrate status
 ### シードデータ投入
 
 ```bash
-npm run db:seed
+npx prisma db seed
 ```
 
-`package.json` に以下が必要：
+`prisma.config.ts` の `migrations.seed` で設定済み：
 
-```json
-{
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
-  }
+```ts
+migrations: {
+  seed: "tsx prisma/seed.ts",
 }
 ```
 

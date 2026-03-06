@@ -12,8 +12,8 @@
 | T02 | `[x]` Prisma セットアップ・Neon (PostgreSQL) 接続確認 | T01 |
 | T03 | `[x]` `prisma/schema.prisma` に User / Report / Comment モデルを定義 | T02 |
 | T04 | `[x]` 初回マイグレーション実行（`prisma migrate dev`） | T03 |
-| T05 | `[ ]` NextAuth.js インストール・Credentials Provider 設定 | T01 |
-| T06 | `[ ]` 開発用シードデータ作成（`prisma/seed.ts`） | T04 |
+| T05 | `[x]` NextAuth.js インストール・Credentials Provider 設定 | T01 |
+| T06 | `[x]` 開発用シードデータ作成（`prisma/seed.ts`） | T04 |
 
 ---
 

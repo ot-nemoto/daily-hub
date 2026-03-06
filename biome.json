@@ -9,6 +9,7 @@
     "ignoreUnknown": true,
     "includes": [
       "src/**",
+      "prisma/**",
       ".vscode/**",
       ".devcontainer/**",
       "!node_modules",
