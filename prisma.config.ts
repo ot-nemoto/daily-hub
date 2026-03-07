@@ -3,6 +3,9 @@ import { defineConfig } from "prisma/config";
 
 config({ path: ".env.local" });
 
+const directUrl = process.env["DIRECT_URL"];
+if (!directUrl) throw new Error("DIRECT_URL is not set");
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
@@ -10,6 +13,6 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DIRECT_URL"]!,
+    url: directUrl,
   },
 });
