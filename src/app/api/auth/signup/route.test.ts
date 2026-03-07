@@ -1,4 +1,5 @@
 // @vitest-environment node
+import bcrypt from "bcryptjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/prisma";
@@ -48,6 +49,11 @@ describe("POST /api/auth/signup", () => {
 
     expect(res.status).toBe(201);
     expect(data).toEqual({ id: "test-id" });
+    // パスワードがハッシュ化されて保存されることを保証
+    expect(bcrypt.hash).toHaveBeenCalledWith("password123", 10);
+    expect(prisma.user.create).toHaveBeenCalledWith({
+      data: { name: "テスト ユーザー", email: "test@example.com", passwordHash: "hashed_password" },
+    });
   });
 
   it("異常系: name が空で 400 を返す", async () => {
