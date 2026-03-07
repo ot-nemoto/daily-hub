@@ -3,15 +3,15 @@
 ## Prisma スキーマ（`prisma/schema.prisma`）
 
 ```prisma
+// Prisma 7: generator provider は "prisma-client"、output でクライアント生成先を指定
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
+// Prisma 7: datasource に URL は書かない。URL は prisma.config.ts で管理する
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  // Vercel Functions（サーバーレス）向けに接続プールURLを使用
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model User {
@@ -39,9 +39,8 @@ model Report {
   author   User      @relation(fields: [authorId], references: [id])
   comments Comment[]
 
-  @@unique([authorId, date]) // 1ユーザー1日1件制約
+  @@unique([authorId, date]) // 1ユーザー1日1件制約 + 月次ビュー用インデックスを兼ねる
   @@index([date])            // 日次ビュー用
-  @@index([authorId, date])  // 月次ビュー用
 }
 
 model Comment {
@@ -106,19 +105,22 @@ model Comment {
 | テーブル | インデックス | 用途 |
 |----------|------------|------|
 | Report | `date` | 日次ビュー（特定日付の全ユーザー日報取得） |
-| Report | `(authorId, date)` | 月次ビュー（特定ユーザーの期間日報取得）、ユニーク制約兼用 |
+| Report | `(authorId, date)` | ユニーク制約として自動作成。月次ビュー用インデックスを兼ねる |
 | Comment | `reportId` | 日報詳細のコメント取得 |
 
 ---
 
 ## 初期データ（開発用シード）
 
-```typescript
-// prisma/seed.ts
-// - テストユーザー 3 名
-// - 各ユーザーに過去 7 日分の日報
-// - いくつかのコメント
-```
+実行コマンド: `npx prisma db seed`（`prisma.config.ts` の `migrations.seed` で設定済み）
+
+| データ | 件数 | 詳細 |
+|--------|------|------|
+| User | 3 | tanaka@example.com / suzuki@example.com / sato@example.com（パスワード共通: `password123`） |
+| Report | 21 | 各ユーザーに過去 7 日分 |
+| Comment | 5 | ユーザー間の相互コメント |
+
+シードを再実行すると既存データを全削除してから投入する（べき等）。
 
 ---
 
