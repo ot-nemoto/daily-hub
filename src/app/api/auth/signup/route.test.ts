@@ -79,6 +79,15 @@ describe("POST /api/auth/signup", () => {
     expect(res.status).toBe(409);
   });
 
+  it("異常系: 同時リクエストによる P2002 競合で 409 を返す", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    const p2002Error = Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+    vi.mocked(prisma.user.create).mockRejectedValue(p2002Error);
+
+    const res = await POST(makeRequest({ name: "テスト", email: "test@example.com", password: "password123" }));
+    expect(res.status).toBe(409);
+  });
+
   it("異常系: 不正な JSON で 400 を返す", async () => {
     const res = await POST(
       new Request("http://localhost/api/auth/signup", {

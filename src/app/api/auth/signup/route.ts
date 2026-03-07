@@ -29,9 +29,17 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: { name, email, passwordHash },
-  });
 
-  return NextResponse.json({ id: user.id }, { status: 201 });
+  try {
+    const user = await prisma.user.create({
+      data: { name, email, passwordHash },
+    });
+    return NextResponse.json({ id: user.id }, { status: 201 });
+  } catch (error) {
+    // 同時リクエストによる競合（DB unique 制約違反）を 409 にマッピング
+    if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2002") {
+      return NextResponse.json({ error: "Email already in use" }, { status: 409 });
+    }
+    throw error;
+  }
 }
