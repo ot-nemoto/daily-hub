@@ -1,6 +1,8 @@
 # tasks.md — 実装タスク一覧
 
 > ステータス: `[ ]` 未着手 / `[~]` 進行中 / `[x]` 完了
+>
+> **完了条件**: APIルートのタスクはユニットテスト（`route.test.ts`）の作成・通過をもって完了とする。
 
 ---
 
@@ -21,12 +23,12 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T10 | `[ ]` サインアップ API（POST `/api/auth/signup`、bcrypt ハッシュ化） | T04 |
-| T11 | `[ ]` NextAuth Credentials Provider でログイン処理 | T05, T10 |
-| T12 | `[ ]` middleware.ts で未認証時のリダイレクト設定 | T11 |
-| T13 | `[ ]` ログインページ UI（`/login`） | T11 |
-| T14 | `[ ]` サインアップページ UI（`/signup`） | T10 |
-| T15 | `[ ]` ログアウト処理 | T11 |
+| T10 | `[x]` サインアップ API（POST `/api/auth/signup`、bcrypt ハッシュ化、テスト込み） | T04 |
+| T11 | `[x]` NextAuth Credentials Provider でログイン処理（テスト込み） | T05, T10 |
+| T12 | `[x]` `src/proxy.ts` で未認証時のリダイレクト設定 | T11 |
+| T13 | `[x]` ログインページ UI（`/login`） | T11 |
+| T14 | `[x]` サインアップページ UI（`/signup`） | T10 |
+| T15 | `[x]` ログアウト処理 | T11 |
 
 ---
 
@@ -34,9 +36,9 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T20 | `[ ]` 日報作成 API（POST `/api/reports`、同日重複チェック） | T04 |
-| T21 | `[ ]` 日報詳細取得 API（GET `/api/reports/[id]`） | T04 |
-| T22 | `[ ]` 日報編集 API（PUT `/api/reports/[id]`、authorId 検証） | T04 |
+| T20 | `[ ]` 日報作成 API（POST `/api/reports`、同日重複チェック、テスト込み） | T04 |
+| T21 | `[ ]` 日報詳細取得 API（GET `/api/reports/[id]`、テスト込み） | T04 |
+| T22 | `[ ]` 日報編集 API（PUT `/api/reports/[id]`、authorId 検証、テスト込み） | T04 |
 | T23 | `[ ]` 日報作成ページ UI（`/reports/new`） | T20 |
 | T24 | `[ ]` 日報編集ページ UI（`/reports/[id]/edit`） | T22 |
 | T25 | `[ ]` 日報詳細ページ UI（`/reports/[id]`） | T21 |
@@ -47,8 +49,8 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T30 | `[ ]` コメント追加 API（POST `/api/reports/[id]/comments`） | T04 |
-| T31 | `[ ]` コメント削除 API（DELETE `/api/reports/[id]/comments/[commentId]`、authorId 検証） | T04 |
+| T30 | `[ ]` コメント追加 API（POST `/api/reports/[id]/comments`、テスト込み） | T04 |
+| T31 | `[ ]` コメント削除 API（DELETE `/api/reports/[id]/comments/[commentId]`、authorId 検証、テスト込み） | T04 |
 | T32 | `[ ]` 日報詳細ページにコメント一覧・追加フォームを組み込む | T25, T30 |
 | T33 | `[ ]` コメント削除ボタン（自分のコメントのみ表示） | T31, T32 |
 
@@ -58,9 +60,9 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T40 | `[ ]` 日報一覧 API（GET `/api/reports?date=...`、日次ビュー用） | T04 |
-| T41 | `[ ]` 日報一覧 API（GET `/api/reports?from=...&to=...`、月次ビュー用） | T04 |
-| T42 | `[ ]` ユーザー一覧 API（GET `/api/users`） | T04 |
+| T40 | `[ ]` 日報一覧 API（GET `/api/reports?date=...`、日次ビュー用、テスト込み） | T04 |
+| T41 | `[ ]` 日報一覧 API（GET `/api/reports?from=...&to=...`、月次ビュー用、テスト込み） | T04 |
+| T42 | `[ ]` ユーザー一覧 API（GET `/api/users`、テスト込み） | T04 |
 | T43 | `[ ]` 日次ビューページ UI（`/reports/daily`、日付選択・ユーザー絞り込み） | T40, T42 |
 | T44 | `[ ]` 月次ビューページ UI（`/reports/monthly`、期間選択・ユーザー切り替え） | T41, T42 |
 
