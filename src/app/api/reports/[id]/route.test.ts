@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/prisma";
-import { GET } from "./route";
+import { GET, PUT } from "./route";
 
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
@@ -12,6 +12,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     report: {
       findUnique: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -43,6 +44,9 @@ function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
+// ----------------------------------------------------------------
+// GET /api/reports/[id]
+// ----------------------------------------------------------------
 describe("GET /api/reports/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -117,5 +121,146 @@ describe("GET /api/reports/[id]", () => {
     const res = await GET(new Request("http://localhost/api/reports/nonexistent"), makeContext("nonexistent"));
 
     expect(res.status).toBe(404);
+  });
+});
+
+// ----------------------------------------------------------------
+// PUT /api/reports/[id]
+// ----------------------------------------------------------------
+describe("PUT /api/reports/[id]", () => {
+  const validBody = {
+    workContent: "○○機能の実装（完了）",
+    tomorrowPlan: "レビュー対応",
+    notes: "解決できた",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("正常系: 自分の日報を更新して 200 と id を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-1" } as never);
+    vi.mocked(prisma.report.update).mockResolvedValue({ id: "report-1" } as never);
+
+    const res = await PUT(
+      new Request("http://localhost/api/reports/report-1", {
+        method: "PUT",
+        body: JSON.stringify(validBody),
+      }),
+      makeContext("report-1"),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toEqual({ id: "report-1" });
+    expect(prisma.report.update).toHaveBeenCalledWith({
+      where: { id: "report-1" },
+      data: { workContent: validBody.workContent, tomorrowPlan: validBody.tomorrowPlan, notes: validBody.notes },
+      select: { id: true },
+    });
+  });
+
+  it("正常系: notes 省略時は空文字で更新される", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-1" } as never);
+    vi.mocked(prisma.report.update).mockResolvedValue({ id: "report-1" } as never);
+
+    const { notes: _notes, ...bodyWithoutNotes } = validBody;
+    await PUT(
+      new Request("http://localhost/api/reports/report-1", {
+        method: "PUT",
+        body: JSON.stringify(bodyWithoutNotes),
+      }),
+      makeContext("report-1"),
+    );
+
+    expect(prisma.report.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ notes: "" }) }),
+    );
+  });
+
+  it("異常系: 未認証で 401 を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(null as never);
+
+    const res = await PUT(
+      new Request("http://localhost/api/reports/report-1", {
+        method: "PUT",
+        body: JSON.stringify(validBody),
+      }),
+      makeContext("report-1"),
+    );
+
+    expect(res.status).toBe(401);
+    expect(prisma.report.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("異常系: workContent が空で 400 を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+
+    const res = await PUT(
+      new Request("http://localhost/api/reports/report-1", {
+        method: "PUT",
+        body: JSON.stringify({ ...validBody, workContent: "" }),
+      }),
+      makeContext("report-1"),
+    );
+
+    expect(res.status).toBe(400);
+    expect(prisma.report.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("異常系: 存在しない ID で 404 を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
+
+    const res = await PUT(
+      new Request("http://localhost/api/reports/nonexistent", {
+        method: "PUT",
+        body: JSON.stringify(validBody),
+      }),
+      makeContext("nonexistent"),
+    );
+
+    expect(res.status).toBe(404);
+    expect(prisma.report.update).not.toHaveBeenCalled();
+  });
+
+  it("異常系: 他ユーザーの日報で 403 を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    // authorId が別ユーザー
+    vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-99" } as never);
+
+    const res = await PUT(
+      new Request("http://localhost/api/reports/report-1", {
+        method: "PUT",
+        body: JSON.stringify(validBody),
+      }),
+      makeContext("report-1"),
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.report.update).not.toHaveBeenCalled();
+  });
+
+  it("異常系: 不正な JSON で 400 を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+
+    const res = await PUT(
+      new Request("http://localhost/api/reports/report-1", {
+        method: "PUT",
+        body: "not json",
+      }),
+      makeContext("report-1"),
+    );
+
+    expect(res.status).toBe(400);
   });
 });
