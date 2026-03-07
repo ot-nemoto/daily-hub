@@ -24,7 +24,7 @@
 | # | タスク | 依存 |
 |---|--------|------|
 | T10 | `[x]` サインアップ API（POST `/api/auth/signup`、bcrypt ハッシュ化、テスト込み） | T04 |
-| T11 | `[ ]` NextAuth Credentials Provider でログイン処理（テスト込み） | T05, T10 |
+| T11 | `[x]` NextAuth Credentials Provider でログイン処理（テスト込み） | T05, T10 |
 | T12 | `[ ]` middleware.ts で未認証時のリダイレクト設定 | T11 |
 | T13 | `[ ]` ログインページ UI（`/login`） | T11 |
 | T14 | `[ ]` サインアップページ UI（`/signup`） | T10 |
