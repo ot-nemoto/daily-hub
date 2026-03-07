@@ -42,6 +42,9 @@ describe("authorizeCredentials", () => {
       name: "テスト ユーザー",
       email: "test@example.com",
     });
+    // DB 検索とパスワード検証が正しい引数で呼ばれることを保証
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: "test@example.com" } });
+    expect(compare).toHaveBeenCalledWith("password123", "hashed_password");
   });
 
   it("異常系: email が undefined で null を返す", async () => {
