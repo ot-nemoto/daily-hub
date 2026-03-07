@@ -1,12 +1,9 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
 
-export default auth((req) => {
-  if (!req.auth) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
-  }
-});
+import { authConfig } from "@/lib/auth.config";
+
+// Edge 互換の設定のみ使用（bcrypt・Prisma に依存しない）
+export default NextAuth(authConfig).auth;
 
 export const config = {
   matcher: [

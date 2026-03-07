@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
+import { authConfig } from "./auth.config";
 import { authorizeCredentials } from "./authorize";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -20,6 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: { strategy: "jwt" },
   callbacks: {
+    ...authConfig.callbacks,
     jwt({ token, user }) {
       if (user) token.id = user.id;
       return token;
@@ -28,8 +31,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.id) session.user.id = token.id as string;
       return session;
     },
-  },
-  pages: {
-    signIn: "/login",
   },
 });
