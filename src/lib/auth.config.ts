@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 // Edge Runtime 互換の設定（bcrypt・Prisma に依存しない）
-// middleware.ts はこの設定のみを参照する
+// src/proxy.ts はこの設定のみを参照する
 export const authConfig = {
   pages: {
     signIn: "/login",
