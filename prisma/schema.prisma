@@ -34,7 +34,6 @@ model Report {
 
   @@unique([authorId, date])
   @@index([date])
-  @@index([authorId, date])
 }
 
 model Comment {

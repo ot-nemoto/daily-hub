@@ -39,9 +39,8 @@ model Report {
   author   User      @relation(fields: [authorId], references: [id])
   comments Comment[]
 
-  @@unique([authorId, date]) // 1ユーザー1日1件制約
+  @@unique([authorId, date]) // 1ユーザー1日1件制約 + 月次ビュー用インデックスを兼ねる
   @@index([date])            // 日次ビュー用
-  @@index([authorId, date])  // 月次ビュー用
 }
 
 model Comment {
@@ -106,7 +105,7 @@ model Comment {
 | テーブル | インデックス | 用途 |
 |----------|------------|------|
 | Report | `date` | 日次ビュー（特定日付の全ユーザー日報取得） |
-| Report | `(authorId, date)` | 月次ビュー（特定ユーザーの期間日報取得）、ユニーク制約兼用 |
+| Report | `(authorId, date)` | ユニーク制約として自動作成。月次ビュー用インデックスを兼ねる |
 | Comment | `reportId` | 日報詳細のコメント取得 |
 
 ---
