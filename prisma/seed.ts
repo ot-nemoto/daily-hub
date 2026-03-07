@@ -1,11 +1,10 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcryptjs";
 import { config } from "dotenv";
+import { PrismaClient } from "../src/generated/prisma/client";
 
 config({ path: ".env.local" });
 config(); // fallback to .env
-
-import { PrismaPg } from "@prisma/adapter-pg";
-import bcrypt from "bcryptjs";
-import { PrismaClient } from "../src/generated/prisma/client";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
