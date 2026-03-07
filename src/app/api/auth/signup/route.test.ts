@@ -1,0 +1,92 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { prisma } from "@/lib/prisma";
+import { POST } from "./route";
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("bcryptjs", () => ({
+  default: {
+    hash: vi.fn().mockResolvedValue("hashed_password"),
+  },
+}));
+
+function makeRequest(body: unknown) {
+  return new Request("http://localhost/api/auth/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+describe("POST /api/auth/signup", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("正常系: 有効な入力で 201 と id を返す", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.create).mockResolvedValue({
+      id: "test-id",
+      name: "テスト ユーザー",
+      email: "test@example.com",
+      passwordHash: "hashed_password",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await POST(makeRequest({ name: "テスト ユーザー", email: "test@example.com", password: "password123" }));
+    const data = await res.json();
+
+    expect(res.status).toBe(201);
+    expect(data).toEqual({ id: "test-id" });
+  });
+
+  it("異常系: name が空で 400 を返す", async () => {
+    const res = await POST(makeRequest({ name: "", email: "test@example.com", password: "password123" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("異常系: email が不正で 400 を返す", async () => {
+    const res = await POST(makeRequest({ name: "テスト", email: "not-an-email", password: "password123" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("異常系: password が 8 文字未満で 400 を返す", async () => {
+    const res = await POST(makeRequest({ name: "テスト", email: "test@example.com", password: "short" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("異常系: メールアドレス重複で 409 を返す", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "existing-id",
+      name: "既存ユーザー",
+      email: "test@example.com",
+      passwordHash: "hashed",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await POST(makeRequest({ name: "テスト", email: "test@example.com", password: "password123" }));
+    expect(res.status).toBe(409);
+  });
+
+  it("異常系: 不正な JSON で 400 を返す", async () => {
+    const res = await POST(
+      new Request("http://localhost/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "invalid-json",
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+});
