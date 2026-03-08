@@ -36,12 +36,12 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T20 | `[ ]` 日報作成 API（POST `/api/reports`、同日重複チェック、テスト込み） | T04 |
-| T21 | `[ ]` 日報詳細取得 API（GET `/api/reports/[id]`、テスト込み） | T04 |
-| T22 | `[ ]` 日報編集 API（PUT `/api/reports/[id]`、authorId 検証、テスト込み） | T04 |
-| T23 | `[ ]` 日報作成ページ UI（`/reports/new`） | T20 |
-| T24 | `[ ]` 日報編集ページ UI（`/reports/[id]/edit`） | T22 |
-| T25 | `[ ]` 日報詳細ページ UI（`/reports/[id]`） | T21 |
+| T20 | `[x]` 日報作成 API（POST `/api/reports`、同日重複チェック、テスト込み） | T04 |
+| T21 | `[x]` 日報詳細取得 API（GET `/api/reports/[id]`、テスト込み） | T04 |
+| T22 | `[x]` 日報編集 API（PUT `/api/reports/[id]`、authorId 検証、テスト込み） | T04 |
+| T23 | `[x]` 日報作成ページ UI（`/reports/new`） | T20 |
+| T24 | `[x]` 日報編集ページ UI（`/reports/[id]/edit`） | T22 |
+| T25 | `[x]` 日報詳細ページ UI（`/reports/[id]`） | T21 |
 
 ---
 

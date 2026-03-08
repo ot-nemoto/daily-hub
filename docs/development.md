@@ -140,6 +140,39 @@ npx prisma generate
 
 ---
 
+## テスト
+
+### ユニットテスト（Vitest）
+
+```bash
+# 1回だけ実行
+npx vitest run
+
+# 詳細表示（テストケース名を全て表示）
+npx vitest run --reporter=verbose
+
+# ウォッチモードで実行（開発中）
+npm test
+
+# UI モードで実行（ブラウザで結果確認）
+npm run test:ui
+
+# カバレッジレポート出力
+npm run test:coverage
+```
+
+### E2E テスト（Playwright）
+
+```bash
+# ヘッドレスで実行
+npm run test:e2e
+
+# UI モードで実行
+npm run test:e2e:ui
+```
+
+---
+
 ## デプロイ（Vercel）
 
 1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`）
