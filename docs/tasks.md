@@ -49,7 +49,7 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T30 | `[ ]` コメント追加 API（POST `/api/reports/[id]/comments`、テスト込み） | T04 |
+| T30 | `[x]` コメント追加 API（POST `/api/reports/[id]/comments`、テスト込み） | T04 |
 | T31 | `[ ]` コメント削除 API（DELETE `/api/reports/[id]/comments/[commentId]`、authorId 検証、テスト込み） | T04 |
 | T32 | `[ ]` 日報詳細ページにコメント一覧・追加フォームを組み込む | T25, T30 |
 | T33 | `[ ]` コメント削除ボタン（自分のコメントのみ表示） | T31, T32 |
