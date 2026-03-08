@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { isValidDate } from "@/lib/dateUtils";
+
 type User = { id: string; name: string };
 
 type Props = {
@@ -10,11 +12,6 @@ type Props = {
   currentUserId: string;
   users: User[];
 };
-
-function isValidDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  return !isNaN(new Date(value).getTime());
-}
 
 export function DailyFilter({ currentDate, currentUserId, users }: Props) {
   const router = useRouter();
