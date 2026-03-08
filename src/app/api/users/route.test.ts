@@ -18,8 +18,8 @@ vi.mock("@/lib/prisma", () => ({
 
 const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com" } };
 const mockUsers = [
-  { id: "user-1", name: "山田 太郎", email: "yamada@example.com" },
-  { id: "user-2", name: "鈴木 花子", email: "suzuki@example.com" },
+  { id: "user-1", name: "山田 太郎" },
+  { id: "user-2", name: "鈴木 花子" },
 ];
 
 describe("GET /api/users", () => {
@@ -37,9 +37,9 @@ describe("GET /api/users", () => {
 
     expect(res.status).toBe(200);
     expect(data).toHaveLength(2);
-    expect(data[0]).toEqual({ id: "user-1", name: "山田 太郎", email: "yamada@example.com" });
+    expect(data[0]).toEqual({ id: "user-1", name: "山田 太郎" });
     expect(prisma.user.findMany).toHaveBeenCalledWith({
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true },
       orderBy: { name: "asc" },
     });
   });
