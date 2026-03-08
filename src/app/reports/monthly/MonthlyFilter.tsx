@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type User = { id: string; name: string; email: string };
+type User = { id: string; name: string };
 
 type Props = {
   currentMonth: string; // "YYYY-MM"

@@ -23,7 +23,7 @@ export default async function DailyViewPage({
 
   const [users, reports] = await Promise.all([
     prisma.user.findMany({
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
     prisma.report.findMany({
