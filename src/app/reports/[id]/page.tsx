@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { CommentDeleteButton } from "./CommentDeleteButton";
 import { CommentForm } from "./CommentForm";
 
 export default async function ReportDetailPage({
@@ -83,7 +84,12 @@ export default async function ReportDetailPage({
             <ul className="space-y-4">
               {report.comments.map((c) => (
                 <li key={c.id} className="rounded-md bg-zinc-50 px-4 py-3">
-                  <p className="text-sm font-medium text-zinc-700">{c.author.name}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-zinc-700">{c.author.name}</p>
+                    {session?.user?.id === c.author.id && (
+                      <CommentDeleteButton reportId={id} commentId={c.id} />
+                    )}
+                  </div>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">{c.body}</p>
                   <p className="mt-1 text-xs text-zinc-400">
                     {new Date(c.createdAt).toLocaleString("ja-JP")}
