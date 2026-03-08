@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { CommentForm } from "./CommentForm";
 
 export default async function ReportDetailPage({
   params,
@@ -91,6 +92,7 @@ export default async function ReportDetailPage({
               ))}
             </ul>
           )}
+          <CommentForm reportId={id} />
         </div>
       </div>
     </div>
