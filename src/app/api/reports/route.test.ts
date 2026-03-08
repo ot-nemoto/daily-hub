@@ -103,6 +103,14 @@ describe("POST /api/reports", () => {
     expect(res.status).toBe(400);
   });
 
+  it("異常系: date が存在しない日付で 400 を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockSession as never);
+
+    const res = await POST(makeRequest({ ...validBody, date: "2026-99-99" }));
+    expect(res.status).toBe(400);
+  });
+
   it("異常系: workContent が空で 400 を返す", async () => {
     const { auth } = await import("@/lib/auth");
     vi.mocked(auth).mockResolvedValue(mockSession as never);

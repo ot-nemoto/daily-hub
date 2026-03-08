@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const ReportSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD required)"),
+  date: z.string().date(),
   workContent: z.string().min(1).max(5000),
   tomorrowPlan: z.string().min(1).max(5000),
   notes: z.string().max(5000).optional().default(""),
