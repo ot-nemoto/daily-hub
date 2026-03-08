@@ -29,7 +29,7 @@ export function ReportNewForm() {
         date: data.get("date"),
         workContent: data.get("workContent"),
         tomorrowPlan: data.get("tomorrowPlan"),
-        notes: data.get("notes") || null,
+        notes: data.get("notes") ?? "",
       }),
     });
 
