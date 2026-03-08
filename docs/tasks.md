@@ -60,11 +60,11 @@
 
 | # | タスク | 依存 |
 |---|--------|------|
-| T40 | `[ ]` 日報一覧 API（GET `/api/reports?date=...`、日次ビュー用、テスト込み） | T04 |
-| T41 | `[ ]` 日報一覧 API（GET `/api/reports?from=...&to=...`、月次ビュー用、テスト込み） | T04 |
-| T42 | `[ ]` ユーザー一覧 API（GET `/api/users`、テスト込み） | T04 |
-| T43 | `[ ]` 日次ビューページ UI（`/reports/daily`、日付選択・ユーザー絞り込み） | T40, T42 |
-| T44 | `[ ]` 月次ビューページ UI（`/reports/monthly`、期間選択・ユーザー切り替え） | T41, T42 |
+| T40 | `[x]` 日報一覧 API（GET `/api/reports?date=...`、日次ビュー用、テスト込み） | T04 |
+| T41 | `[x]` 日報一覧 API（GET `/api/reports?from=...&to=...`、月次ビュー用、テスト込み） | T04 |
+| T42 | `[x]` ユーザー一覧 API（GET `/api/users`、テスト込み） | T04 |
+| T43 | `[x]` 日次ビューページ UI（`/reports/daily`、日付選択・ユーザー絞り込み） | T40, T42 |
+| T44 | `[x]` 月次ビューページ UI（`/reports/monthly`、期間選択・ユーザー切り替え） | T41, T42 |
 
 ---
 
