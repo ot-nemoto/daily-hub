@@ -108,6 +108,18 @@ Client (React)
 - フォームの送信は Server Actions または fetch + API Routes
 - クライアント状態（フィルター選択など）は `useState` で管理
 
+### フィルター入力バリデーション方針
+
+日次・月次ビューのフィルターコンポーネント（`DailyFilter`, `MonthlyFilter`）は以下の方針で実装する。
+
+| 入力種別 | 動作 |
+|----------|------|
+| ユーザー選択（`<select>`） | `onChange` で即時 `router.push()`（選択肢は常に有効値のため検証不要） |
+| 日付入力（`<input type="date">`, `<input type="month">`） | `useState` でローカル管理し `onChange` で入力値を更新。有効な場合のみ `router.push()`、無効な場合は `border-red-500` を適用してエラーを示す（URL は変更しない） |
+
+- 入力フィールドは `defaultValue`（非制御）ではなく `value` + `useState`（制御コンポーネント）で管理する
+- 日付バリデーションは `isValidDate(value)` / `isValidMonth(value)` のようなユーティリティ関数で行い、正規表現＋`Date` コンストラクタの組み合わせで検証する
+
 ## セキュリティ方針
 
 - APIルートは全て `auth()` でセッション確認してから処理
