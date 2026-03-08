@@ -22,26 +22,30 @@ export function ReportNewForm() {
     setError(null);
 
     const data = new FormData(e.currentTarget);
-    const res = await fetch("/api/reports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date: data.get("date"),
-        workContent: data.get("workContent"),
-        tomorrowPlan: data.get("tomorrowPlan"),
-        notes: data.get("notes") ?? "",
-      }),
-    });
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: data.get("date"),
+          workContent: data.get("workContent"),
+          tomorrowPlan: data.get("tomorrowPlan"),
+          notes: data.get("notes") ?? "",
+        }),
+      });
 
-    if (res.status === 409) {
-      setError("この日付の日報はすでに作成済みです");
+      if (res.status === 409) {
+        setError("この日付の日報はすでに作成済みです");
+      } else if (!res.ok) {
+        setError("保存に失敗しました。入力内容を確認してください");
+      } else {
+        const { id } = await res.json();
+        router.push(`/reports/${id}`);
+      }
+    } catch {
+      setError("保存に失敗しました。時間をおいて再度お試しください");
+    } finally {
       setPending(false);
-    } else if (!res.ok) {
-      setError("保存に失敗しました。入力内容を確認してください");
-      setPending(false);
-    } else {
-      const { id } = await res.json();
-      router.push(`/reports/${id}`);
     }
   }
 

@@ -23,25 +23,29 @@ export function ReportEditForm({ id, defaultValues }: Props) {
     setError(null);
 
     const data = new FormData(e.currentTarget);
-    const res = await fetch(`/api/reports/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        workContent: data.get("workContent"),
-        tomorrowPlan: data.get("tomorrowPlan"),
-        notes: data.get("notes") || "",
-      }),
-    });
+    try {
+      const res = await fetch(`/api/reports/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workContent: data.get("workContent"),
+          tomorrowPlan: data.get("tomorrowPlan"),
+          notes: data.get("notes") ?? "",
+        }),
+      });
 
-    if (res.status === 403) {
-      setError("この日報を編集する権限がありません");
+      if (res.status === 403) {
+        setError("この日報を編集する権限がありません");
+      } else if (!res.ok) {
+        setError("保存に失敗しました。入力内容を確認してください");
+      } else {
+        router.push(`/reports/${id}`);
+        router.refresh();
+      }
+    } catch {
+      setError("保存に失敗しました。時間をおいて再度お試しください");
+    } finally {
       setPending(false);
-    } else if (!res.ok) {
-      setError("保存に失敗しました。入力内容を確認してください");
-      setPending(false);
-    } else {
-      router.push(`/reports/${id}`);
-      router.refresh();
     }
   }
 
