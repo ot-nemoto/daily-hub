@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ErrorMessage } from "@/components/ErrorMessage";
+
 export function SignupForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -15,32 +17,34 @@ export function SignupForm() {
     setError(null);
 
     const data = new FormData(e.currentTarget);
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: data.get("name"),
-        email: data.get("email"),
-        password: data.get("password"),
-      }),
-    });
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.get("name"),
+          email: data.get("email"),
+          password: data.get("password"),
+        }),
+      });
 
-    if (res.status === 409) {
-      setError("このメールアドレスはすでに使用されています");
+      if (res.status === 409) {
+        setError("このメールアドレスはすでに使用されています");
+      } else if (!res.ok) {
+        setError("登録に失敗しました。入力内容を確認してください");
+      } else {
+        router.push("/login");
+      }
+    } catch {
+      setError("登録に失敗しました。時間をおいて再度お試しください");
+    } finally {
       setPending(false);
-    } else if (!res.ok) {
-      setError("登録に失敗しました。入力内容を確認してください");
-      setPending(false);
-    } else {
-      router.push("/login");
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-      )}
+      <ErrorMessage message={error} />
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-zinc-700">
           お名前

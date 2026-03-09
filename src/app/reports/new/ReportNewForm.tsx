@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ErrorMessage } from "@/components/ErrorMessage";
+
 function today(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -51,9 +53,7 @@ export function ReportNewForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-      )}
+      <ErrorMessage message={error} />
       <div>
         <label htmlFor="date" className="block text-sm font-medium text-zinc-700">
           日付
