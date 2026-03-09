@@ -23,61 +23,22 @@ NEXTAUTH_SECRET="<openssl rand -base64 32 で生成>"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
-### GitHub MCP セットアップ（必須）
-
-タスク管理に GitHub Issues を使うため、GitHub Personal Access Token の設定が必要です。
-
-#### 1. PAT を発行する
-
-[GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)](https://github.com/settings/tokens) から新しいトークンを発行する。
-
-必要なスコープ: `repo`（Issues・PR の読み書き）
-
-#### 2. devcontainer 内で環境変数を永続化する
-
-devcontainer のターミナルで実行する：
-
-```bash
-echo 'export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_xxxxxxxxxxxx"' >> ~/.profile
-```
-
-設定後、devcontainer のターミナルから Claude Code を再起動する：
-
-```bash
-claude
-```
-
-#### 3. MCP サーバーを信頼する
-
-初回起動時に以下のプロンプトが表示されるので `1` を選択する：
-
-```
-New MCP server found in .mcp.json: github
-> 1. Use this and all future MCP servers in this project
-  2. Use this MCP server
-  3. Continue without using this MCP server
-```
-
-> MCP サーバーの定義は `.mcp.json` で管理されています。
-> PAT は個人の `~/.profile` で管理し、リポジトリにコミットしないこと。
-
 ### 設定済み MCP サーバー
 
 `.mcp.json` に以下のサーバーが定義されている。
 
 | サーバー | 主な用途 | 認証 |
 |----------|----------|------|
-| `github` | Issue・PR の作成・参照・更新 | PAT（個人設定） |
 | `playwright` | ブラウザ操作・E2E テストの自動実行 | 不要 |
 | `context7` | ライブラリの最新ドキュメント参照 | 不要 |
 
-### 推奨ツール（任意）
+### 必須ツール
 
 | ツール | 用途 |
 |--------|------|
-| [GitHub CLI (`gh`)](https://cli.github.com/) | ターミナルから Issue・PR を操作する場合 |
+| [GitHub CLI (`gh`)](https://cli.github.com/) | Issue・PR の作成・参照・更新 |
 
-インストール後は `gh auth login` で認証する。
+`gh auth login` で認証する。
 
 ### 開発サーバー起動
 
