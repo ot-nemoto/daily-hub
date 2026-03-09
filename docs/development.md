@@ -180,13 +180,37 @@ npm run test:coverage
 
 ### E2E テスト（Playwright）
 
+#### 前提条件
+
+E2E テストの実行には以下が必要。
+
+1. **Chromium のインストール**（devcontainer では `postCreateCommand` で自動実行済み）
+
+   ```bash
+   npx playwright install --with-deps chromium
+   ```
+
+2. **シードデータの投入**（テストユーザー `tanaka@example.com` が DB に存在する必要がある）
+
+   ```bash
+   npx prisma db seed
+   ```
+
+#### 実行コマンド
+
 ```bash
-# ヘッドレスで実行
+# ヘッドレスで実行（setup プロジェクトによる認証セッション生成を含む）
 npm run test:e2e
 
 # UI モードで実行
 npm run test:e2e:ui
 ```
+
+#### 仕組み
+
+- `playwright.config.ts` の `setup` プロジェクトが最初に実行され、`tanaka@example.com` でログインしてセッション情報を `e2e/.auth/user.json` に保存する
+- 後続のテストは `e2e/fixtures.ts` の `loggedInPage` fixture を通じてこのセッションを再利用する
+- `e2e/.auth/` は `.gitignore` で除外されているため、テスト実行のたびに生成される
 
 ---
 
