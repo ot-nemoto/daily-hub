@@ -61,6 +61,14 @@ New MCP server found in .mcp.json: github
 > MCP サーバーの定義は `.mcp.json` で管理されています。
 > PAT は個人の `~/.profile` で管理し、リポジトリにコミットしないこと。
 
+### 推奨ツール（任意）
+
+| ツール | 用途 |
+|--------|------|
+| [GitHub CLI (`gh`)](https://cli.github.com/) | ターミナルから Issue・PR を操作する場合 |
+
+インストール後は `gh auth login` で認証する。
+
 ### 開発サーバー起動
 
 ```bash
