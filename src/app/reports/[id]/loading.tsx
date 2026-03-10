@@ -1,7 +1,7 @@
 export default function ReportDetailLoading() {
   return (
     <div className="min-h-screen bg-zinc-50 py-10">
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6 px-4">
         {/* Report content skeleton */}
         <div className="rounded-lg bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
