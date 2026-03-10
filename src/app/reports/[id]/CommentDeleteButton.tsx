@@ -36,7 +36,7 @@ export function CommentDeleteButton({ reportId, commentId }: Props) {
   }
 
   return (
-    <span className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-end gap-1">
       <ErrorMessage message={error} />
       <button
         type="button"
@@ -46,6 +46,6 @@ export function CommentDeleteButton({ reportId, commentId }: Props) {
       >
         {pending ? "削除中..." : "削除"}
       </button>
-    </span>
+    </div>
   );
 }
