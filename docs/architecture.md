@@ -4,14 +4,18 @@
 
 | レイヤー | 技術 | 理由 |
 |----------|------|------|
-| フレームワーク | Next.js 14 (App Router) | フロント・APIを一体管理、TypeScript標準対応 |
+| フレームワーク | Next.js 16 (App Router) | フロント・APIを一体管理、TypeScript標準対応 |
 | 言語 | TypeScript (strict) | 型安全、補完が効く |
-| スタイリング | Tailwind CSS | 素早いUI構築、クラスベースで管理しやすい |
+| スタイリング | Tailwind CSS v4 | 素早いUI構築、クラスベースで管理しやすい |
+| Lint / Format | Biome | ESLint + Prettier を1ツールで代替、高速 |
 | ORM | Prisma | 型安全なDBアクセス、マイグレーション管理 |
 | DB（開発） | PostgreSQL (Neon) | 開発・本番で同一DBエンジンを使い環境差異をなくす |
 | DB（本番） | PostgreSQL (Neon) | サーバーレスPostgreSQL、無料枠で運用可能 |
 | 認証 | NextAuth.js v5 | Next.jsとの統合が容易、Credentials providerで実装 |
 | ホスティング | Vercel (Hobby) | Next.jsの開発元、無料枠・無期限、デプロイが最も簡単 |
+| ユニットテスト | Vitest + Testing Library | 高速、Vite互換、React コンポーネントテスト対応 |
+| E2Eテスト | Playwright | ブラウザ操作・認証フロー・フォーム送信の自動テスト |
+| 開発サーバー | Turbopack | Next.js 16 デフォルト、HMR が高速 |
 | パッケージ管理 | npm | devcontainerのデフォルト環境に合わせる |
 
 ## ディレクトリ構成
@@ -21,7 +25,9 @@ daily-hub/
 ├── docs/               # 設計ドキュメント
 ├── prisma/
 │   ├── schema.prisma   # DBスキーマ定義
+│   ├── seed.ts         # 開発用シードデータ
 │   └── migrations/     # マイグレーションファイル
+├── prisma.config.ts    # Prisma 7 設定（datasource URL・seed コマンド）
 ├── src/
 │   ├── app/            # Next.js App Router
 │   │   ├── (auth)/
@@ -49,7 +55,11 @@ daily-hub/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
 │   │   └── auth.ts     # NextAuth設定
 │   └── types/          # 共通型定義
+├── e2e/                # Playwright E2Eテスト
 ├── CLAUDE.md
+├── biome.json          # Biome 設定
+├── vitest.config.ts    # Vitest 設定
+├── playwright.config.ts # Playwright 設定
 └── package.json
 ```
 
@@ -98,6 +108,18 @@ Client (React)
 - フォームの送信は Server Actions または fetch + API Routes
 - クライアント状態（フィルター選択など）は `useState` で管理
 
+### フィルター入力バリデーション方針
+
+日次・月次ビューのフィルターコンポーネント（`DailyFilter`, `MonthlyFilter`）は以下の方針で実装する。
+
+| 入力種別 | 動作 |
+|----------|------|
+| ユーザー選択（`<select>`） | `onChange` で即時 `router.push()`（選択肢は常に有効値のため検証不要） |
+| 日付入力（`<input type="date">`, `<input type="month">`） | `useState` でローカル管理し `onChange` で入力値を更新。有効な場合のみ `router.push()`、無効な場合は `border-red-500` を適用してエラーを示す（URL は変更しない） |
+
+- 入力フィールドは `defaultValue`（非制御）ではなく `value` + `useState`（制御コンポーネント）で管理する
+- 日付バリデーションは `isValidDate(value)` / `isValidMonth(value)` のようなユーティリティ関数で行い、正規表現＋`Date` コンストラクタの組み合わせで検証する
+
 ## セキュリティ方針
 
 - APIルートは全て `auth()` でセッション確認してから処理
@@ -109,24 +131,29 @@ Client (React)
 
 ```env
 # .env.local（ローカル開発）
-DATABASE_URL="postgresql://..."   # Neon の接続文字列（開発ブランチ）
+DATABASE_URL="postgresql://..."   # Neon の接続プール URL（?pgbouncer=true&connection_limit=1 付き）
+DIRECT_URL="postgresql://..."     # Neon の直接接続 URL（prisma migrate 用）
 NEXTAUTH_SECRET="..."             # openssl rand -base64 32 で生成
 NEXTAUTH_URL="http://localhost:3000"
 
 # Vercel 環境変数（本番）
-DATABASE_URL="postgresql://..."   # Neon の接続文字列（本番ブランチ）
+DATABASE_URL="postgresql://..."   # 本番の接続プール URL
+DIRECT_URL="postgresql://..."     # 本番の直接接続 URL
 NEXTAUTH_SECRET="..."
 NEXTAUTH_URL="https://<your-app>.vercel.app"
 ```
 
-## Neon の接続プール設定
+## Prisma 7 の接続構成
 
-Vercel Functions（サーバーレス）は接続が都度生成されるため、Neon の **connection pooling URL** を使う。
+Prisma 7 では URL の設定箇所が分離された。
 
-```typescript
-// src/lib/prisma.ts
-// DATABASE_URL には ?pgbouncer=true&connection_limit=1 付きの pooling URL を使用
-```
+| 設定箇所 | URL | 用途 |
+|----------|-----|------|
+| `prisma.config.ts` → `datasource.url` | `DIRECT_URL` | CLI（migrate / generate） |
+| `src/lib/prisma.ts` → `PrismaClient` adapter | `DATABASE_URL` | ランタイム（クエリ） |
+
+- `DATABASE_URL`：Neon の **接続プール URL**（`?pgbouncer=true&connection_limit=1` 付き）。Vercel Functions のサーバーレス環境で接続数を節約するために使用。`@prisma/adapter-pg` 経由で渡す。
+- `DIRECT_URL`：Neon の **直接接続 URL**。`prisma migrate` は接続プール非対応のため直接接続が必要。
 
 ## デプロイフロー
 

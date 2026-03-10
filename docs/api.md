@@ -4,6 +4,25 @@
 
 ## 認証
 
+### POST /api/auth/signup
+新規ユーザー登録（認証不要）
+
+**Request Body**
+```json
+{ "name": "田中 太郎", "email": "tanaka@example.com", "password": "password123" }
+```
+
+**Response 201**
+```json
+{ "id": "cuid" }
+```
+
+**Errors**
+- `400` — バリデーションエラー（フィールド不足・形式不正・パスワード8文字未満）
+- `409` — メールアドレスがすでに使用されている
+
+---
+
 ### POST /api/auth/callback/credentials
 NextAuth.js が管理。直接呼び出しはしない。
 
