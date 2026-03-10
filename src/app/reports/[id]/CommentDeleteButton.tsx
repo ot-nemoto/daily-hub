@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ErrorMessage } from "@/components/ErrorMessage";
+
 type Props = {
   reportId: string;
   commentId: string;
@@ -34,8 +36,8 @@ export function CommentDeleteButton({ reportId, commentId }: Props) {
   }
 
   return (
-    <span className="flex flex-col items-end gap-1">
-      {error && <span className="text-xs text-red-500">{error}</span>}
+    <div className="flex flex-col items-end gap-1">
+      <ErrorMessage message={error} />
       <button
         type="button"
         onClick={handleDelete}
@@ -44,6 +46,6 @@ export function CommentDeleteButton({ reportId, commentId }: Props) {
       >
         {pending ? "削除中..." : "削除"}
       </button>
-    </span>
+    </div>
   );
 }

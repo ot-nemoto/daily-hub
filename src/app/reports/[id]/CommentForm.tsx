@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
+import { ErrorMessage } from "@/components/ErrorMessage";
+
 type Props = {
   reportId: string;
 };
@@ -53,9 +55,7 @@ export function CommentForm({ reportId }: Props) {
         placeholder="コメントを入力してください（1000文字以内）"
         className="block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
       />
-      {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-      )}
+      <ErrorMessage message={error} />
       <div className="flex justify-end">
         <button
           type="submit"

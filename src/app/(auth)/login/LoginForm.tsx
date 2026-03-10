@@ -4,6 +4,8 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
+import { ErrorMessage } from "@/components/ErrorMessage";
+
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -30,9 +32,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-      )}
+      <ErrorMessage message={error} />
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
           メールアドレス

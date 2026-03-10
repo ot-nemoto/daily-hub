@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ErrorMessage } from "@/components/ErrorMessage";
+
 type Props = {
   id: string;
   defaultValues: {
@@ -51,9 +53,7 @@ export function ReportEditForm({ id, defaultValues }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-      )}
+      <ErrorMessage message={error} />
       <div>
         <label htmlFor="workContent" className="block text-sm font-medium text-zinc-700">
           本日の作業内容

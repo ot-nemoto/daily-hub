@@ -43,7 +43,7 @@ export default async function DailyViewPage({
 
   return (
     <div className="min-h-screen bg-zinc-50 py-10">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6 px-4">
         <div className="rounded-lg bg-white p-6 shadow-sm">
           <h1 className="mb-4 text-lg font-bold text-zinc-900">日次ビュー</h1>
           <DailyFilter currentDate={date} currentUserId={userId} users={users} />
