@@ -12,8 +12,8 @@ type Fixtures = {
 };
 
 export const test = base.extend<Fixtures>({
-	loggedInPage: async ({ browser }, use) => {
-		const context = await browser.newContext({ storageState: AUTH_FILE });
+	loggedInPage: async ({ browser, baseURL }, use) => {
+		const context = await browser.newContext({ baseURL, storageState: AUTH_FILE });
 		const page = await context.newPage();
 		await use(page);
 		await context.close();
