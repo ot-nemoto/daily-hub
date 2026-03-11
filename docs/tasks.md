@@ -69,9 +69,9 @@
 
 ---
 
-## フェーズ 5 — 仕上げ・品質
+## フェーズ 5 以降
 
-タスクの詳細・状態は GitHub Issues で管理する。
+フェーズ 5 以降のタスクはすべて GitHub Issues で管理する。tasks.md には記載しない。
 
 - Issues: https://github.com/ot-nemoto/daily-hub/issues
 
