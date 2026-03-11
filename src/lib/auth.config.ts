@@ -7,7 +7,11 @@ export const authConfig = {
     signIn: "/login",
   },
   callbacks: {
-    authorized({ auth }) {
+    authorized({ auth, request }) {
+      const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
+      if (isAdminPath) {
+        return auth?.user?.role === "ADMIN";
+      }
       return !!auth?.user;
     },
   },
