@@ -22,6 +22,9 @@
 
 ```
 daily-hub/
+├── .github/
+│   └── workflows/
+│       └── release.yml # master push 時に自動リリース
 ├── docs/               # 設計ドキュメント
 ├── prisma/
 │   ├── schema.prisma   # DBスキーマ定義
@@ -158,11 +161,17 @@ Prisma 7 では URL の設定箇所が分離された。
 ## デプロイフロー
 
 ```
-git push origin main
+git push origin develop
   → Vercel が自動検知
     → ビルド（next build）
       → Vercel にデプロイ
         → prisma migrate deploy（マイグレーション）
+
+git push origin master
+  → GitHub Actions (release.yml) が起動
+    → package.json のバージョンを取得
+    → タグが未存在なら GitHub Releases を即時公開
+      → リリースノートをコミット・PR から自動生成
 ```
 
 ## 将来の移行パス
