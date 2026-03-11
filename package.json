@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "postinstall": "prisma generate",
-    "build": "prisma migrate deploy && next build",
+    "build": "[ \"$VERCEL_ENV\" = 'production' ] && prisma migrate deploy; next build",
     "start": "next start",
     "lint": "biome lint .",
     "format": "biome format --write .",
