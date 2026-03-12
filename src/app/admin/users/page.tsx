@@ -5,7 +5,8 @@ import { UserTable } from "./UserTable";
 
 export default async function AdminUsersPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") redirect("/");
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/");
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
