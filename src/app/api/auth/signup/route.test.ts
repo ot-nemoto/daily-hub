@@ -40,6 +40,8 @@ describe("POST /api/auth/signup", () => {
       name: "テスト ユーザー",
       email: "test@example.com",
       passwordHash: "hashed_password",
+      role: "MEMBER" as never,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -77,6 +79,8 @@ describe("POST /api/auth/signup", () => {
       name: "既存ユーザー",
       email: "test@example.com",
       passwordHash: "hashed",
+      role: "MEMBER" as never,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

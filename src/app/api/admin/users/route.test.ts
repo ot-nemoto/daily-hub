@@ -74,7 +74,7 @@ describe("GET /api/admin/users", () => {
   });
 
   it("異常系: 未ログインは 403 を返す", async () => {
-    mockAuth.mockResolvedValue(null);
+    mockAuth.mockResolvedValue(null as never);
 
     const res = await GET();
     expect(res.status).toBe(403);

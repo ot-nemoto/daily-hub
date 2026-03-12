@@ -51,8 +51,8 @@ export async function PATCH(
   const updated = await prisma.user.update({
     where: { id },
     data: {
-      ...(role !== undefined && { role }),
-      ...(isActive !== undefined && { isActive }),
+      ...(role !== undefined && { role: role as Role }),
+      ...(isActive !== undefined && { isActive: isActive as boolean }),
     },
   });
 
