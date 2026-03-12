@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { startOfTodayUtc } from "@/lib/dateUtils";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,10 +9,9 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = startOfTodayUtc();
   const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+  thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 29);
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },

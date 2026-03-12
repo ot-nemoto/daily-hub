@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { startOfTodayUtc } from "@/lib/dateUtils";
 import { redirect } from "next/navigation";
 import { UserTable } from "./UserTable";
 
@@ -8,10 +9,9 @@ export default async function AdminUsersPage() {
   if (!session?.user) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/");
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = startOfTodayUtc();
   const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+  thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 29);
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
