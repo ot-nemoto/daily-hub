@@ -2,8 +2,6 @@
 
 ## Prisma スキーマ（`prisma/schema.prisma`）
 
-> **注意**: `Invitation` モデルは Phase 7b で追加予定です。現在の `prisma/schema.prisma` には未実装です。
-
 ```prisma
 // Prisma 7: generator provider は "prisma-client"、output でクライアント生成先を指定
 generator client {
@@ -34,10 +32,9 @@ model User {
 
   reports     Report[]
   comments    Comment[]
-  invitations Invitation[] @relation("InvitedBy")  // Phase 7b（未実装）
+  invitations Invitation[] @relation("InvitedBy")
 }
 
-// ※ Invitation モデルは Phase 7b で追加予定（現在の schema.prisma には未追加）
 model Invitation {
   id          String    @id @default(cuid())
   token       String    @unique             // URL に埋め込む使い捨てトークン
