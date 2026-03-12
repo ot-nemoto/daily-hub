@@ -1,0 +1,92 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/auth", () => ({
+  auth: vi.fn(),
+}));
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+  },
+}));
+vi.mock("@/generated/prisma/client", () => ({
+  Role: { ADMIN: "ADMIN", MEMBER: "MEMBER", VIEWER: "VIEWER" },
+}));
+
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { PATCH } from "./route";
+
+const mockAuth = vi.mocked(auth);
+const mockFindUnique = vi.mocked(prisma.user.findUnique);
+const mockUpdate = vi.mocked(prisma.user.update);
+
+const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
+const memberSession = { user: { id: "member-1", role: "MEMBER" } };
+
+const makeRequest = (body: object) =>
+  new Request("http://localhost/api/admin/users/user-1", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+
+const makeParams = (id = "user-1") =>
+  ({ params: Promise.resolve({ id }) }) as never;
+
+describe("PATCH /api/admin/users/[id]", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: ロールを変更できる", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+    mockFindUnique.mockResolvedValue({ id: "user-1" } as never);
+    mockUpdate.mockResolvedValue({ id: "user-1" } as never);
+
+    const res = await PATCH(makeRequest({ role: "MEMBER" }) as never, makeParams());
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ id: "user-1" });
+  });
+
+  it("正常系: isActive を変更できる", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+    mockFindUnique.mockResolvedValue({ id: "user-1" } as never);
+    mockUpdate.mockResolvedValue({ id: "user-1" } as never);
+
+    const res = await PATCH(makeRequest({ isActive: false }) as never, makeParams());
+    expect(res.status).toBe(200);
+  });
+
+  it("異常系: 不正なロール値は 400 を返す", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await PATCH(makeRequest({ role: "INVALID" }) as never, makeParams());
+    expect(res.status).toBe(400);
+  });
+
+  it("異常系: 自分自身の ADMIN を降格しようとすると 403", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await PATCH(
+      makeRequest({ role: "MEMBER" }) as never,
+      makeParams("admin-1")
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("異常系: 存在しないユーザーは 404", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+    mockFindUnique.mockResolvedValue(null);
+
+    const res = await PATCH(makeRequest({ isActive: false }) as never, makeParams("no-user"));
+    expect(res.status).toBe(404);
+  });
+
+  it("異常系: MEMBER は 403 を返す", async () => {
+    mockAuth.mockResolvedValue(memberSession as never);
+
+    const res = await PATCH(makeRequest({ role: "MEMBER" }) as never, makeParams());
+    expect(res.status).toBe(403);
+  });
+});
