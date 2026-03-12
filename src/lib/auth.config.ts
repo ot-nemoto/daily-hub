@@ -10,7 +10,12 @@ export const authConfig = {
     authorized({ auth, request }) {
       const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
       if (isAdminPath) {
-        return auth?.user?.role === "ADMIN";
+        if (!auth?.user) return false; // 未ログイン → /login
+        if (auth.user.role !== "ADMIN") {
+          // ログイン済み非ADMIN → /
+          return Response.redirect(new URL("/", request.nextUrl));
+        }
+        return true;
       }
       return !!auth?.user;
     },

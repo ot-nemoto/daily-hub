@@ -5,20 +5,20 @@ import { authConfig } from "./auth.config";
 
 const authorized = authConfig.callbacks.authorized as (args: {
   auth: { user?: { role?: string } } | null;
-  request: { nextUrl: { pathname: string } };
-}) => boolean;
+  request: { nextUrl: URL };
+}) => boolean | Response;
 
 type SessionCallbackArgs = {
   session: { user: { id?: string; role?: string; isActive?: boolean } };
   token: { id?: string; role?: string; isActive?: boolean };
 };
-const sessionCallback = authConfig.callbacks.session as (
+const sessionCallback = authConfig.callbacks.session as unknown as (
   args: SessionCallbackArgs
 ) => SessionCallbackArgs["session"];
 
 describe("authorized callback", () => {
   const makeRequest = (pathname: string) => ({
-    nextUrl: { pathname },
+    nextUrl: new URL(`http://localhost${pathname}`),
   });
 
   describe("通常ルート", () => {
@@ -72,13 +72,16 @@ describe("session callback", () => {
       ).toBe(true);
     });
 
-    it("異常系: MEMBER ユーザーは /admin にアクセス不可", () => {
-      expect(
-        authorized({ auth: { user: { role: "MEMBER" } }, request: makeRequest("/admin/users") })
-      ).toBe(false);
+    it("異常系: MEMBER ユーザーは /admin にアクセスすると / にリダイレクト", () => {
+      const result = authorized({
+        auth: { user: { role: "MEMBER" } },
+        request: makeRequest("/admin/users"),
+      });
+      expect(result).toBeInstanceOf(Response);
+      expect((result as Response).headers.get("location")).toBe("http://localhost/");
     });
 
-    it("異常系: 未ログインユーザーは /admin にアクセス不可", () => {
+    it("異常系: 未ログインユーザーは /admin にアクセスすると false を返す", () => {
       expect(
         authorized({ auth: null, request: makeRequest("/admin") })
       ).toBe(false);
