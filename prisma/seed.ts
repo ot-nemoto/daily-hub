@@ -13,9 +13,9 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 const USERS = [
-  { name: "田中 太郎", email: "tanaka@example.com" },
-  { name: "鈴木 花子", email: "suzuki@example.com" },
-  { name: "佐藤 健", email: "sato@example.com" },
+  { name: "田中 太郎", email: "tanaka@example.com", role: "ADMIN" as const },
+  { name: "鈴木 花子", email: "suzuki@example.com", role: "MEMBER" as const },
+  { name: "佐藤 健", email: "sato@example.com", role: "MEMBER" as const },
 ];
 
 // 基準日: 2026-03-07（UTC 00:00:00）
@@ -55,9 +55,9 @@ async function main() {
 
   // ユーザー作成
   const users = await Promise.all(
-    USERS.map(({ name, email }) =>
+    USERS.map(({ name, email, role }) =>
       prisma.user.create({
-        data: { name, email, passwordHash },
+        data: { name, email, passwordHash, role },
       }),
     ),
   );
