@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 
 import { authConfig } from "./auth.config";
 import { authorizeCredentials } from "./authorize";
+import { prisma } from "./prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -23,11 +24,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     ...authConfig.callbacks,
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role;
         token.isActive = (user as { isActive?: boolean }).isActive;
+        return token;
+      }
+      // Re-fetch from DB to reflect role/isActive changes since last sign-in
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, isActive: true },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.isActive = dbUser.isActive;
+        }
       }
       return token;
     },
