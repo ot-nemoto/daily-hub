@@ -14,6 +14,14 @@ export const authConfig = {
       }
       return !!auth?.user;
     },
+    // ミドルウェアでも JWT → session のマッピングが必要
+    session({ session, token }) {
+      if (token.id) session.user.id = token.id as string;
+      if (token.role) session.user.role = token.role as string;
+      if (token.isActive !== undefined)
+        session.user.isActive = token.isActive as boolean;
+      return session;
+    },
   },
   providers: [],
 } satisfies NextAuthConfig;
