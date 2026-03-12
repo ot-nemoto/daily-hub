@@ -22,19 +22,26 @@ export async function GET() {
       role: true,
       isActive: true,
       createdAt: true,
+      // 最新日報1件のみ取得（最終日報日の表示用）
       reports: {
         select: { date: true },
         orderBy: { date: "desc" },
+        take: 1,
+      },
+      // 過去30日の提出数はDBで集計
+      _count: {
+        select: {
+          reports: {
+            where: { date: { gte: thirtyDaysAgo, lte: today } },
+          },
+        },
       },
     },
   });
 
   const result = users.map((user) => {
     const lastReport = user.reports[0] ?? null;
-    const reportsInRange = user.reports.filter(
-      (r) => r.date >= thirtyDaysAgo && r.date <= today
-    );
-    const submissionRate30d = Math.round((reportsInRange.length / 30) * 100) / 100;
+    const submissionRate30d = Math.round((user._count.reports / 30) * 100) / 100;
 
     return {
       id: user.id,

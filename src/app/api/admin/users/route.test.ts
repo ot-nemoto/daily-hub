@@ -19,9 +19,6 @@ const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
 const memberSession = { user: { id: "member-1", role: "MEMBER" } };
 
 const today = new Date();
-today.setHours(0, 0, 0, 0);
-const yesterday = new Date(today);
-yesterday.setDate(yesterday.getDate() - 1);
 
 const mockUsers = [
   {
@@ -31,7 +28,8 @@ const mockUsers = [
     role: "ADMIN",
     isActive: true,
     createdAt: new Date("2026-01-01"),
-    reports: [{ date: today }, { date: yesterday }],
+    reports: [{ date: today }],
+    _count: { reports: 20 },
   },
   {
     id: "user-2",
@@ -41,6 +39,7 @@ const mockUsers = [
     isActive: true,
     createdAt: new Date("2026-01-02"),
     reports: [],
+    _count: { reports: 0 },
   },
 ];
 
