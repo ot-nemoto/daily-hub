@@ -57,13 +57,13 @@ daily-hub/
 │   │           ├── users/
 │   │           │   ├── route.ts    # GET(一覧), POST(作成)
 │   │           │   └── [id]/
-│   │           │       └── route.ts # PATCH(更新), DELETE(削除)
+│   │           │       └── route.ts # PATCH(更新), DELETE(削除・Phase 7c 未実装)
 │   │           └── invitations/
-│   │               └── route.ts    # GET(一覧), POST(発行)
+│   │               └── route.ts    # GET(一覧), POST(発行)（Phase 7b 未実装）
 │   ├── admin/                      # 管理画面ページ（Phase 7）
 │   │   └── users/
 │   │       ├── page.tsx            # ユーザー一覧
-│   │       └── new/page.tsx        # ユーザー作成
+│   │       └── new/page.tsx        # ユーザー作成（Phase 7b 未実装）
 │   ├── components/     # 再利用UIコンポーネント
 │   ├── lib/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
@@ -102,7 +102,7 @@ daily-hub/
 ```
 /admin/* へのアクセス
   → middleware で role === "ADMIN" を確認
-  → admin 以外は /reports/daily にリダイレクト
+  → admin 以外は / にリダイレクト
 
 /api/admin/* へのアクセス
   → auth() でセッション取得
