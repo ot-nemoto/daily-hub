@@ -62,7 +62,10 @@ export function UserTable({
         </thead>
         <tbody className="divide-y divide-zinc-100">
           {users.map((user) => (
-            <tr key={user.id} className="py-3">
+            <tr
+              key={user.id}
+              className={`py-3 ${!user.isActive ? "opacity-50" : ""}`}
+            >
               <td className="py-3 pr-4 font-medium text-zinc-900">
                 {user.name}
                 {user.id === currentUserId && (
