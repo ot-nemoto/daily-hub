@@ -13,11 +13,26 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json();
+
+  let body: { role?: unknown; isActive?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const { role, isActive } = body;
 
-  if (role !== undefined && !Object.values(Role).includes(role)) {
+  if (role !== undefined && !Object.values(Role).includes(role as Role)) {
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+  }
+
+  if (isActive !== undefined && typeof isActive !== "boolean") {
+    return NextResponse.json({ error: "isActive must be a boolean" }, { status: 400 });
+  }
+
+  if (role === undefined && isActive === undefined) {
+    return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
   }
 
   // 自分自身の ADMIN ロールを降格しようとした場合は 403

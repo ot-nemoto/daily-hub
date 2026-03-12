@@ -33,6 +33,12 @@ const makeRequest = (body: object) =>
     body: JSON.stringify(body),
   });
 
+const makeRawRequest = (body: string) =>
+  new Request("http://localhost/api/admin/users/user-1", {
+    method: "PATCH",
+    body,
+  });
+
 const makeParams = (id = "user-1") =>
   ({ params: Promise.resolve({ id }) }) as never;
 
@@ -88,5 +94,29 @@ describe("PATCH /api/admin/users/[id]", () => {
 
     const res = await PATCH(makeRequest({ role: "MEMBER" }) as never, makeParams());
     expect(res.status).toBe(403);
+  });
+
+  it("異常系: 不正JSON は 400 を返す", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await PATCH(makeRawRequest("not-json") as never, makeParams());
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "Invalid JSON" });
+  });
+
+  it("異常系: isActive が boolean 以外は 400 を返す", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await PATCH(makeRequest({ isActive: "yes" }) as never, makeParams());
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "isActive must be a boolean" });
+  });
+
+  it("異常系: 更新フィールドなし（空ボディ）は 400 を返す", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await PATCH(makeRequest({}) as never, makeParams());
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "No updatable fields provided" });
   });
 });
