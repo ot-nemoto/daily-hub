@@ -81,8 +81,11 @@ export async function DELETE(
   }
 
   // FK制約の順序でカスケード削除
+  // 本人の日報に他ユーザーが付けたコメントと、本人が書いたコメントを両方削除
   await prisma.$transaction([
-    prisma.comment.deleteMany({ where: { authorId: id } }),
+    prisma.comment.deleteMany({
+      where: { OR: [{ report: { authorId: id } }, { authorId: id }] },
+    }),
     prisma.report.deleteMany({ where: { authorId: id } }),
     prisma.invitation.deleteMany({ where: { invitedById: id } }),
     prisma.user.delete({ where: { id } }),
