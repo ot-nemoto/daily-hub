@@ -17,7 +17,8 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com" } };
+const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com", role: "MEMBER" } };
+const mockViewerSession = { user: { id: "user-2", name: "閲覧 ユーザー", email: "viewer@example.com", role: "VIEWER" } };
 
 const now = new Date("2026-03-06T12:00:00.000Z");
 const mockReport = {
@@ -262,5 +263,22 @@ describe("PUT /api/reports/[id]", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+
+  it("異常系: VIEWER ロールで 403 を返す", async () => {
+    const { auth } = await import("@/lib/auth");
+    vi.mocked(auth).mockResolvedValue(mockViewerSession as never);
+
+    const res = await PUT(
+      new Request("http://localhost/api/reports/report-1", {
+        method: "PUT",
+        body: JSON.stringify(validBody),
+      }),
+      makeContext("report-1"),
+    );
+
+    expect(res.status).toBe(403);
+    expect(prisma.report.findUnique).not.toHaveBeenCalled();
+    expect(prisma.report.update).not.toHaveBeenCalled();
   });
 });
