@@ -21,6 +21,8 @@ const mockUser = {
   name: "テスト ユーザー",
   email: "test@example.com",
   passwordHash: "hashed_password",
+  role: "MEMBER" as const,
+  isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -41,6 +43,8 @@ describe("authorizeCredentials", () => {
       id: "test-id",
       name: "テスト ユーザー",
       email: "test@example.com",
+      role: "MEMBER",
+      isActive: true,
     });
     // DB 検索とパスワード検証が正しい引数で呼ばれることを保証
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: "test@example.com" } });
@@ -57,6 +61,14 @@ describe("authorizeCredentials", () => {
     const result = await authorizeCredentials("test@example.com", undefined);
     expect(result).toBeNull();
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("異常系: isActive が false のユーザーは null を返す", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...mockUser, isActive: false });
+
+    const result = await authorizeCredentials("test@example.com", "password123");
+
+    expect(result).toBeNull();
   });
 
   it("異常系: ユーザーが存在しない場合 null を返す", async () => {

@@ -2,7 +2,25 @@
 
 import { describe, expect, it } from "vitest";
 
-import { isValidDate, isValidMonth } from "./dateUtils";
+import { isValidDate, isValidMonth, startOfTodayUtc } from "./dateUtils";
+
+describe("startOfTodayUtc", () => {
+  it("正常系: 時刻が UTC 00:00:00.000 であること", () => {
+    const result = startOfTodayUtc();
+    expect(result.getUTCHours()).toBe(0);
+    expect(result.getUTCMinutes()).toBe(0);
+    expect(result.getUTCSeconds()).toBe(0);
+    expect(result.getUTCMilliseconds()).toBe(0);
+  });
+
+  it("正常系: 返り値が今日の UTC 年月日を持つこと", () => {
+    const now = new Date();
+    const result = startOfTodayUtc();
+    expect(result.getUTCFullYear()).toBe(now.getUTCFullYear());
+    expect(result.getUTCMonth()).toBe(now.getUTCMonth());
+    expect(result.getUTCDate()).toBe(now.getUTCDate());
+  });
+});
 
 describe("isValidDate", () => {
   it("正しい日付を受け入れる", () => {

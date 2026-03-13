@@ -203,6 +203,129 @@ NextAuth.js が管理。直接呼び出しはしない。
 
 ---
 
+---
+
+## 管理者（admin ロール必須）
+
+> 全エンドポイントは `admin` ロールのユーザーのみアクセス可能。`admin` 以外は `403 Forbidden`。
+
+### GET /api/admin/users
+ユーザー一覧取得（管理画面用）
+
+**Response 200**
+```json
+[
+  {
+    "id": "cuid",
+    "name": "田中 太郎",
+    "email": "tanaka@example.com",
+    "role": "ADMIN",
+    "isActive": true,
+    "createdAt": "2026-01-01T00:00:00Z",
+    "lastReportAt": "2026-03-10T00:00:00Z",
+    "submissionRate30d": 0.85
+  }
+]
+```
+
+- `lastReportAt`: 最後に日報を投稿した日付（投稿なしは `null`）
+- `submissionRate30d`: 直近30日間のうち日報を提出した割合（0〜1）
+
+---
+
+### POST /api/admin/users
+ユーザー直接作成（Phase 7b）
+
+**Request Body**
+```json
+{ "name": "佐藤 花子", "email": "sato@example.com", "password": "tempPassword123" }
+```
+
+**Response 201**
+```json
+{ "id": "cuid" }
+```
+
+**Errors**
+- `400` — バリデーションエラー
+- `409` — メールアドレスが既に使用されている
+
+---
+
+### PATCH /api/admin/users/[id]
+ユーザー情報更新（ロール変更・有効化／無効化）
+
+**Request Body**（変更したいフィールドのみ指定）
+```json
+{ "role": "MEMBER", "isActive": false }
+```
+
+**Response 200**
+```json
+{ "id": "cuid" }
+```
+
+**Errors**
+- `400` — バリデーションエラー（不正なロール値など）
+- `403` — 自分自身の `admin` ロールを降格しようとした
+- `404` — ユーザーが存在しない
+
+---
+
+### DELETE /api/admin/users/[id]
+ユーザー完全削除（日報・コメントを含む）（Phase 7c）
+
+**Response 204** — No Content
+
+**Errors**
+- `403` — 自分自身を削除しようとした
+- `404` — ユーザーが存在しない
+
+---
+
+### POST /api/admin/invitations
+招待リンク発行（Phase 7b）
+
+**Request Body**
+```json
+{ "email": "invite@example.com" }
+```
+- `email` は任意。指定した場合はそのメールアドレスのみ利用可
+
+**Response 201**
+```json
+{
+  "id": "cuid",
+  "token": "uuid-token",
+  "inviteUrl": "https://daily-hub-two.vercel.app/signup?token=uuid-token",
+  "expiresAt": "2026-03-14T00:00:00Z"
+}
+```
+
+**Errors**
+- `400` — メールアドレス形式が不正
+
+---
+
+### GET /api/admin/invitations
+招待リンク一覧取得（Phase 7b）
+
+**Response 200**
+```json
+[
+  {
+    "id": "cuid",
+    "email": "invite@example.com",
+    "inviteUrl": "https://daily-hub-two.vercel.app/signup?token=uuid-token",
+    "expiresAt": "2026-03-14T00:00:00Z",
+    "usedAt": null,
+    "createdAt": "2026-03-11T00:00:00Z"
+  }
+]
+```
+
+---
+
 ## バリデーションルール（共通）
 
 | フィールド | 必須 | 最大文字数 |
@@ -212,3 +335,5 @@ NextAuth.js が管理。直接呼び出しはしない。
 | `tomorrowPlan` | YES | 5000文字 |
 | `notes` | NO | 5000文字 |
 | コメント `body` | YES | 1000文字 |
+| ユーザー `name` | YES | 100文字 |
+| ユーザー `password` | YES | 8文字以上 |

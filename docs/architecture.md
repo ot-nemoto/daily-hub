@@ -53,6 +53,17 @@ daily-hub/
 │   │       │           └── route.ts # GET, POST
 │   │       └── users/
 │   │           └── route.ts        # GET(ユーザー一覧)
+│   │       └── admin/              # 管理者専用API（Phase 7）
+│   │           ├── users/
+│   │           │   ├── route.ts    # GET(一覧), POST(作成)
+│   │           │   └── [id]/
+│   │           │       └── route.ts # PATCH(更新), DELETE(削除・Phase 7c 未実装)
+│   │           └── invitations/
+│   │               └── route.ts    # GET(一覧), POST(発行)（Phase 7b 未実装）
+│   ├── admin/                      # 管理画面ページ（Phase 7）
+│   │   └── users/
+│   │       ├── page.tsx            # ユーザー一覧
+│   │       └── new/page.tsx        # ユーザー作成（Phase 7b 未実装）
 │   ├── components/     # 再利用UIコンポーネント
 │   ├── lib/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
@@ -76,12 +87,26 @@ daily-hub/
 ログイン
   → POST /api/auth/callback/credentials
   → bcryptでパスワード検証
+  → isActive === false なら認証エラー（Phase 7a）
   → セッションCookieを発行
 
 セッション
   → NextAuth の JWT セッション (httpOnly Cookie)
   → サーバーコンポーネントで getServerSession() で取得
   → APIルートで auth() で取得
+  → セッションに role を含める（Phase 7a）
+```
+
+## アクセス制御（Phase 7a）
+
+```
+/admin/* へのアクセス
+  → middleware で role === "ADMIN" を確認
+  → admin 以外は / にリダイレクト
+
+/api/admin/* へのアクセス
+  → auth() でセッション取得
+  → role !== "ADMIN" なら 403 を返す
 ```
 
 ## インフラ構成
@@ -127,8 +152,10 @@ Client (React)
 
 - APIルートは全て `auth()` でセッション確認してから処理
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
+- 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
 - 入力値は Zod でバリデーション
 - SQLインジェクション対策は Prisma のパラメータ化クエリに委任
+- 招待トークンは `crypto.randomUUID()` で生成し、使用後に `usedAt` をセットして無効化（Phase 7b）
 
 ## 環境変数
 

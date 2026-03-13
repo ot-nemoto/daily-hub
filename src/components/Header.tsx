@@ -32,6 +32,22 @@ export async function Header() {
             >
               日報作成
             </Link>
+            {session?.user?.role === "ADMIN" && (
+              <>
+                <Link
+                  href="/admin/users"
+                  className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
+                >
+                  ユーザー管理
+                </Link>
+                <Link
+                  href="/admin/invitations"
+                  className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
+                >
+                  招待リンク
+                </Link>
+              </>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">

@@ -7,8 +7,25 @@ export const authConfig = {
     signIn: "/login",
   },
   callbacks: {
-    authorized({ auth }) {
+    authorized({ auth, request }) {
+      const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
+      if (isAdminPath) {
+        if (!auth?.user) return false; // 未ログイン → /login
+        if (auth.user.role !== "ADMIN") {
+          // ログイン済み非ADMIN → /
+          return Response.redirect(new URL("/", request.nextUrl));
+        }
+        return true;
+      }
       return !!auth?.user;
+    },
+    // ミドルウェアでも JWT → session のマッピングが必要
+    session({ session, token }) {
+      if (token.id) session.user.id = token.id as string;
+      if (token.role) session.user.role = token.role as string;
+      if (token.isActive !== undefined)
+        session.user.isActive = token.isActive as boolean;
+      return session;
     },
   },
   providers: [],

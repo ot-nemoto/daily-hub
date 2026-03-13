@@ -8,6 +8,12 @@ export function isValidDate(value: string): boolean {
   return date.getUTCFullYear() === y && date.getUTCMonth() + 1 === m && date.getUTCDate() === d;
 }
 
+/** 今日の UTC midnight を返す（Report.date の保存形式に合わせた基準日用） */
+export function startOfTodayUtc(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
 /** YYYY-MM 形式かつ実在する月かを検証する */
 export function isValidMonth(value: string): boolean {
   if (!/^\d{4}-\d{2}$/.test(value)) return false;

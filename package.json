@@ -1,11 +1,11 @@
 {
   "name": "daily-hub",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "postinstall": "prisma generate",
-    "build": "prisma migrate deploy && next build",
+    "build": "if [ \"$VERCEL_ENV\" = 'production' ]; then prisma migrate deploy && next build; else next build; fi",
     "start": "next start",
     "lint": "biome lint .",
     "format": "biome format --write .",

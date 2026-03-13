@@ -7,16 +7,37 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
 model User {
   id           String    @id @default(cuid())
   name         String
   email        String    @unique
   passwordHash String
+  role         Role      @default(MEMBER)
+  isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  reports  Report[]
-  comments Comment[]
+  reports     Report[]
+  comments    Comment[]
+  invitations Invitation[] @relation("InvitedBy")
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  email       String?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  invitedById String
+  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id])
 }
 
 model Report {
