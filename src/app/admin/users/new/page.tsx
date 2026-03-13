@@ -8,6 +8,7 @@ export default function NewUserPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"MEMBER" | "VIEWER">("MEMBER");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -19,7 +20,7 @@ export default function NewUserPage() {
     const res = await fetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, role }),
     });
 
     setSubmitting(false);
@@ -67,6 +68,19 @@ export default function NewUserPage() {
                 required
                 className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700">
+                ロール
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as "MEMBER" | "VIEWER")}
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              >
+                <option value="MEMBER">MEMBER（日報作成・閲覧）</option>
+                <option value="VIEWER">VIEWER（閲覧のみ）</option>
+              </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-700">
