@@ -51,6 +51,7 @@ async function main() {
   // 既存データを削除（外部キー制約の順序で）
   await prisma.comment.deleteMany();
   await prisma.report.deleteMany();
+  await prisma.invitation.deleteMany();
   await prisma.user.deleteMany();
 
   // ユーザー作成

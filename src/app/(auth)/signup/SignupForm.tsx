@@ -6,7 +6,12 @@ import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
 
-export function SignupForm() {
+type Props = {
+  token?: string;
+  defaultEmail?: string | null;
+};
+
+export function SignupForm({ token, defaultEmail }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -25,6 +30,7 @@ export function SignupForm() {
           name: data.get("name"),
           email: data.get("email"),
           password: data.get("password"),
+          ...(token ? { token } : {}),
         }),
       });
 
@@ -68,7 +74,9 @@ export function SignupForm() {
           type="email"
           required
           autoComplete="email"
-          className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          defaultValue={defaultEmail ?? ""}
+          readOnly={!!defaultEmail}
+          className={`mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 ${defaultEmail ? "bg-zinc-100 text-zinc-500" : ""}`}
         />
       </div>
       <div>
