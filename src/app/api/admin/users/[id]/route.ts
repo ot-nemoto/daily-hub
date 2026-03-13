@@ -58,3 +58,38 @@ export async function PATCH(
 
   return NextResponse.json({ id: updated.id });
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  // 自分自身の削除は禁止
+  if (id === session.user.id) {
+    return NextResponse.json({ error: "Cannot delete yourself" }, { status: 403 });
+  }
+
+  const existing = await prisma.user.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  // FK制約の順序でカスケード削除
+  // 本人の日報に他ユーザーが付けたコメントと、本人が書いたコメントを両方削除
+  await prisma.$transaction([
+    prisma.comment.deleteMany({
+      where: { OR: [{ report: { authorId: id } }, { authorId: id }] },
+    }),
+    prisma.report.deleteMany({ where: { authorId: id } }),
+    prisma.invitation.deleteMany({ where: { invitedById: id } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
+
+  return NextResponse.json({ ok: true });
+}

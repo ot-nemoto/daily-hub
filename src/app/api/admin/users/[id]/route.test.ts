@@ -9,7 +9,12 @@ vi.mock("@/lib/prisma", () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
+    comment: { deleteMany: vi.fn() },
+    report: { deleteMany: vi.fn() },
+    invitation: { deleteMany: vi.fn() },
+    $transaction: vi.fn(),
   },
 }));
 vi.mock("@/generated/prisma/client", () => ({
@@ -18,11 +23,12 @@ vi.mock("@/generated/prisma/client", () => ({
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PATCH } from "./route";
+import { DELETE, PATCH } from "./route";
 
 const mockAuth = vi.mocked(auth);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUpdate = vi.mocked(prisma.user.update);
+const mockTransaction = vi.mocked(prisma.$transaction);
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
 const memberSession = { user: { id: "member-1", role: "MEMBER" } };
@@ -118,5 +124,46 @@ describe("PATCH /api/admin/users/[id]", () => {
     const res = await PATCH(makeRequest({}) as never, makeParams());
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: "No updatable fields provided" });
+  });
+});
+
+const makeDeleteRequest = () =>
+  new Request("http://localhost/api/admin/users/user-1", { method: "DELETE" });
+
+describe("DELETE /api/admin/users/[id]", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: ユーザーを削除できる", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+    mockFindUnique.mockResolvedValue({ id: "user-1" } as never);
+    mockTransaction.mockResolvedValue([] as never);
+
+    const res = await DELETE(makeDeleteRequest() as never, makeParams());
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(mockTransaction).toHaveBeenCalled();
+  });
+
+  it("異常系: 自分自身の削除は 403 を返す", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await DELETE(makeDeleteRequest() as never, makeParams("admin-1"));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ error: "Cannot delete yourself" });
+  });
+
+  it("異常系: MEMBER は 403 を返す", async () => {
+    mockAuth.mockResolvedValue(memberSession as never);
+
+    const res = await DELETE(makeDeleteRequest() as never, makeParams());
+    expect(res.status).toBe(403);
+  });
+
+  it("異常系: 存在しないユーザーは 404 を返す", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+    mockFindUnique.mockResolvedValue(null);
+
+    const res = await DELETE(makeDeleteRequest() as never, makeParams("no-user"));
+    expect(res.status).toBe(404);
   });
 });
