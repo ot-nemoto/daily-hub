@@ -79,6 +79,9 @@ describe("POST /api/admin/invitations", () => {
   });
 });
 
+const makeGetRequest = () =>
+  new Request("http://localhost/api/admin/invitations");
+
 describe("GET /api/admin/invitations", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -86,7 +89,7 @@ describe("GET /api/admin/invitations", () => {
     mockAuth.mockResolvedValue(adminSession as never);
     mockFindMany.mockResolvedValue([mockInvitation] as never);
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -102,14 +105,14 @@ describe("GET /api/admin/invitations", () => {
   it("異常系: MEMBER は 403 を返す", async () => {
     mockAuth.mockResolvedValue(memberSession as never);
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(403);
   });
 
   it("異常系: 未ログインは 403 を返す", async () => {
     mockAuth.mockResolvedValue(null as never);
 
-    const res = await GET();
+    const res = await GET(makeGetRequest());
     expect(res.status).toBe(403);
   });
 });

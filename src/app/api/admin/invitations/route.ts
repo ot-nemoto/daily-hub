@@ -7,6 +7,12 @@ const CreateInvitationSchema = z.object({
   email: z.string().email().optional(),
 });
 
+function getBaseUrl(request: Request): string {
+  const host = request.headers.get("host") ?? "localhost:3000";
+  const proto = request.headers.get("x-forwarded-proto") ?? "http";
+  return `${proto}://${host}`;
+}
+
 export async function POST(request: Request) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
@@ -26,7 +32,7 @@ export async function POST(request: Request) {
   const { email } = result.data;
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = getBaseUrl(request);
 
   const invitation = await prisma.invitation.create({
     data: {
@@ -48,7 +54,7 @@ export async function POST(request: Request) {
   );
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -66,7 +72,7 @@ export async function GET() {
     },
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = getBaseUrl(request);
 
   const result = invitations.map((inv) => ({
     id: inv.id,
