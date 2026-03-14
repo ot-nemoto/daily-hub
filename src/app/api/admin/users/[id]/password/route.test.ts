@@ -61,6 +61,14 @@ describe("PATCH /api/admin/users/[id]/password", () => {
     });
   });
 
+  it("異常系: 自分自身のパスワードをリセットしようとすると 403", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await PATCH(makeRequest({ password: "newpassword123" }) as never, makeParams("admin-1"));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ error: "Cannot reset your own password" });
+  });
+
   it("異常系: MEMBER は 403 を返す", async () => {
     mockAuth.mockResolvedValue(memberSession as never);
 
