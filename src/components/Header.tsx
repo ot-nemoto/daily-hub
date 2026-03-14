@@ -52,7 +52,12 @@ export async function Header() {
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           {session?.user?.name && (
-            <span className="hidden text-sm text-zinc-500 sm:inline">{session.user.name}</span>
+            <Link
+              href="/settings"
+              className="hidden text-sm text-zinc-500 hover:text-zinc-900 sm:inline"
+            >
+              {session.user.name}
+            </Link>
           )}
           <SignOutButton className="shrink-0 rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50" />
         </div>
