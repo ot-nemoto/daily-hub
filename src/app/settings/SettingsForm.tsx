@@ -28,19 +28,23 @@ export function SettingsForm({ initialName, email }: Props) {
     const data = new FormData(e.currentTarget);
     const name = data.get("name") as string;
 
-    const res = await fetch("/api/me", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-
-    setNamePending(false);
-    if (res.ok) {
-      setNameSuccess(true);
-      router.refresh();
-    } else {
-      const json = await res.json().catch(() => ({}));
-      setNameError(json.error ?? "名前の更新に失敗しました");
+    try {
+      const res = await fetch("/api/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        setNameSuccess(true);
+        router.refresh();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        setNameError(json.error ?? "名前の更新に失敗しました");
+      }
+    } catch {
+      setNameError("通信エラーが発生しました");
+    } finally {
+      setNamePending(false);
     }
   }
 
@@ -61,23 +65,25 @@ export function SettingsForm({ initialName, email }: Props) {
       return;
     }
 
-    const res = await fetch("/api/me", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentPassword, newPassword }),
-    });
-
-    setPwPending(false);
-    if (res.ok) {
-      setPwSuccess(true);
-      (e.target as HTMLFormElement).reset();
-    } else {
-      if (res.status === 403) {
+    try {
+      const res = await fetch("/api/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (res.ok) {
+        setPwSuccess(true);
+        (e.target as HTMLFormElement).reset();
+      } else if (res.status === 403) {
         setPwError("現在のパスワードが正しくありません");
       } else {
         const json = await res.json().catch(() => ({}));
         setPwError(json.error ?? "パスワードの変更に失敗しました");
       }
+    } catch {
+      setPwError("通信エラーが発生しました");
+    } finally {
+      setPwPending(false);
     }
   }
 

@@ -35,7 +35,9 @@ export async function PATCH(request: Request) {
 
   const result = UpdateMeSchema.safeParse(body);
   if (!result.success) {
-    return NextResponse.json({ error: result.error.flatten() }, { status: 400 });
+    const flat = result.error.flatten();
+    const message = flat.formErrors[0] ?? Object.values(flat.fieldErrors).flat()[0] ?? "Invalid request";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const { name, currentPassword, newPassword } = result.data;

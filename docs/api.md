@@ -303,7 +303,7 @@ NextAuth.js が管理。直接呼び出しはしない。
 
 **Response 200**
 ```json
-{ "id": "cuid" }
+{ "ok": true }
 ```
 
 **Errors**

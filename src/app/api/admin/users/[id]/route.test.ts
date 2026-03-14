@@ -87,6 +87,17 @@ describe("PATCH /api/admin/users/[id]", () => {
     expect(res.status).toBe(403);
   });
 
+  it("異常系: 自分自身の isActive を変更しようとすると 403", async () => {
+    mockAuth.mockResolvedValue(adminSession as never);
+
+    const res = await PATCH(
+      makeRequest({ isActive: false }) as never,
+      makeParams("admin-1")
+    );
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ error: "Cannot change your own active status" });
+  });
+
   it("異常系: 存在しないユーザーは 404", async () => {
     mockAuth.mockResolvedValue(adminSession as never);
     mockFindUnique.mockResolvedValue(null);
