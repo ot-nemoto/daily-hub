@@ -30,6 +30,27 @@ NextAuth.js が管理。直接呼び出しはしない。
 
 ## ユーザー
 
+### PATCH /api/me
+ログイン中ユーザーの名前・パスワード変更
+
+**Request Body**（変更したいフィールドのみ指定）
+```json
+{ "name": "新しい名前", "currentPassword": "現在のPW", "newPassword": "新しいPW" }
+```
+- `name` のみ指定した場合は名前変更のみ実行
+- パスワード変更時は `currentPassword` と `newPassword` の両方が必須
+
+**Response 200**
+```json
+{ "id": "cuid", "name": "新しい名前", "email": "user@example.com" }
+```
+
+**Errors**
+- `400` — バリデーションエラー（名前が空・パスワード8文字未満・`newPassword` のみ指定など）
+- `403` — `currentPassword` が現在のパスワードと一致しない
+
+---
+
 ### GET /api/users
 全ユーザー一覧（日次ビューのユーザー選択用）
 
@@ -268,6 +289,26 @@ NextAuth.js が管理。直接呼び出しはしない。
 **Errors**
 - `400` — バリデーションエラー（不正なロール値など）
 - `403` — 自分自身の `admin` ロールを降格しようとした
+- `404` — ユーザーが存在しない
+
+---
+
+### PATCH /api/admin/users/[id]/password
+ユーザーの仮パスワード発行（Phase 7c）
+
+**Request Body**
+```json
+{ "password": "tempPassword123" }
+```
+
+**Response 200**
+```json
+{ "id": "cuid" }
+```
+
+**Errors**
+- `400` — バリデーションエラー（パスワード8文字未満）
+- `403` — 自分自身のパスワードをリセットしようとした
 - `404` — ユーザーが存在しない
 
 ---
