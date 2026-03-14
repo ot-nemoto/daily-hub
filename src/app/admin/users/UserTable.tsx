@@ -156,30 +156,34 @@ export function UserTable({
                 </td>
                 <td className="py-3">
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      disabled={loading === `active-${user.id}`}
-                      onClick={() => handleToggleActive(user.id, user.isActive)}
-                      className={`rounded px-3 py-1 text-xs font-medium disabled:opacity-50 ${
-                        user.isActive
-                          ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-                          : "bg-green-50 text-green-700 hover:bg-green-100"
-                      }`}
-                    >
-                      {user.isActive ? "無効化" : "有効化"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loading === `password-${user.id}`}
-                      onClick={() => {
-                        setPasswordInput("");
-                        setPasswordError("");
-                        setPasswordDialog({ userId: user.id, userName: user.name });
-                      }}
-                      className="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50"
-                    >
-                      PW リセット
-                    </button>
+                    {user.id !== currentUserId && (
+                      <button
+                        type="button"
+                        disabled={loading === `active-${user.id}`}
+                        onClick={() => handleToggleActive(user.id, user.isActive)}
+                        className={`rounded px-3 py-1 text-xs font-medium disabled:opacity-50 ${
+                          user.isActive
+                            ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                            : "bg-green-50 text-green-700 hover:bg-green-100"
+                        }`}
+                      >
+                        {user.isActive ? "無効化" : "有効化"}
+                      </button>
+                    )}
+                    {user.id !== currentUserId && (
+                      <button
+                        type="button"
+                        disabled={loading === `password-${user.id}`}
+                        onClick={() => {
+                          setPasswordInput("");
+                          setPasswordError("");
+                          setPasswordDialog({ userId: user.id, userName: user.name });
+                        }}
+                        className="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50"
+                      >
+                        PW リセット
+                      </button>
+                    )}
                     {user.id !== currentUserId && (
                       <button
                         type="button"

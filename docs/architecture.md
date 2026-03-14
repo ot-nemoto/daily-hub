@@ -60,6 +60,8 @@ daily-hub/
 │   │           │       └── route.ts # PATCH(更新), DELETE(削除・Phase 7c 未実装)
 │   │           └── invitations/
 │   │               └── route.ts    # GET(一覧), POST(発行)（Phase 7b 未実装）
+│   ├── settings/
+│   │   └── page.tsx            # 個人設定（名前・パスワード変更）（Phase 9）
 │   ├── admin/                      # 管理画面ページ（Phase 7）
 │   │   └── users/
 │   │       ├── page.tsx            # ユーザー一覧

@@ -14,6 +14,11 @@ export async function PATCH(
 
   const { id } = await params;
 
+  // 自分自身のパスワードリセットは禁止
+  if (id === session.user.id) {
+    return NextResponse.json({ error: "Cannot reset your own password" }, { status: 403 });
+  }
+
   let body: { password?: unknown };
   try {
     body = await request.json();

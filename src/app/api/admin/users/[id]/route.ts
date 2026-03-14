@@ -43,6 +43,14 @@ export async function PATCH(
     );
   }
 
+  // 自分自身の isActive を変更しようとした場合は 403
+  if (id === session.user.id && isActive !== undefined) {
+    return NextResponse.json(
+      { error: "Cannot change your own active status" },
+      { status: 403 }
+    );
+  }
+
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
