@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
+  getSession: vi.fn(),
 }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -12,29 +12,20 @@ vi.mock("@/lib/prisma", () => ({
     },
   },
 }));
-vi.mock("bcryptjs", () => ({
-  default: {
-    compare: vi.fn(),
-    hash: vi.fn().mockResolvedValue("hashed-new-password"),
-  },
-}));
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 import { PATCH } from "./route";
 
-const mockAuth = vi.mocked(auth);
+const mockAuth = vi.mocked(getSession);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUpdate = vi.mocked(prisma.user.update);
-const mockCompare = vi.mocked(bcrypt.compare);
 
-const session = { user: { id: "user-1", role: "MEMBER" } };
+const session = { user: { id: "user-1", role: "MEMBER", isActive: true } };
 const existingUser = {
   id: "user-1",
   name: "田中 太郎",
   email: "tanaka@example.com",
-  passwordHash: "hashed-current",
 };
 const updatedUser = { id: "user-1", name: "田中 太郎", email: "tanaka@example.com" };
 
@@ -83,59 +74,6 @@ describe("PATCH /api/me", () => {
     });
   });
 
-  describe("パスワード変更", () => {
-    it("正常系: パスワードを変更できる", async () => {
-      mockAuth.mockResolvedValue(session as never);
-      mockFindUnique.mockResolvedValue(existingUser as never);
-      mockCompare.mockResolvedValue(true as never);
-      mockUpdate.mockResolvedValue(updatedUser as never);
-
-      const res = await PATCH(
-        makeRequest({ currentPassword: "current123", newPassword: "newpassword1" }) as never
-      );
-      expect(res.status).toBe(200);
-      expect(mockUpdate).toHaveBeenCalledWith({
-        where: { id: "user-1" },
-        data: { passwordHash: "hashed-new-password" },
-        select: { id: true, name: true, email: true },
-      });
-    });
-
-    it("異常系: currentPassword が一致しない場合は 403 を返す", async () => {
-      mockAuth.mockResolvedValue(session as never);
-      mockFindUnique.mockResolvedValue(existingUser as never);
-      mockCompare.mockResolvedValue(false as never);
-
-      const res = await PATCH(
-        makeRequest({ currentPassword: "wrongpassword", newPassword: "newpassword1" }) as never
-      );
-      expect(res.status).toBe(403);
-    });
-
-    it("異常系: newPassword が 8 文字未満は 400 を返す", async () => {
-      mockAuth.mockResolvedValue(session as never);
-
-      const res = await PATCH(
-        makeRequest({ currentPassword: "current123", newPassword: "short" }) as never
-      );
-      expect(res.status).toBe(400);
-    });
-
-    it("異常系: newPassword のみ指定は 400 を返す", async () => {
-      mockAuth.mockResolvedValue(session as never);
-
-      const res = await PATCH(makeRequest({ newPassword: "newpassword1" }) as never);
-      expect(res.status).toBe(400);
-    });
-
-    it("異常系: currentPassword のみ指定は 400 を返す", async () => {
-      mockAuth.mockResolvedValue(session as never);
-
-      const res = await PATCH(makeRequest({ currentPassword: "current123" }) as never);
-      expect(res.status).toBe(400);
-    });
-  });
-
   describe("認証", () => {
     it("異常系: 未認証は 401 を返す", async () => {
       mockAuth.mockResolvedValue(null);
@@ -146,13 +84,6 @@ describe("PATCH /api/me", () => {
   });
 
   describe("バリデーション", () => {
-    it("異常系: ボディが空は 400 を返す", async () => {
-      mockAuth.mockResolvedValue(session as never);
-
-      const res = await PATCH(makeRequest({}) as never);
-      expect(res.status).toBe(400);
-    });
-
     it("異常系: 不正 JSON は 400 を返す", async () => {
       mockAuth.mockResolvedValue(session as never);
 

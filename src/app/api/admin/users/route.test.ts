@@ -2,26 +2,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
+  getSession: vi.fn(),
 }));
 vi.mock("@/lib/prisma", () => ({
   prisma: { user: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn() } },
 }));
-vi.mock("bcryptjs", () => ({
-  default: { hash: vi.fn().mockResolvedValue("hashed") },
-}));
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GET, POST } from "./route";
 
-const mockAuth = vi.mocked(auth);
+const mockAuth = vi.mocked(getSession);
 const mockFindMany = vi.mocked(prisma.user.findMany);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockCreate = vi.mocked(prisma.user.create);
 
-const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
-const memberSession = { user: { id: "member-1", role: "MEMBER" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN", isActive: true } };
+const memberSession = { user: { id: "member-1", role: "MEMBER", isActive: true } };
 
 const today = new Date();
 
@@ -100,7 +97,7 @@ describe("POST /api/admin/users", () => {
     mockFindUnique.mockResolvedValue(null as never);
     mockCreate.mockResolvedValue({ id: "new-user-1" } as never);
 
-    const res = await POST(makeRequest({ name: "新規 ユーザー", email: "new@example.com", password: "password123" }));
+    const res = await POST(makeRequest({ name: "新規 ユーザー", email: "new@example.com" }));
     const body = await res.json();
 
     expect(res.status).toBe(201);
@@ -110,22 +107,15 @@ describe("POST /api/admin/users", () => {
   it("異常系: MEMBER は 403 を返す", async () => {
     mockAuth.mockResolvedValue(memberSession as never);
 
-    const res = await POST(makeRequest({ name: "test", email: "test@example.com", password: "password123" }));
+    const res = await POST(makeRequest({ name: "test", email: "test@example.com" }));
     expect(res.status).toBe(403);
-  });
-
-  it("異常系: バリデーションエラーは 400 を返す（passwordが短い）", async () => {
-    mockAuth.mockResolvedValue(adminSession as never);
-
-    const res = await POST(makeRequest({ name: "test", email: "test@example.com", password: "short" }));
-    expect(res.status).toBe(400);
   });
 
   it("異常系: メールアドレス重複は 409 を返す", async () => {
     mockAuth.mockResolvedValue(adminSession as never);
     mockFindUnique.mockResolvedValue({ id: "existing" } as never);
 
-    const res = await POST(makeRequest({ name: "test", email: "existing@example.com", password: "password123" }));
+    const res = await POST(makeRequest({ name: "test", email: "existing@example.com" }));
     expect(res.status).toBe(409);
   });
 });

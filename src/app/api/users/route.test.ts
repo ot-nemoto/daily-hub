@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { GET } from "./route";
 
 vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
+  getSession: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -16,7 +16,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com" } };
+const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com", isActive: true } };
 const mockUsers = [
   { id: "user-1", name: "山田 太郎" },
   { id: "user-2", name: "鈴木 花子" },
@@ -28,8 +28,8 @@ describe("GET /api/users", () => {
   });
 
   it("正常系: 200 とユーザー一覧を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as never);
 
     const res = await GET();
@@ -45,8 +45,8 @@ describe("GET /api/users", () => {
   });
 
   it("異常系: 未認証で 401 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(null as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(null as never);
 
     const res = await GET();
 

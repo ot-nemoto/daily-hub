@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
+  getSession: vi.fn(),
 }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -21,17 +21,17 @@ vi.mock("@/generated/prisma/client", () => ({
   Role: { ADMIN: "ADMIN", MEMBER: "MEMBER", VIEWER: "VIEWER" },
 }));
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DELETE, PATCH } from "./route";
 
-const mockAuth = vi.mocked(auth);
+const mockAuth = vi.mocked(getSession);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUpdate = vi.mocked(prisma.user.update);
 const mockTransaction = vi.mocked(prisma.$transaction);
 
-const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
-const memberSession = { user: { id: "member-1", role: "MEMBER" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN", isActive: true } };
+const memberSession = { user: { id: "member-1", role: "MEMBER", isActive: true } };
 
 const makeRequest = (body: object) =>
   new Request("http://localhost/api/admin/users/user-1", {
