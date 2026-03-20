@@ -1,5 +1,4 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import bcrypt from "bcryptjs";
 import { config } from "dotenv";
 import { PrismaClient } from "../src/generated/prisma/client";
 
@@ -46,8 +45,6 @@ const TOMORROW_PLANS = [
 ];
 
 async function main() {
-  const passwordHash = await bcrypt.hash("password123", 10);
-
   // 既存データを削除（外部キー制約の順序で）
   await prisma.comment.deleteMany();
   await prisma.report.deleteMany();
@@ -58,7 +55,7 @@ async function main() {
   const users = await Promise.all(
     USERS.map(({ name, email, role }) =>
       prisma.user.create({
-        data: { name, email, passwordHash, role },
+        data: { name, email, role },
       }),
     ),
   );
@@ -128,7 +125,6 @@ async function main() {
   console.log("Created 5 comments");
 
   console.log("\nSeed completed successfully!");
-  console.log("Login credentials: password123 (all users)");
   for (const u of users) console.log(`  ${u.email}`);
 }
 

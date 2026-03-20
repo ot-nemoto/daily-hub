@@ -21,14 +21,14 @@ enum Role {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  name         String
-  email        String    @unique
-  passwordHash String
-  role         Role      @default(MEMBER)  // Phase 7a
-  isActive     Boolean   @default(true)    // Phase 7a: false でログイン不可
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id        String  @id @default(cuid())
+  clerkId   String? @unique               // Phase 10: Clerk ユーザーID（初回ログイン時に紐付け）
+  name      String
+  email     String  @unique
+  role      Role    @default(MEMBER)      // Phase 7a
+  isActive  Boolean @default(true)        // Phase 7a: false でログイン不可
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   reports     Report[]
   comments    Comment[]
@@ -89,9 +89,9 @@ model Comment {
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | String (CUID) | 主キー |
+| clerkId | String? | Clerk ユーザーID（nullable・ユニーク）。初回ログイン時に自動紐付け |
 | name | String | 表示名 |
-| email | String | ユニーク、ログインに使用 |
-| passwordHash | String | bcrypt ハッシュ |
+| email | String | ユニーク、Clerk 側のメールと紐付けに使用 |
 | role | Role (enum) | `ADMIN` / `MEMBER` / `VIEWER`、デフォルト `MEMBER` |
 | isActive | Boolean | `false` でログイン不可（データは保持）、デフォルト `true` |
 | createdAt | DateTime | 作成日時 |
