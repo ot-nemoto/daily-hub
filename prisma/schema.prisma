@@ -14,58 +14,64 @@ enum Role {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  clerkId   String? @unique
+  id        String   @id @default(cuid())
+  clerkId   String?  @unique @map("clerk_id")
   name      String
-  email     String  @unique
-  role      Role    @default(MEMBER)
-  isActive  Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  email     String   @unique
+  role      Role     @default(MEMBER)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   reports     Report[]
   comments    Comment[]
   invitations Invitation[] @relation("InvitedBy")
+
+  @@map("User")
 }
 
 model Invitation {
   id          String    @id @default(cuid())
   token       String    @unique
   email       String?
-  expiresAt   DateTime
-  usedAt      DateTime?
-  createdAt   DateTime  @default(now())
+  expiresAt   DateTime  @map("expires_at")
+  usedAt      DateTime? @map("used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
-  invitedById String
-  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedById String @map("invited_by_id")
+  invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  @@map("Invitation")
 }
 
 model Report {
   id           String   @id @default(cuid())
   date         DateTime
-  workContent  String
-  tomorrowPlan String
+  workContent  String   @map("work_content")
+  tomorrowPlan String   @map("tomorrow_plan")
   notes        String   @default("")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  authorId String
-  author   User      @relation(fields: [authorId], references: [id])
+  authorId String  @map("author_id")
+  author   User    @relation(fields: [authorId], references: [id])
   comments Comment[]
 
   @@unique([authorId, date])
   @@index([date])
+  @@map("Report")
 }
 
 model Comment {
   id        String   @id @default(cuid())
   body      String
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
-  reportId String
+  reportId String @map("report_id")
   report   Report @relation(fields: [reportId], references: [id])
-  authorId String
+  authorId String @map("author_id")
   author   User   @relation(fields: [authorId], references: [id])
 
   @@index([reportId])
+  @@map("Comment")
 }

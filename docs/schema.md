@@ -21,14 +21,14 @@ enum Role {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  clerkId   String? @unique               // Phase 10: Clerk ユーザーID（初回ログイン時に紐付け）
+  id        String   @id @default(cuid())
+  clerkId   String?  @unique @map("clerk_id")              // Phase 10: Clerk ユーザーID（初回ログイン時に紐付け）
   name      String
-  email     String  @unique
-  role      Role    @default(MEMBER)      // Phase 7a
-  isActive  Boolean @default(true)        // Phase 7a: false でログイン不可
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  email     String   @unique
+  role      Role     @default(MEMBER)                      // Phase 7a
+  isActive  Boolean  @default(true) @map("is_active")      // Phase 7a: false でログイン不可
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   reports     Report[]
   comments    Comment[]
@@ -37,29 +37,29 @@ model User {
 
 model Invitation {
   id          String    @id @default(cuid())
-  token       String    @unique             // URL に埋め込む使い捨てトークン
-  email       String?                       // 招待先メール（任意、指定時はそのメールのみ利用可）
-  expiresAt   DateTime                      // 有効期限（発行から72時間）
-  usedAt      DateTime?                     // 使用済み日時（null = 未使用）
-  createdAt   DateTime  @default(now())
+  token       String    @unique                               // URL に埋め込む使い捨てトークン
+  email       String?                                         // 招待先メール（任意、指定時はそのメールのみ利用可）
+  expiresAt   DateTime  @map("expires_at")                   // 有効期限（発行から72時間）
+  usedAt      DateTime? @map("used_at")                      // 使用済み日時（null = 未使用）
+  createdAt   DateTime  @default(now()) @map("created_at")
 
-  invitedById String
-  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedById String @map("invited_by_id")
+  invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id])
 
   @@index([token])
 }
 
 model Report {
-  id           String    @id @default(cuid())
-  date         DateTime  // 日付部分のみ使用（時刻は 00:00:00 UTC で統一）
-  workContent  String    // 作業内容
-  tomorrowPlan String    // 明日の予定
-  notes        String    @default("") // 感想・課題・問題点（任意）
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  date         DateTime                                    // 日付部分のみ使用（時刻は 00:00:00 UTC で統一）
+  workContent  String   @map("work_content")               // 作業内容
+  tomorrowPlan String   @map("tomorrow_plan")              // 明日の予定
+  notes        String   @default("")                       // 感想・課題・問題点（任意）
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  authorId String
-  author   User      @relation(fields: [authorId], references: [id])
+  authorId String  @map("author_id")
+  author   User    @relation(fields: [authorId], references: [id])
   comments Comment[]
 
   @@unique([authorId, date]) // 1ユーザー1日1件制約 + 月次ビュー用インデックスを兼ねる
@@ -69,11 +69,11 @@ model Report {
 model Comment {
   id        String   @id @default(cuid())
   body      String
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
-  reportId String
+  reportId String @map("report_id")
   report   Report @relation(fields: [reportId], references: [id])
-  authorId String
+  authorId String @map("author_id")
   author   User   @relation(fields: [authorId], references: [id])
 
   @@index([reportId])
