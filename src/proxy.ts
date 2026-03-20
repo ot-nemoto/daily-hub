@@ -1,14 +1,22 @@
-import NextAuth from "next-auth";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-import { authConfig } from "@/lib/auth.config";
+const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error"]);
 
-// Edge 互換の設定のみ使用（bcrypt・Prisma に依存しない）
-export default NextAuth(authConfig).auth;
+export default clerkMiddleware(async (auth, request) => {
+  // 非本番環境: MOCK_USER_ID が設定されている場合はバイパス
+  if (process.env.NODE_ENV !== "production" && process.env.MOCK_USER_ID) {
+    return NextResponse.next();
+  }
+
+  if (!isPublicRoute(request)) {
+    await auth.protect();
+  }
+});
 
 export const config = {
   matcher: [
-    // 認証不要なパスを除いた全ルートに適用
-    // 除外: /login, /signup, /api/auth/**, _next/static, _next/image, favicon.ico
-    "/((?!login|signup|api/auth|_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
   ],
 };

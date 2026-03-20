@@ -1,55 +1,91 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { Prisma } from "@/generated/prisma/client";
 
-import { authConfig } from "./auth.config";
-import { authorizeCredentials } from "./authorize";
 import { prisma } from "./prisma";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  ...authConfig,
-  providers: [
-    Credentials({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        return authorizeCredentials(
-          credentials?.email as string | undefined,
-          credentials?.password as string | undefined,
-        );
-      },
-    }),
-  ],
-  session: { strategy: "jwt" },
-  callbacks: {
-    ...authConfig.callbacks,
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as { role?: string }).role;
-        token.isActive = (user as { isActive?: boolean }).isActive;
-        return token;
-      }
-      // Re-fetch from DB to reflect role/isActive changes since last sign-in
-      if (token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { name: true, role: true, isActive: true },
+export type Session = {
+  user: {
+    id: string;
+    name: string;
+    role: string;
+    isActive: boolean;
+  };
+};
+
+export async function getSession(): Promise<Session | null> {
+  // 非本番環境: MOCK_USER_ID が設定されている場合は DB から直接セッションを返す
+  if (process.env.NODE_ENV !== "production" && process.env.MOCK_USER_ID) {
+    const user = await prisma.user.findUnique({
+      where: { id: process.env.MOCK_USER_ID },
+      select: { id: true, name: true, role: true, isActive: true },
+    });
+    return user ? { user } : null;
+  }
+
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  // まず clerkId で検索
+  let user = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    select: { id: true, name: true, role: true, isActive: true },
+  });
+
+  // 見つからない場合、メールアドレスで突合して初回紐付け or 新規作成
+  if (!user) {
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    if (!email) return null;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, name: true, role: true, isActive: true, clerkId: true },
+    });
+
+    if (!existingUser) {
+      // DB に存在しない新規サインアップユーザーを自動作成
+      // 並行リクエストによるレースコンディション対策: P2002 をキャッチして既存レコードを返す
+      const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email;
+      try {
+        user = await prisma.user.create({
+          data: { clerkId: userId, email, name, role: "MEMBER" },
+          select: { id: true, name: true, role: true, isActive: true },
         });
-        if (dbUser) {
-          token.name = dbUser.name;
-          token.role = dbUser.role;
-          token.isActive = dbUser.isActive;
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+          user = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, name: true, role: true, isActive: true },
+          });
+          if (!user) return null;
+        } else {
+          throw e;
         }
       }
-      return token;
-    },
-    session({ session, token }) {
-      if (token.id) session.user.id = token.id as string;
-      if (token.role) session.user.role = token.role as string;
-      if (token.isActive !== undefined) session.user.isActive = token.isActive as boolean;
-      return session;
-    },
-  },
-});
+    } else if (existingUser.clerkId) {
+      return null; // 既に別の Clerk ID に紐付き済み
+    } else {
+      // clerkId: null の場合のみ更新（並行リクエストによる上書き防止）
+      const { count } = await prisma.user.updateMany({
+        where: { email, clerkId: null },
+        data: { clerkId: userId },
+      });
+      if (count === 0) {
+        // 別リクエストが先に紐付けを完了した場合は再取得して返す
+        user = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, name: true, role: true, isActive: true },
+        });
+        if (!user) return null;
+      } else {
+        user = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, name: true, role: true, isActive: true },
+        });
+        if (!user) return null;
+      }
+    }
+  }
+
+  return { user };
+}
