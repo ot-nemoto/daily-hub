@@ -6,6 +6,10 @@ vi.mock("@clerk/nextjs/server", () => ({
   currentUser: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => { throw new Error(`NEXT_REDIRECT:${url}`); }),
+}));
+
 vi.mock("./prisma", () => ({
   prisma: {
     user: {
@@ -191,7 +195,7 @@ describe("getSession", () => {
       expect(result).toBeNull();
     });
 
-    it("既に別の clerkId に紐付き済みの DB ユーザーは null を返す", async () => {
+    it("既に別の clerkId に紐付き済みの DB ユーザーは /auth-error にリダイレクトする", async () => {
       // @ts-ignore
       mockAuth.mockResolvedValue({ userId: "clerk-new123" });
       // @ts-ignore
@@ -206,8 +210,7 @@ describe("getSession", () => {
         firstName: null,
       });
 
-      const result = await getSession();
-      expect(result).toBeNull();
+      await expect(getSession()).rejects.toThrow("NEXT_REDIRECT:/auth-error");
       expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 

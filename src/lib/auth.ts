@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { Prisma } from "@/generated/prisma/client";
+import { redirect } from "next/navigation";
 
 import { prisma } from "./prisma";
 
@@ -63,7 +64,7 @@ export async function getSession(): Promise<Session | null> {
         }
       }
     } else if (existingUser.clerkId) {
-      return null; // 既に別の Clerk ID に紐付き済み
+      redirect("/auth-error"); // 既に別の Clerk ID に紐付き済み
     } else {
       // clerkId: null の場合のみ更新（並行リクエストによる上書き防止）
       const { count } = await prisma.user.updateMany({
