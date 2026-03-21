@@ -9,6 +9,9 @@ export default clerkMiddleware(async (auth, request) => {
     return NextResponse.next();
   }
 
+  // 認証チェック: 未ログインユーザーを /login にリダイレクト
+  // ロールベースの認可チェックは Edge Runtime で DB アクセスができないため
+  // 各ページ・API ルートで getSession() を使って実施する
   if (!isPublicRoute(request)) {
     await auth.protect();
   }
