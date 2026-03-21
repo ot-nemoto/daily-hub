@@ -181,6 +181,16 @@ describe("getSession", () => {
       expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
+    it("isActive=false のユーザーは null を返す", async () => {
+      // @ts-ignore
+      mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
+      // @ts-ignore
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      const result = await getSession();
+      expect(result).toBeNull();
+    });
+
     it("既に別の clerkId に紐付き済みの DB ユーザーは null を返す", async () => {
       // @ts-ignore
       mockAuth.mockResolvedValue({ userId: "clerk-new123" });

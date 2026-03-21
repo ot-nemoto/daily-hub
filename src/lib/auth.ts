@@ -87,5 +87,7 @@ export async function getSession(): Promise<Session | null> {
     }
   }
 
+  if (!user.isActive) return null;
+
   return { user };
 }
