@@ -15,7 +15,6 @@ type User = {
 };
 
 type DeleteDialog = { userId: string; userName: string };
-type PasswordDialog = { userId: string; userName: string };
 
 export function UserTable({
   users,
@@ -28,9 +27,6 @@ export function UserTable({
   const [loading, setLoading] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
   const [deleteNameInput, setDeleteNameInput] = useState("");
-  const [passwordDialog, setPasswordDialog] = useState<PasswordDialog | null>(null);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [deleteError, setDeleteError] = useState("");
 
   async function handleRoleChange(id: string, role: string) {
@@ -68,28 +64,6 @@ export function UserTable({
     setDeleteDialog(null);
     setDeleteNameInput("");
     router.refresh();
-  }
-
-  async function handlePasswordReset() {
-    if (!passwordDialog) return;
-    setPasswordError("");
-    if (passwordInput.length < 8) {
-      setPasswordError("8文字以上で入力してください");
-      return;
-    }
-    setLoading(`password-${passwordDialog.userId}`);
-    const res = await fetch(`/api/admin/users/${passwordDialog.userId}/password`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: passwordInput }),
-    });
-    setLoading(null);
-    if (res.ok) {
-      setPasswordDialog(null);
-      setPasswordInput("");
-    } else {
-      setPasswordError("パスワードのリセットに失敗しました");
-    }
   }
 
   return (
@@ -173,20 +147,6 @@ export function UserTable({
                     {user.id !== currentUserId && (
                       <button
                         type="button"
-                        disabled={loading === `password-${user.id}`}
-                        onClick={() => {
-                          setPasswordInput("");
-                          setPasswordError("");
-                          setPasswordDialog({ userId: user.id, userName: user.name });
-                        }}
-                        className="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50"
-                      >
-                        PW リセット
-                      </button>
-                    )}
-                    {user.id !== currentUserId && (
-                      <button
-                        type="button"
                         disabled={loading === `delete-${user.id}`}
                         onClick={() => {
                           setDeleteNameInput("");
@@ -241,46 +201,6 @@ export function UserTable({
                 className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 削除する
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* パスワードリセットダイアログ */}
-      {passwordDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-2 text-base font-bold text-zinc-900">パスワードリセット</h2>
-            <p className="mb-4 text-sm text-zinc-600">
-              <span className="font-medium text-zinc-900">{passwordDialog.userName}</span>{" "}
-              の新しい仮パスワードを入力してください。
-            </p>
-            <input
-              type="password"
-              value={passwordInput}
-              onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }}
-              placeholder="8文字以上"
-              className="mb-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-            />
-            {passwordError && (
-              <p className="mb-3 text-xs text-red-600">{passwordError}</p>
-            )}
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => { setPasswordDialog(null); setPasswordInput(""); setPasswordError(""); }}
-                className="rounded-md border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
-              >
-                キャンセル
-              </button>
-              <button
-                type="button"
-                disabled={loading === `password-${passwordDialog.userId}`}
-                onClick={handlePasswordReset}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                リセットする
               </button>
             </div>
           </div>
