@@ -69,6 +69,8 @@ Prisma 7 では接続設定が2箇所に分離されている。
 
 ### マイグレーション
 
+マイグレーションは**常に手動で実行**する（ビルドスクリプトによる自動実行は行わない）。
+
 ```bash
 # スキーマ変更後に新しいマイグレーションを作成・適用
 npx prisma migrate dev --name <migration-name>
@@ -76,8 +78,18 @@ npx prisma migrate dev --name <migration-name>
 # 例：初回
 npx prisma migrate dev --name init
 
-# 本番への適用（デプロイ時に実行）
+# 本番・ステージング環境への適用（デプロイ前に手動実行）
 npx prisma migrate deploy
+```
+
+#### DB を完全リセットしてシードを投入し直す場合
+
+```bash
+# DB をリセット（全テーブル削除・マイグレーション再適用）
+npx prisma migrate reset --force
+
+# シードデータを投入
+npx prisma db seed
 ```
 
 ### Prisma クライアント再生成
@@ -217,10 +229,10 @@ npm run test:e2e:ui
 ## デプロイ（Vercel）
 
 1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`）
-2. `main` ブランチにプッシュすると自動デプロイ
-3. デプロイ後に `prisma migrate deploy` を実行（Vercel の Build Command に追加推奨）
+2. デプロイ前に**手動**でマイグレーションを適用する
 
-```
-# Vercel Build Command の例
-npx prisma migrate deploy && next build
-```
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+3. `main` ブランチにプッシュすると自動デプロイ（Build Command は `next build` のみ）
