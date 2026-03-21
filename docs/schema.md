@@ -45,8 +45,6 @@ model Invitation {
 
   invitedById String @map("invited_by_id")
   invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id])
-
-  @@index([token])
 }
 
 model Report {
