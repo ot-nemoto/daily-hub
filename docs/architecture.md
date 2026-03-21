@@ -11,7 +11,7 @@
 | ORM | Prisma | 型安全なDBアクセス、マイグレーション管理 |
 | DB（開発） | PostgreSQL (Neon) | 開発・本番で同一DBエンジンを使い環境差異をなくす |
 | DB（本番） | PostgreSQL (Neon) | サーバーレスPostgreSQL、無料枠で運用可能 |
-| 認証 | NextAuth.js v5 | Next.jsとの統合が容易、Credentials providerで実装 |
+| 認証 | Clerk (@clerk/nextjs v7, @clerk/backend v3) | eval-hubと同一Clerkアプリを共有・セッション共有。clerkId経由でDBユーザーと紐付け |
 | ホスティング | Vercel (Hobby) | Next.jsの開発元、無料枠・無期限、デプロイが最も簡単 |
 | ユニットテスト | Vitest + Testing Library | 高速、Vite互換、React コンポーネントテスト対応 |
 | E2Eテスト | Playwright | ブラウザ操作・認証フロー・フォーム送信の自動テスト |
@@ -34,8 +34,9 @@ daily-hub/
 ├── src/
 │   ├── app/            # Next.js App Router
 │   │   ├── (auth)/
-│   │   │   ├── login/page.tsx
-│   │   │   └── signup/page.tsx
+│   │   │   └── login/[[...rest]]/page.tsx  # Clerk SignIn コンポーネント
+│   │   ├── auth-error/
+│   │   │   └── page.tsx            # 認証エラー（isActive=false 等）
 │   │   ├── reports/
 │   │   │   ├── new/page.tsx
 │   │   │   ├── daily/page.tsx
@@ -44,32 +45,35 @@ daily-hub/
 │   │   │       ├── page.tsx        # 詳細
 │   │   │       └── edit/page.tsx   # 編集
 │   │   └── api/
-│   │       ├── auth/[...nextauth]/route.ts
+│   │       ├── me/
+│   │       │   └── route.ts        # PATCH(名前変更)
 │   │       ├── reports/
 │   │       │   ├── route.ts        # GET(一覧), POST(作成)
 │   │       │   └── [id]/
 │   │       │       ├── route.ts    # GET(詳細), PUT(編集)
 │   │       │       └── comments/
-│   │       │           └── route.ts # GET, POST
-│   │       └── users/
-│   │           └── route.ts        # GET(ユーザー一覧)
+│   │       │           ├── route.ts        # GET, POST
+│   │       │           └── [commentId]/
+│   │       │               └── route.ts    # DELETE
+│   │       ├── users/
+│   │       │   └── route.ts        # GET(ユーザー一覧)
 │   │       └── admin/              # 管理者専用API（Phase 7）
 │   │           ├── users/
 │   │           │   ├── route.ts    # GET(一覧), POST(作成)
 │   │           │   └── [id]/
-│   │           │       └── route.ts # PATCH(更新), DELETE(削除・Phase 7c 未実装)
+│   │           │       └── route.ts # PATCH(更新), DELETE(削除)
 │   │           └── invitations/
-│   │               └── route.ts    # GET(一覧), POST(発行)（Phase 7b 未実装）
+│   │               └── route.ts    # GET(一覧), POST(発行)
 │   ├── settings/
-│   │   └── page.tsx            # 個人設定（名前・パスワード変更）（Phase 9）
+│   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
 │   ├── admin/                      # 管理画面ページ（Phase 7）
 │   │   └── users/
 │   │       ├── page.tsx            # ユーザー一覧
-│   │       └── new/page.tsx        # ユーザー作成（Phase 7b 未実装）
+│   │       └── new/page.tsx        # ユーザー作成（Phase 7b）
 │   ├── components/     # 再利用UIコンポーネント
 │   ├── lib/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
-│   │   └── auth.ts     # NextAuth設定
+│   │   └── auth.ts     # getSession()（Clerk + DB統合）
 │   └── types/          # 共通型定義
 ├── e2e/                # Playwright E2Eテスト
 ├── CLAUDE.md
@@ -83,20 +87,23 @@ daily-hub/
 
 ```
 未認証ユーザー
-  → 全ルートで middleware がセッション確認
-  → 未認証なら /login にリダイレクト
+  → proxy.ts（clerkMiddleware）でセッション確認
+  → 未認証なら /login にリダイレクト（Clerk が処理）
+  → MOCK_USER_ID が設定されている場合はバイパス（ローカル開発用）
 
 ログイン
-  → POST /api/auth/callback/credentials
-  → bcryptでパスワード検証
-  → isActive === false なら認証エラー（Phase 7a）
-  → セッションCookieを発行
+  → Clerk の SignIn UI（/login）でメール+パスワード認証
+  → Clerk がセッション Cookie を発行
 
-セッション
-  → NextAuth の JWT セッション (httpOnly Cookie)
-  → サーバーコンポーネントで getServerSession() で取得
-  → APIルートで auth() で取得
-  → セッションに role を含める（Phase 7a）
+getSession()（src/lib/auth.ts）
+  → MOCK_USER_ID 環境変数が設定されている場合は DB ユーザーを直接返す
+  → Clerk auth() で userId（clerkId）を取得
+  → clerkId で DB ユーザーを検索
+  → 未ヒット時：Clerk currentUser() でメールを取得し DB ユーザーと突合
+    → 突合成功：clerkId を DB に書き込み（自動紐付け）
+    → 突合失敗かつ Clerk にユーザーあり：DB に新規作成
+  → isActive === false なら null を返す（API は 401、画面は /auth-error へ）
+  → Session 型 { user: { id, name, role, isActive } } を返す
 ```
 
 ## アクセス制御（Phase 7a）
@@ -152,7 +159,7 @@ Client (React)
 
 ## セキュリティ方針
 
-- APIルートは全て `auth()` でセッション確認してから処理
+- APIルートは全て `getSession()` でセッション確認してから処理
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
 - 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
 - 入力値は Zod でバリデーション
@@ -162,17 +169,18 @@ Client (React)
 ## 環境変数
 
 ```env
-# .env.local（ローカル開発）
+# .env.local（ローカル開発・本番共通）
 DATABASE_URL="postgresql://..."   # Neon の接続プール URL（?pgbouncer=true&connection_limit=1 付き）
 DIRECT_URL="postgresql://..."     # Neon の直接接続 URL（prisma migrate 用）
-NEXTAUTH_SECRET="..."             # openssl rand -base64 32 で生成
-NEXTAUTH_URL="http://localhost:3000"
 
-# Vercel 環境変数（本番）
-DATABASE_URL="postgresql://..."   # 本番の接続プール URL
-DIRECT_URL="postgresql://..."     # 本番の直接接続 URL
-NEXTAUTH_SECRET="..."
-NEXTAUTH_URL="https://<your-app>.vercel.app"
+# Clerk（Phase 10〜）
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+CLERK_SECRET_KEY=sk_test_xxx               # シード実行時の Clerk ユーザー同期にも使用
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
+
+# ローカル開発用モック（Clerk をバイパスして DB ユーザーを直接使用）
+MOCK_USER_ID=<DB の users.id>
 ```
 
 ## Prisma 7 の接続構成
@@ -208,5 +216,5 @@ git push origin master
 | 項目 | 現在（MVP） | 将来 |
 |------|------------|------|
 | DB | Neon 無料枠 | Neon の有料プラン or 他の PostgreSQL に移行可 |
-| 認証 | Credentials | NextAuth の Provider 追加で Google/GitHub SSO 対応可 |
+| 認証 | Clerk | Clerk のダッシュボードで SSO・MFA 等の拡張が可能 |
 | ホスティング | Vercel Hobby | Vercel Pro または VPS/Cloud Run に移行可 |

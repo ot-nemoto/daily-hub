@@ -17,10 +17,18 @@ npm install
 `.env.local` をプロジェクトルートに作成する（`.env` ではなく `.env.local` を使う）：
 
 ```env
+# Neon PostgreSQL
 DATABASE_URL="postgresql://<user>:<password>@<host>-pooler.<region>.aws.neon.tech/<db>?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
 DIRECT_URL="postgresql://<user>:<password>@<host>.<region>.aws.neon.tech/<db>?sslmode=require&channel_binding=require"
-NEXTAUTH_SECRET="<openssl rand -base64 32 で生成>"
-NEXTAUTH_URL="http://localhost:3000"
+
+# Clerk（Neon ダッシュボードから取得）
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+CLERK_SECRET_KEY=sk_test_xxx
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
+
+# ローカル開発用モック（Clerk をバイパスして DB ユーザーを直接使用）
+MOCK_USER_ID=<DB の users.id>
 ```
 
 ### 設定済み MCP サーバー
@@ -127,14 +135,6 @@ npx prisma studio
 
 ---
 
-## NEXTAUTH_SECRET の生成
-
-```bash
-openssl rand -base64 32
-```
-
----
-
 ## よくある問題
 
 ### `prisma migrate dev` が失敗する
@@ -190,7 +190,7 @@ E2E テストの実行には以下が必要。
    npx playwright install --with-deps chromium
    ```
 
-2. **シードデータの投入**（テストユーザー `tanaka@example.com` が DB に存在する必要がある）
+2. **シードデータの投入**（テストユーザーが DB に存在する必要がある）
 
    ```bash
    npx prisma db seed
@@ -208,7 +208,7 @@ npm run test:e2e:ui
 
 #### 仕組み
 
-- `playwright.config.ts` の `setup` プロジェクトが最初に実行され、`tanaka@example.com` でログインしてセッション情報を `e2e/.auth/user.json` に保存する
+- `playwright.config.ts` の `setup` プロジェクトが最初に実行され、シードユーザー（例: `yamada@example.com`）でログインしてセッション情報を `e2e/.auth/user.json` に保存する
 - 後続のテストは `e2e/fixtures.ts` の `loggedInPage` fixture を通じてこのセッションを再利用する
 - `e2e/.auth/` は `.gitignore` で除外されているため、テスト実行のたびに生成される
 
@@ -216,7 +216,7 @@ npm run test:e2e:ui
 
 ## デプロイ（Vercel）
 
-1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`）
+1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`）
 2. `main` ブランチにプッシュすると自動デプロイ
 3. デプロイ後に `prisma migrate deploy` を実行（Vercel の Build Command に追加推奨）
 

@@ -1,44 +1,19 @@
 # api.md — APIエンドポイント定義
 
 > 全エンドポイントは認証必須。未認証の場合は `401 Unauthorized` を返す。
-
-## 認証
-
-### POST /api/auth/signup
-新規ユーザー登録（認証不要）
-
-**Request Body**
-```json
-{ "name": "田中 太郎", "email": "tanaka@example.com", "password": "password123" }
-```
-
-**Response 201**
-```json
-{ "id": "cuid" }
-```
-
-**Errors**
-- `400` — バリデーションエラー（フィールド不足・形式不正・パスワード8文字未満）
-- `409` — メールアドレスがすでに使用されている
-
----
-
-### POST /api/auth/callback/credentials
-NextAuth.js が管理。直接呼び出しはしない。
+> 認証は Clerk（Phase 10〜）。サーバー側では `getSession()` でセッションを取得する。
 
 ---
 
 ## ユーザー
 
 ### PATCH /api/me
-ログイン中ユーザーの名前・パスワード変更
+ログイン中ユーザーの名前変更
 
-**Request Body**（変更したいフィールドのみ指定）
+**Request Body**
 ```json
-{ "name": "新しい名前", "currentPassword": "現在のPW", "newPassword": "新しいPW" }
+{ "name": "新しい名前" }
 ```
-- `name` のみ指定した場合は名前変更のみ実行
-- パスワード変更時は `currentPassword` と `newPassword` の両方が必須
 
 **Response 200**
 ```json
@@ -46,8 +21,8 @@ NextAuth.js が管理。直接呼び出しはしない。
 ```
 
 **Errors**
-- `400` — バリデーションエラー（名前が空・パスワード8文字未満・`newPassword` のみ指定など）
-- `403` — `currentPassword` が現在のパスワードと一致しない
+- `400` — バリデーションエラー（名前が空・100文字超）
+- `401` — 未認証
 
 ---
 
@@ -224,11 +199,9 @@ NextAuth.js が管理。直接呼び出しはしない。
 
 ---
 
----
+## 管理者（ADMIN ロール必須）
 
-## 管理者（admin ロール必須）
-
-> 全エンドポイントは `admin` ロールのユーザーのみアクセス可能。`admin` 以外は `403 Forbidden`。
+> 全エンドポイントは `ADMIN` ロールのユーザーのみアクセス可能。`ADMIN` 以外は `403 Forbidden`。
 
 ### GET /api/admin/users
 ユーザー一覧取得（管理画面用）
@@ -238,8 +211,8 @@ NextAuth.js が管理。直接呼び出しはしない。
 [
   {
     "id": "cuid",
-    "name": "田中 太郎",
-    "email": "tanaka@example.com",
+    "name": "土井垣将",
+    "email": "doigaki@example.com",
     "role": "ADMIN",
     "isActive": true,
     "createdAt": "2026-01-01T00:00:00Z",
@@ -257,10 +230,14 @@ NextAuth.js が管理。直接呼び出しはしない。
 ### POST /api/admin/users
 ユーザー直接作成（Phase 7b）
 
+`clerkId` は null のまま作成され、対象者が Clerk でログインした際に自動紐付けされる。
+
 **Request Body**
 ```json
-{ "name": "佐藤 花子", "email": "sato@example.com", "password": "tempPassword123" }
+{ "name": "山田 太郎", "email": "yamada@example.com", "role": "MEMBER" }
 ```
+
+- `role` は省略可（デフォルト `MEMBER`）。`MEMBER` または `VIEWER` のみ指定可
 
 **Response 201**
 ```json
@@ -288,27 +265,7 @@ NextAuth.js が管理。直接呼び出しはしない。
 
 **Errors**
 - `400` — バリデーションエラー（不正なロール値など）
-- `403` — 自分自身の `admin` ロールを降格しようとした
-- `404` — ユーザーが存在しない
-
----
-
-### PATCH /api/admin/users/[id]/password
-ユーザーの仮パスワード発行（Phase 7c）
-
-**Request Body**
-```json
-{ "password": "tempPassword123" }
-```
-
-**Response 200**
-```json
-{ "ok": true }
-```
-
-**Errors**
-- `400` — バリデーションエラー（パスワード8文字未満）
-- `403` — 自分自身のパスワードをリセットしようとした
+- `403` — 自分自身の `ADMIN` ロールを降格しようとした
 - `404` — ユーザーが存在しない
 
 ---
@@ -338,10 +295,12 @@ NextAuth.js が管理。直接呼び出しはしない。
 {
   "id": "cuid",
   "token": "uuid-token",
-  "inviteUrl": "https://daily-hub-two.vercel.app/signup?token=uuid-token",
+  "inviteUrl": "https://daily-hub.vercel.app/signup?token=uuid-token",
   "expiresAt": "2026-03-14T00:00:00Z"
 }
 ```
+
+- `inviteUrl` の `/signup` ページは Phase 7b で別途実装予定（現時点では未実装）
 
 **Errors**
 - `400` — メールアドレス形式が不正
@@ -357,7 +316,7 @@ NextAuth.js が管理。直接呼び出しはしない。
   {
     "id": "cuid",
     "email": "invite@example.com",
-    "inviteUrl": "https://daily-hub-two.vercel.app/signup?token=uuid-token",
+    "inviteUrl": "https://daily-hub.vercel.app/signup?token=uuid-token",
     "expiresAt": "2026-03-14T00:00:00Z",
     "usedAt": null,
     "createdAt": "2026-03-11T00:00:00Z"
@@ -369,12 +328,11 @@ NextAuth.js が管理。直接呼び出しはしない。
 
 ## バリデーションルール（共通）
 
-| フィールド | 必須 | 最大文字数 |
-|-----------|------|-----------|
-| `date` | YES | — (YYYY-MM-DD形式) |
-| `workContent` | YES | 5000文字 |
-| `tomorrowPlan` | YES | 5000文字 |
-| `notes` | NO | 5000文字 |
-| コメント `body` | YES | 1000文字 |
-| ユーザー `name` | YES | 100文字 |
-| ユーザー `password` | YES | 8文字以上 |
+| フィールド | 必須 | 制約 |
+|-----------|------|------|
+| `date` | YES | YYYY-MM-DD 形式 |
+| `workContent` | YES | 最大 5000 文字 |
+| `tomorrowPlan` | YES | 最大 5000 文字 |
+| `notes` | NO | 最大 5000 文字 |
+| コメント `body` | YES | 1〜1000 文字 |
+| ユーザー `name` | YES | 最大 100 文字 |

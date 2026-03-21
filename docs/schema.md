@@ -152,26 +152,26 @@ model Comment {
 
 実行コマンド: `npx prisma db seed`（`prisma.config.ts` の `migrations.seed` で設定済み）
 
+完全リセットして再投入する場合: `npx prisma migrate reset`
+
 | データ | 件数 | 詳細 |
 |--------|------|------|
-| User | 3 | tanaka@example.com (`ADMIN`) / suzuki@example.com (`MEMBER`) / sato@example.com (`MEMBER`)（パスワード共通: `password123`） |
-| Report | 21 | 各ユーザーに過去 7 日分 |
+| User | 5 | eval-hub と同一ユーザーセット（下表参照） |
+| Report | 21 | MEMBER 3名 × 過去 7 日分 |
 | Comment | 5 | ユーザー間の相互コメント |
 
-シードを再実行すると既存データを全削除してから投入する（べき等）。
+**シードユーザー一覧**（eval-hub と共通）
 
----
+| email | 名前 | ロール |
+|-------|------|--------|
+| doigaki@example.com | 土井垣将 | ADMIN |
+| shiranui@example.com | 不知火守 | ADMIN |
+| yamada@example.com | 山田太郎 | MEMBER |
+| satonaka@example.com | 里中智 | MEMBER |
+| iwaki@example.com | 岩鬼正美 | MEMBER |
 
-## 環境変数
-
-```env
-# .env.local（開発・本番共通。Neon ダッシュボードから取得）
-
-# 接続プール経由（Vercel Functions から使用）
-DATABASE_URL="postgresql://user:password@ep-xxx.neon.tech/dailyhub?pgbouncer=true&connection_limit=1"
-
-# 直接接続（prisma migrate 実行時に使用）
-DIRECT_URL="postgresql://user:password@ep-xxx.neon.tech/dailyhub"
-```
+- `CLERK_SECRET_KEY` が設定されている場合、シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
+- 初期パスワード: `AmericanDogs`（Clerk 上に作成される場合）
+- シードを再実行すると既存データを全削除してから投入する
 
 Neon では開発用と本番用でブランチを分けることができる（無料枠で利用可能）。
