@@ -51,7 +51,7 @@ describe("POST /api/admin/invitations", () => {
     expect(body).toMatchObject({
       id: "inv-1",
       token: "test-token-uuid",
-      inviteUrl: expect.stringContaining("/signup?token=test-token-uuid"),
+      inviteUrl: expect.stringContaining("/login"),
       expiresAt: expect.any(String),
     });
   });
@@ -97,7 +97,7 @@ describe("GET /api/admin/invitations", () => {
     expect(body[0]).toMatchObject({
       id: "inv-1",
       email: "invite@example.com",
-      inviteUrl: expect.stringContaining("/signup?token=test-token-uuid"),
+      inviteUrl: expect.stringContaining("/login"),
       usedAt: null,
     });
   });
