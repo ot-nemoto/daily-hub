@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CommentDeleteButton } from "./CommentDeleteButton";
 import { CommentForm } from "./CommentForm";
@@ -11,7 +11,7 @@ export default async function ReportDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [session, { id }] = await Promise.all([auth(), params]);
+  const [session, { id }] = await Promise.all([getSession(), params]);
 
   const report = await prisma.report.findUnique({
     where: { id },

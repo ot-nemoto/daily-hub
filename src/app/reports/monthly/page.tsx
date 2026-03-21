@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isValidDate } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
 import { MonthlyFilter } from "./MonthlyFilter";
@@ -26,7 +26,7 @@ export default async function MonthlyViewPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string; authorId?: string }>;
 }) {
-  const [session, params] = await Promise.all([auth(), searchParams]);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
 
   const month = currentMonth();
   // 不正な日付が URL から渡された場合は今月にフォールバック

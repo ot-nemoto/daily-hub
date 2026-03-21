@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ReportEditForm } from "./ReportEditForm";
 
@@ -13,7 +13,7 @@ export default async function ReportEditPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [session, { id }] = await Promise.all([auth(), params]);
+  const [session, { id }] = await Promise.all([getSession(), params]);
 
   const report = await prisma.report.findUnique({
     where: { id },
