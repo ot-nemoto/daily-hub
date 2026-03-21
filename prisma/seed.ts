@@ -1,3 +1,4 @@
+import { createClerkClient } from "@clerk/backend";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { config } from "dotenv";
 import { PrismaClient } from "../src/generated/prisma/client";
@@ -11,11 +12,33 @@ if (!connectionString) throw new Error("DATABASE_URL is not set");
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const USERS = [
-  { name: "田中 太郎", email: "tanaka@example.com", role: "ADMIN" as const },
-  { name: "鈴木 花子", email: "suzuki@example.com", role: "MEMBER" as const },
-  { name: "佐藤 健", email: "sato@example.com", role: "MEMBER" as const },
-];
+const clerkClient =
+  process.env.NODE_ENV !== "production" && process.env.CLERK_SECRET_KEY
+    ? createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+    : null;
+
+async function syncClerkUser(email: string): Promise<string | null> {
+  if (!clerkClient) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("  本番環境のため Clerk ユーザー作成をスキップします");
+    } else {
+      console.warn("  CLERK_SECRET_KEY が未設定のため Clerk ユーザー作成をスキップします");
+    }
+    return null;
+  }
+
+  // 既存の Clerk ユーザーを検索
+  const existing = await clerkClient.users.getUserList({ emailAddress: [email] });
+  if (existing.data.length > 0) return existing.data[0].id;
+
+  // 新規作成
+  const created = await clerkClient.users.createUser({
+    emailAddress: [email],
+    password: "AmericanDogs",
+    skipPasswordChecks: true,
+  });
+  return created.id;
+}
 
 // 基準日: 2026-03-07（UTC 00:00:00）
 function getDate(daysAgo: number): Date {
@@ -44,26 +67,39 @@ const TOMORROW_PLANS = [
   "全機能の動作確認と最終調整",
 ];
 
+// eval-hub と同一ユーザーセット
+const USERS = [
+  { email: "doigaki@example.com",  name: "土井垣将", role: "ADMIN"  as const },
+  { email: "shiranui@example.com", name: "不知火守", role: "ADMIN"  as const },
+  { email: "yamada@example.com",   name: "山田太郎", role: "MEMBER" as const },
+  { email: "satonaka@example.com", name: "里中智",   role: "MEMBER" as const },
+  { email: "iwaki@example.com",    name: "岩鬼正美", role: "MEMBER" as const },
+];
+
 async function main() {
   // 既存データを削除（外部キー制約の順序で）
   await prisma.comment.deleteMany();
   await prisma.report.deleteMany();
   await prisma.invitation.deleteMany();
   await prisma.user.deleteMany();
+  console.log("Deleted all existing data");
 
-  // ユーザー作成
-  const users = await Promise.all(
-    USERS.map(({ name, email, role }) =>
-      prisma.user.create({
-        data: { name, email, role },
-      }),
-    ),
-  );
+  // ユーザー作成（Clerk と同期）
+  const users = [];
+  for (const { email, name, role } of USERS) {
+    const clerkId = await syncClerkUser(email);
+    const user = await prisma.user.create({
+      data: { email, name, role, ...(clerkId ? { clerkId } : {}) },
+    });
+    users.push(user);
+    console.log(`  Created user: ${email}${clerkId ? " (Clerk synced)" : " (no Clerk)"}`);
+  }
   console.log(`Created ${users.length} users`);
 
-  // 各ユーザーに過去7日分の日報を作成
+  // MEMBER ユーザー（yamada, satonaka, iwaki）に過去7日分の日報を作成
+  const memberUsers = users.filter((u) => u.role === "MEMBER");
   const reports = [];
-  for (const [userIndex, user] of users.entries()) {
+  for (const [userIndex, user] of memberUsers.entries()) {
     for (let i = 0; i < 7; i++) {
       const date = getDate(i);
       const contentIndex = (userIndex * 7 + i) % WORK_CONTENTS.length;
@@ -81,51 +117,33 @@ async function main() {
   }
   console.log(`Created ${reports.length} reports`);
 
-  // コメント作成
-  // 鈴木→田中の最新日報
+  // コメント作成（土井垣・不知火がメンバーの日報にコメント）
+  const [, shiranui, yamada, satonaka] = users;
+
+  // 不知火→山田の最新日報
   await prisma.comment.create({
-    data: {
-      reportId: reports[0].id,
-      authorId: users[1].id,
-      body: "お疲れ様です！バリデーションの追加、助かります。",
-    },
+    data: { reportId: reports[0].id, authorId: shiranui.id, body: "お疲れ様です！バリデーションの追加、助かります。" },
   });
-  // 佐藤→田中の最新日報
+  // 里中→山田の最新日報
   await prisma.comment.create({
-    data: {
-      reportId: reports[0].id,
-      authorId: users[2].id,
-      body: "進捗確認しました。引き続きよろしくお願いします。",
-    },
+    data: { reportId: reports[0].id, authorId: satonaka.id, body: "進捗確認しました。引き続きよろしくお願いします。" },
   });
-  // 田中→鈴木の最新日報
+  // 山田→里中の最新日報
   await prisma.comment.create({
-    data: {
-      reportId: reports[7].id,
-      authorId: users[0].id,
-      body: "ありがとうございます！参考にして実装を進めます。",
-    },
+    data: { reportId: reports[7].id, authorId: yamada.id, body: "ありがとうございます！参考にして実装を進めます。" },
   });
-  // 佐藤→鈴木の最新日報
+  // 不知火→里中の最新日報
   await prisma.comment.create({
-    data: {
-      reportId: reports[7].id,
-      authorId: users[2].id,
-      body: "月次ビューの設計方針、共有いただけると助かります。",
-    },
+    data: { reportId: reports[7].id, authorId: shiranui.id, body: "月次ビューの設計方針、共有いただけると助かります。" },
   });
-  // 田中→佐藤の最新日報
+  // 山田→岩鬼の最新日報
   await prisma.comment.create({
-    data: {
-      reportId: reports[14].id,
-      authorId: users[0].id,
-      body: "テスト追加ありがとうございます！カバレッジが上がりましたね。",
-    },
+    data: { reportId: reports[14].id, authorId: yamada.id, body: "テスト追加ありがとうございます！カバレッジが上がりましたね。" },
   });
   console.log("Created 5 comments");
 
   console.log("\nSeed completed successfully!");
-  for (const u of users) console.log(`  ${u.email}`);
+  for (const u of users) console.log(`  ${u.email} / role: ${u.role}`);
 }
 
 main()
