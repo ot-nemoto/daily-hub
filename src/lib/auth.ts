@@ -34,7 +34,7 @@ export async function getSession(): Promise<Session | null> {
   // 見つからない場合、メールアドレスで突合して初回紐付け or 新規作成
   if (!user) {
     const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    const email = clerkUser?.primaryEmailAddress?.emailAddress;
     if (!email) return null;
 
     const existingUser = await prisma.user.findUnique({

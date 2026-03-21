@@ -112,7 +112,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true }); // updateMany 後の再取得
       // @ts-ignore
       mockCurrentUser.mockResolvedValue({
-        emailAddresses: [{ emailAddress: "tanaka@example.com" }],
+        primaryEmailAddress: { emailAddress: "tanaka@example.com" },
         fullName: null,
         firstName: null,
       });
@@ -141,7 +141,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true }); // count=0 後の再取得
       // @ts-ignore
       mockCurrentUser.mockResolvedValue({
-        emailAddresses: [{ emailAddress: "tanaka@example.com" }],
+        primaryEmailAddress: { emailAddress: "tanaka@example.com" },
         fullName: null,
         firstName: null,
       });
@@ -163,7 +163,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce(null); // email 検索 → 未ヒット
       // @ts-ignore
       mockCurrentUser.mockResolvedValue({
-        emailAddresses: [{ emailAddress: "new@example.com" }],
+        primaryEmailAddress: { emailAddress: "new@example.com" },
         fullName: "新規ユーザー",
         firstName: null,
       });
@@ -201,7 +201,7 @@ describe("getSession", () => {
         .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true, clerkId: "clerk-other" }); // email 検索 → 別IDに紐付き済み
       // @ts-ignore
       mockCurrentUser.mockResolvedValue({
-        emailAddresses: [{ emailAddress: "tanaka@example.com" }],
+        primaryEmailAddress: { emailAddress: "tanaka@example.com" },
         fullName: null,
         firstName: null,
       });
@@ -217,7 +217,7 @@ describe("getSession", () => {
       // @ts-ignore
       mockFindUnique.mockResolvedValueOnce(null);
       // @ts-ignore
-      mockCurrentUser.mockResolvedValue({ emailAddresses: [] });
+      mockCurrentUser.mockResolvedValue({ primaryEmailAddress: null });
 
       const result = await getSession();
       expect(result).toBeNull();
