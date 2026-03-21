@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "postinstall": "prisma generate",
-    "build": "if [ \"$VERCEL_ENV\" = 'production' ]; then prisma migrate deploy && next build; else next build; fi",
+    "build": "next build",
     "start": "next start",
     "lint": "biome lint .",
     "format": "biome format --write .",
@@ -17,11 +17,11 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@clerk/backend": "^3.2.2",
+    "@clerk/nextjs": "^7.0.6",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
-    "bcryptjs": "^3.0.3",
     "next": "16.1.6",
-    "next-auth": "^5.0.0-beta.30",
     "pg": "^8.20.0",
     "prisma": "^7.4.2",
     "react": "19.2.3",
@@ -35,7 +35,6 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/pg": "^8.18.0",
     "@types/react": "^19",

@@ -21,14 +21,14 @@ enum Role {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  name         String
-  email        String    @unique
-  passwordHash String
-  role         Role      @default(MEMBER)  // Phase 7a
-  isActive     Boolean   @default(true)    // Phase 7a: false でログイン不可
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  clerkId   String?  @unique @map("clerk_id")              // Phase 10: Clerk ユーザーID（初回ログイン時に紐付け）
+  name      String
+  email     String   @unique
+  role      Role     @default(MEMBER)                      // Phase 7a
+  isActive  Boolean  @default(true) @map("is_active")      // Phase 7a: false でログイン不可
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   reports     Report[]
   comments    Comment[]
@@ -37,29 +37,27 @@ model User {
 
 model Invitation {
   id          String    @id @default(cuid())
-  token       String    @unique             // URL に埋め込む使い捨てトークン
-  email       String?                       // 招待先メール（任意、指定時はそのメールのみ利用可）
-  expiresAt   DateTime                      // 有効期限（発行から72時間）
-  usedAt      DateTime?                     // 使用済み日時（null = 未使用）
-  createdAt   DateTime  @default(now())
+  token       String    @unique                               // URL に埋め込む使い捨てトークン
+  email       String?                                         // 招待先メール（任意、指定時はそのメールのみ利用可）
+  expiresAt   DateTime  @map("expires_at")                   // 有効期限（発行から72時間）
+  usedAt      DateTime? @map("used_at")                      // 使用済み日時（null = 未使用）
+  createdAt   DateTime  @default(now()) @map("created_at")
 
-  invitedById String
-  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id])
-
-  @@index([token])
+  invitedById String @map("invited_by_id")
+  invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id])
 }
 
 model Report {
-  id           String    @id @default(cuid())
-  date         DateTime  // 日付部分のみ使用（時刻は 00:00:00 UTC で統一）
-  workContent  String    // 作業内容
-  tomorrowPlan String    // 明日の予定
-  notes        String    @default("") // 感想・課題・問題点（任意）
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  date         DateTime                                    // 日付部分のみ使用（時刻は 00:00:00 UTC で統一）
+  workContent  String   @map("work_content")               // 作業内容
+  tomorrowPlan String   @map("tomorrow_plan")              // 明日の予定
+  notes        String   @default("")                       // 感想・課題・問題点（任意）
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  authorId String
-  author   User      @relation(fields: [authorId], references: [id])
+  authorId String  @map("author_id")
+  author   User    @relation(fields: [authorId], references: [id])
   comments Comment[]
 
   @@unique([authorId, date]) // 1ユーザー1日1件制約 + 月次ビュー用インデックスを兼ねる
@@ -69,11 +67,11 @@ model Report {
 model Comment {
   id        String   @id @default(cuid())
   body      String
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
-  reportId String
+  reportId String @map("report_id")
   report   Report @relation(fields: [reportId], references: [id])
-  authorId String
+  authorId String @map("author_id")
   author   User   @relation(fields: [authorId], references: [id])
 
   @@index([reportId])
@@ -89,9 +87,9 @@ model Comment {
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | String (CUID) | 主キー |
+| clerkId | String? | Clerk ユーザーID（nullable・ユニーク）。初回ログイン時に自動紐付け |
 | name | String | 表示名 |
-| email | String | ユニーク、ログインに使用 |
-| passwordHash | String | bcrypt ハッシュ |
+| email | String | ユニーク、Clerk 側のメールと紐付けに使用 |
 | role | Role (enum) | `ADMIN` / `MEMBER` / `VIEWER`、デフォルト `MEMBER` |
 | isActive | Boolean | `false` でログイン不可（データは保持）、デフォルト `true` |
 | createdAt | DateTime | 作成日時 |
@@ -152,26 +150,26 @@ model Comment {
 
 実行コマンド: `npx prisma db seed`（`prisma.config.ts` の `migrations.seed` で設定済み）
 
+完全リセットして再投入する場合: `npx prisma migrate reset`
+
 | データ | 件数 | 詳細 |
 |--------|------|------|
-| User | 3 | tanaka@example.com (`ADMIN`) / suzuki@example.com (`MEMBER`) / sato@example.com (`MEMBER`)（パスワード共通: `password123`） |
-| Report | 21 | 各ユーザーに過去 7 日分 |
+| User | 5 | eval-hub と同一ユーザーセット（下表参照） |
+| Report | 21 | MEMBER 3名 × 過去 7 日分 |
 | Comment | 5 | ユーザー間の相互コメント |
 
-シードを再実行すると既存データを全削除してから投入する（べき等）。
+**シードユーザー一覧**（eval-hub と共通）
 
----
+| email | 名前 | ロール |
+|-------|------|--------|
+| doigaki@example.com | 土井垣将 | ADMIN |
+| shiranui@example.com | 不知火守 | ADMIN |
+| yamada@example.com | 山田太郎 | MEMBER |
+| satonaka@example.com | 里中智 | MEMBER |
+| iwaki@example.com | 岩鬼正美 | MEMBER |
 
-## 環境変数
-
-```env
-# .env.local（開発・本番共通。Neon ダッシュボードから取得）
-
-# 接続プール経由（Vercel Functions から使用）
-DATABASE_URL="postgresql://user:password@ep-xxx.neon.tech/dailyhub?pgbouncer=true&connection_limit=1"
-
-# 直接接続（prisma migrate 実行時に使用）
-DIRECT_URL="postgresql://user:password@ep-xxx.neon.tech/dailyhub"
-```
+- `CLERK_SECRET_KEY` が設定されている場合、シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
+- 初期パスワード: `AmericanDogs`（Clerk 上に作成される場合）
+- シードを再実行すると既存データを全削除してから投入する
 
 Neon では開発用と本番用でブランチを分けることができる（無料枠で利用可能）。

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startOfTodayUtc } from "@/lib/dateUtils";
 import Link from "next/link";
@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { UserTable } from "./UserTable";
 
 export default async function AdminUsersPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/");
 
