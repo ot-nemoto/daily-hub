@@ -317,12 +317,10 @@
 {
   "id": "cuid",
   "token": "uuid-token",
-  "inviteUrl": "https://daily-hub.vercel.app/signup?token=uuid-token",
+  "inviteUrl": "https://daily-hub.vercel.app/login",
   "expiresAt": "2026-03-14T00:00:00Z"
 }
 ```
-
-- `inviteUrl` の `/signup` ページは Phase 7b で別途実装予定（現時点では未実装）
 
 **Errors**
 - `400` — メールアドレス形式が不正
@@ -338,7 +336,7 @@
   {
     "id": "cuid",
     "email": "invite@example.com",
-    "inviteUrl": "https://daily-hub.vercel.app/signup?token=uuid-token",
+    "inviteUrl": "https://daily-hub.vercel.app/login",
     "expiresAt": "2026-03-14T00:00:00Z",
     "usedAt": null,
     "createdAt": "2026-03-11T00:00:00Z"

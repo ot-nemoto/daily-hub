@@ -44,7 +44,7 @@ daily-hub/
 │   │   │   └── [id]/
 │   │   │       ├── page.tsx        # 詳細
 │   │   │       └── edit/page.tsx   # 編集
-│   │   └── api/
+│   │   ├── api/
 │   │       ├── me/
 │   │       │   └── route.ts        # PATCH(名前変更)
 │   │       ├── reports/
@@ -64,12 +64,14 @@ daily-hub/
 │   │           │       └── route.ts # PATCH(更新), DELETE(削除)
 │   │           └── invitations/
 │   │               └── route.ts    # GET(一覧), POST(発行)
-│   ├── settings/
-│   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
-│   ├── admin/                      # 管理画面ページ（Phase 7）
-│   │   └── users/
-│   │       ├── page.tsx            # ユーザー一覧
-│   │       └── new/page.tsx        # ユーザー作成（Phase 7b）
+│   │   ├── settings/
+│   │   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
+│   │   └── admin/                  # 管理画面ページ（Phase 7）
+│   │       ├── users/
+│   │       │   ├── page.tsx        # ユーザー一覧
+│   │       │   └── new/page.tsx    # ユーザー作成（Phase 7b）
+│   │       └── invitations/
+│   │           └── page.tsx        # 招待リンク発行・一覧（Phase 7b）
 │   ├── components/     # 再利用UIコンポーネント
 │   ├── lib/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
@@ -202,7 +204,7 @@ git push origin develop
   → Vercel が自動検知
     → ビルド（next build）
       → Vercel にデプロイ
-        → prisma migrate deploy（マイグレーション）
+        ※ マイグレーションは事前に手動で実行（prisma migrate deploy）
 
 git push origin master
   → GitHub Actions (release.yml) が起動
