@@ -80,6 +80,55 @@ model Comment {
 
 ---
 
+## リレーション図
+
+```mermaid
+erDiagram
+    User {
+        String id PK
+        String clerkId UK "nullable"
+        String name
+        String email UK
+        Role role "ADMIN / MEMBER / VIEWER"
+        Boolean isActive
+        DateTime createdAt
+        DateTime updatedAt
+    }
+    Report {
+        String id PK
+        DateTime date
+        String workContent
+        String tomorrowPlan
+        String notes
+        String authorId FK
+        DateTime createdAt
+        DateTime updatedAt
+    }
+    Comment {
+        String id PK
+        String body
+        String reportId FK
+        String authorId FK
+        DateTime createdAt
+    }
+    Invitation {
+        String id PK
+        String token UK
+        String email "nullable"
+        DateTime expiresAt
+        DateTime usedAt "nullable"
+        String invitedById FK
+        DateTime createdAt
+    }
+
+    User ||--o{ Report : "作成"
+    User ||--o{ Comment : "投稿"
+    User ||--o{ Invitation : "発行"
+    Report ||--o{ Comment : "コメント"
+```
+
+---
+
 ## テーブル定義（概要）
 
 ### User

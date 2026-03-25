@@ -5,6 +5,28 @@
 
 ---
 
+## エンドポイント一覧
+
+| メソッド | パス | 概要 | 認可 |
+|---------|------|------|------|
+| PATCH | `/api/me` | ログイン中ユーザーの名前変更 | 要ログイン |
+| GET | `/api/users` | ユーザー一覧取得 | 要ログイン |
+| GET | `/api/reports` | 日報一覧取得（日次・月次） | 要ログイン |
+| POST | `/api/reports` | 日報作成 | 要ログイン |
+| GET | `/api/reports/[id]` | 日報詳細取得 | 要ログイン |
+| PUT | `/api/reports/[id]` | 日報編集 | 本人のみ |
+| GET | `/api/reports/[id]/comments` | コメント一覧取得 | 要ログイン |
+| POST | `/api/reports/[id]/comments` | コメント追加 | 要ログイン |
+| DELETE | `/api/reports/[id]/comments/[commentId]` | コメント削除 | 本人のみ |
+| GET | `/api/admin/users` | ユーザー一覧取得（管理用） | ADMIN のみ |
+| POST | `/api/admin/users` | ユーザー作成 | ADMIN のみ |
+| PATCH | `/api/admin/users/[id]` | ユーザー情報更新（ロール・有効化） | ADMIN のみ |
+| DELETE | `/api/admin/users/[id]` | ユーザー完全削除 | ADMIN のみ |
+| POST | `/api/admin/invitations` | 招待リンク発行 | ADMIN のみ |
+| GET | `/api/admin/invitations` | 招待リンク一覧取得 | ADMIN のみ |
+
+---
+
 ## ユーザー
 
 ### PATCH /api/me
