@@ -19,7 +19,6 @@
 | POST | `/api/reports/[id]/comments` | コメント追加 | 要ログイン |
 | DELETE | `/api/reports/[id]/comments/[commentId]` | コメント削除 | 本人のみ |
 | GET | `/api/admin/users` | ユーザー一覧取得（管理用） | ADMIN のみ |
-| POST | `/api/admin/users` | ユーザー作成 | ADMIN のみ |
 | PATCH | `/api/admin/users/[id]` | ユーザー情報更新（ロール・有効化） | ADMIN のみ |
 | DELETE | `/api/admin/users/[id]` | ユーザー完全削除 | ADMIN のみ |
 | POST | `/api/admin/invitations` | 招待リンク発行 | ADMIN のみ |
@@ -246,29 +245,6 @@
 
 - `lastReportAt`: 最後に日報を投稿した日付（投稿なしは `null`）
 - `submissionRate30d`: 直近30日間のうち日報を提出した割合（0〜1）
-
----
-
-### POST /api/admin/users
-ユーザー直接作成（Phase 7b）
-
-`clerkId` は null のまま作成され、対象者が Clerk でログインした際に自動紐付けされる。
-
-**Request Body**
-```json
-{ "name": "山田 太郎", "email": "yamada@example.com", "role": "MEMBER" }
-```
-
-- `role` は省略可（デフォルト `MEMBER`）。`MEMBER` または `VIEWER` のみ指定可
-
-**Response 201**
-```json
-{ "id": "cuid" }
-```
-
-**Errors**
-- `400` — バリデーションエラー
-- `409` — メールアドレスが既に使用されている
 
 ---
 

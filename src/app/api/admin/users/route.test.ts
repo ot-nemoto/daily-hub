@@ -5,17 +5,15 @@ vi.mock("@/lib/auth", () => ({
   getSession: vi.fn(),
 }));
 vi.mock("@/lib/prisma", () => ({
-  prisma: { user: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn() } },
+  prisma: { user: { findMany: vi.fn() } },
 }));
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { GET, POST } from "./route";
+import { GET } from "./route";
 
 const mockAuth = vi.mocked(getSession);
 const mockFindMany = vi.mocked(prisma.user.findMany);
-const mockFindUnique = vi.mocked(prisma.user.findUnique);
-const mockCreate = vi.mocked(prisma.user.create);
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN", isActive: true } };
 const memberSession = { user: { id: "member-1", role: "MEMBER", isActive: true } };
@@ -79,43 +77,5 @@ describe("GET /api/admin/users", () => {
 
     const res = await GET();
     expect(res.status).toBe(403);
-  });
-});
-
-const makeRequest = (body: unknown) =>
-  new Request("http://localhost/api/admin/users", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-describe("POST /api/admin/users", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it("正常系: ADMIN はユーザーを作成できる", async () => {
-    mockAuth.mockResolvedValue(adminSession as never);
-    mockFindUnique.mockResolvedValue(null as never);
-    mockCreate.mockResolvedValue({ id: "new-user-1" } as never);
-
-    const res = await POST(makeRequest({ name: "新規 ユーザー", email: "new@example.com" }));
-    const body = await res.json();
-
-    expect(res.status).toBe(201);
-    expect(body).toEqual({ id: "new-user-1" });
-  });
-
-  it("異常系: MEMBER は 403 を返す", async () => {
-    mockAuth.mockResolvedValue(memberSession as never);
-
-    const res = await POST(makeRequest({ name: "test", email: "test@example.com" }));
-    expect(res.status).toBe(403);
-  });
-
-  it("異常系: メールアドレス重複は 409 を返す", async () => {
-    mockAuth.mockResolvedValue(adminSession as never);
-    mockFindUnique.mockResolvedValue({ id: "existing" } as never);
-
-    const res = await POST(makeRequest({ name: "test", email: "existing@example.com" }));
-    expect(res.status).toBe(409);
   });
 });

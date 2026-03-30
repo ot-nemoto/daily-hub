@@ -1,7 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startOfTodayUtc } from "@/lib/dateUtils";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserTable } from "./UserTable";
 
@@ -51,14 +50,8 @@ export default async function AdminUsersPage() {
     <div className="min-h-screen bg-zinc-50 py-10">
       <div className="mx-auto max-w-5xl space-y-6 px-4">
         <div className="rounded-lg bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6">
             <h1 className="text-lg font-bold text-zinc-900">ユーザー管理</h1>
-            <Link
-              href="/admin/users/new"
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              ユーザーを追加
-            </Link>
           </div>
           <UserTable
             users={usersWithStats}
