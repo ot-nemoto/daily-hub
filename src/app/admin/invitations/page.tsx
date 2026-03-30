@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Invitation = {
   id: string;
@@ -18,16 +18,16 @@ export default function InvitationsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  async function loadInvitations() {
+  const loadInvitations = useCallback(async () => {
     const res = await fetch("/api/admin/invitations");
     if (res.ok) {
       setInvitations(await res.json());
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadInvitations();
-  }, []);
+  }, [loadInvitations]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

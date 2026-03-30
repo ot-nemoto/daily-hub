@@ -14,6 +14,7 @@ export default function MonthlyViewLoading() {
 
         {/* Report card skeletons */}
         {[...Array(4)].map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
           <div key={i} className="rounded-lg bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div className="space-y-1.5">

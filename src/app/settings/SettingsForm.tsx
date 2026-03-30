@@ -51,9 +51,7 @@ export function SettingsForm({ initialName, email }: Props) {
         <h2 className="mb-4 text-base font-bold text-zinc-900">プロフィール</h2>
         <form onSubmit={handleNameSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700">
-              メールアドレス
-            </label>
+            <p className="block text-sm font-medium text-zinc-700">メールアドレス</p>
             <p className="mt-1 text-sm text-zinc-500">{email}</p>
           </div>
           <div>
