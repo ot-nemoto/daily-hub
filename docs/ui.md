@@ -198,7 +198,7 @@ ADMIN が期限付き招待リンクを発行・管理する。
 | Loading | `loading.tsx` によるフォールバック |
 | Normal | 日報カード一覧を表示 |
 | Empty | 「この日の日報はありません」を表示 |
-| Error | API エラー時はエラーメッセージを表示 |
+| Error | サーバーコンポーネントで例外が発生した場合は Next.js の `error.tsx` フォールバックページを表示 |
 
 ### 月次ビュー（`/reports/monthly`）
 
@@ -207,7 +207,7 @@ ADMIN が期限付き招待リンクを発行・管理する。
 | Loading | `loading.tsx` によるフォールバック |
 | Normal | 日報カード一覧を表示 |
 | Empty | 「この期間の日報はありません」を表示 |
-| Error | API エラー時はエラーメッセージを表示 |
+| Error | サーバーコンポーネントで例外が発生した場合は Next.js の `error.tsx` フォールバックページを表示 |
 
 ### 日報作成（`/reports/new`）
 
