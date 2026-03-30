@@ -37,7 +37,6 @@ MOCK_USER_ID=<DB の users.id>
 
 | サーバー | 主な用途 | 認証 |
 |----------|----------|------|
-| `playwright` | ブラウザ操作・E2E テストの自動実行 | 不要 |
 | `context7` | ライブラリの最新ドキュメント参照 | 不要 |
 
 ### 必須ツール
@@ -181,42 +180,6 @@ npm run test:ui
 # カバレッジレポート出力
 npm run test:coverage
 ```
-
-### E2E テスト（Playwright）
-
-#### 前提条件
-
-E2E テストの実行には以下が必要。
-
-1. **Chromium のインストール**（devcontainer では `postCreateCommand` で自動実行済み）
-
-   ```bash
-   npx playwright install --with-deps chromium
-   ```
-
-2. **シードデータの投入**（テストユーザーが DB に存在する必要がある）
-
-   ```bash
-   npx tsx prisma/seed.ts
-   ```
-
-#### 実行コマンド
-
-```bash
-# ヘッドレスで実行（setup プロジェクトによる認証セッション生成を含む）
-npm run test:e2e
-
-# UI モードで実行
-npm run test:e2e:ui
-```
-
-#### 仕組み
-
-- `playwright.config.ts` の `setup` プロジェクトが最初に実行され、シードユーザー（例: `yamada@example.com`）でログインしてセッション情報を `e2e/.auth/user.json` に保存する
-- 後続のテストは `e2e/fixtures.ts` の `loggedInPage` fixture を通じてこのセッションを再利用する
-- `e2e/.auth/` は `.gitignore` で除外されているため、テスト実行のたびに生成される
-
----
 
 ## デプロイ（Vercel）
 
