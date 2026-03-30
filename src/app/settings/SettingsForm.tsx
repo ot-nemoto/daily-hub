@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { parseApiError } from "@/lib/apiError";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -34,8 +35,7 @@ export function SettingsForm({ initialName, email }: Props) {
         setNameSuccess(true);
         router.refresh();
       } else {
-        const json = await res.json().catch(() => ({}));
-        setNameError(json.error ?? "名前の更新に失敗しました");
+        setNameError(await parseApiError(res, "名前の更新に失敗しました"));
       }
     } catch {
       setNameError("通信エラーが発生しました");

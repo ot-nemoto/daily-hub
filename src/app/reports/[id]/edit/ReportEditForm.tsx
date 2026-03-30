@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { parseApiError } from "@/lib/apiError";
 
 type Props = {
   id: string;
@@ -39,7 +40,7 @@ export function ReportEditForm({ id, defaultValues }: Props) {
       if (res.status === 403) {
         setError("この日報を編集する権限がありません");
       } else if (!res.ok) {
-        setError("保存に失敗しました。入力内容を確認してください");
+        setError(await parseApiError(res, "保存に失敗しました。入力内容を確認してください"));
       } else {
         router.push(`/reports/${id}`);
         router.refresh();

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { parseApiError } from "@/lib/apiError";
 import { today } from "@/lib/dateUtils";
 
 export function ReportNewForm() {
@@ -32,7 +33,7 @@ export function ReportNewForm() {
       if (res.status === 409) {
         setError("この日付の日報はすでに作成済みです");
       } else if (!res.ok) {
-        setError("保存に失敗しました。入力内容を確認してください");
+        setError(await parseApiError(res, "保存に失敗しました。入力内容を確認してください"));
       } else {
         const { id } = await res.json();
         router.push(`/reports/${id}`);
