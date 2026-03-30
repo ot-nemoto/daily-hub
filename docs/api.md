@@ -12,9 +12,9 @@
 | PATCH | `/api/me` | ログイン中ユーザーの名前変更 | 要ログイン |
 | GET | `/api/users` | ユーザー一覧取得 | 要ログイン |
 | GET | `/api/reports` | 日報一覧取得（日次・月次） | 要ログイン |
-| POST | `/api/reports` | 日報作成 | 要ログイン |
+| POST | `/api/reports` | 日報作成 | VIEWER 以外（MEMBER・ADMIN） |
 | GET | `/api/reports/[id]` | 日報詳細取得 | 要ログイン |
-| PUT | `/api/reports/[id]` | 日報編集 | 本人のみ |
+| PUT | `/api/reports/[id]` | 日報編集 | 本人かつ VIEWER 以外（MEMBER・ADMIN） |
 | GET | `/api/reports/[id]/comments` | コメント一覧取得 | 要ログイン |
 | POST | `/api/reports/[id]/comments` | コメント追加 | 要ログイン |
 | DELETE | `/api/reports/[id]/comments/[commentId]` | コメント削除 | 本人のみ |
