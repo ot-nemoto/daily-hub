@@ -2,13 +2,6 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startOfTodayUtc } from "@/lib/dateUtils";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const CreateUserSchema = z.object({
-  name: z.string().min(1).max(100),
-  email: z.string().email(),
-  role: z.enum(["MEMBER", "VIEWER"]).optional().default("MEMBER"),
-});
 
 export async function GET() {
   const session = await getSession();
@@ -63,40 +56,4 @@ export async function GET() {
   });
 
   return NextResponse.json(result);
-}
-
-export async function POST(request: Request) {
-  const session = await getSession();
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const body = await request.json().catch(() => null);
-  if (!body) {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const result = CreateUserSchema.safeParse(body);
-  if (!result.success) {
-    return NextResponse.json({ error: result.error.flatten() }, { status: 400 });
-  }
-
-  const { name, email, role } = result.data;
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json({ error: "Email already in use" }, { status: 409 });
-  }
-
-  try {
-    const user = await prisma.user.create({
-      data: { name, email, role },
-    });
-    return NextResponse.json({ id: user.id }, { status: 201 });
-  } catch (error) {
-    if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2002") {
-      return NextResponse.json({ error: "Email already in use" }, { status: 409 });
-    }
-    throw error;
-  }
 }

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { parseApiError } from "@/lib/apiError";
+
 type Invitation = {
   id: string;
   email: string | null;
@@ -46,7 +48,7 @@ export default function InvitationsPage() {
       setEmail("");
       loadInvitations();
     } else {
-      setError("招待リンクの発行に失敗しました。");
+      setError(await parseApiError(res, "招待リンクの発行に失敗しました。"));
     }
   }
 

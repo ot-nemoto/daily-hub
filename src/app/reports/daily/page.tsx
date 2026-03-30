@@ -1,17 +1,9 @@
 import Link from "next/link";
 
 import { getSession } from "@/lib/auth";
-import { isValidDate } from "@/lib/dateUtils";
+import { isValidDate, today } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
 import { DailyFilter } from "./DailyFilter";
-
-function today(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
 
 export default async function DailyViewPage({
   searchParams,
