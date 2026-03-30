@@ -1,18 +1,29 @@
 "use client";
 
-import { SignOutButton as ClerkSignOutButton } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
+import { useState } from "react";
 
 type Props = {
   className?: string;
-  children?: React.ReactNode;
 };
 
-export function SignOutButton({ className, children = "ログアウト" }: Props) {
+export function SignOutButton({ className }: Props) {
+  const { signOut } = useClerk();
+  const [loading, setLoading] = useState(false);
+
+  async function handleSignOut() {
+    setLoading(true);
+    await signOut({ redirectUrl: "/login" });
+  }
+
   return (
-    <ClerkSignOutButton redirectUrl="/login">
-      <button type="button" className={className}>
-        {children}
-      </button>
-    </ClerkSignOutButton>
+    <button
+      type="button"
+      disabled={loading}
+      onClick={handleSignOut}
+      className={className}
+    >
+      {loading ? "ログアウト中..." : "ログアウト"}
+    </button>
   );
 }

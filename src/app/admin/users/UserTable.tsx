@@ -141,7 +141,7 @@ export function UserTable({
                             : "bg-green-50 text-green-700 hover:bg-green-100"
                         }`}
                       >
-                        {user.isActive ? "無効化" : "有効化"}
+                        {loading === `active-${user.id}` ? "更新中..." : user.isActive ? "無効化" : "有効化"}
                       </button>
                     )}
                     {user.id !== currentUserId && (
@@ -154,7 +154,7 @@ export function UserTable({
                         }}
                         className="rounded bg-red-50 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
                       >
-                        削除
+                        {loading === `delete-${user.id}` ? "削除中..." : "削除"}
                       </button>
                     )}
                   </div>
@@ -200,7 +200,7 @@ export function UserTable({
                 onClick={handleDelete}
                 className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
-                削除する
+                {loading === `delete-${deleteDialog.userId}` ? "削除中..." : "削除する"}
               </button>
             </div>
           </div>
