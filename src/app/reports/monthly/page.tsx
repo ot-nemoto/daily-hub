@@ -1,25 +1,9 @@
 import Link from "next/link";
 
 import { getSession } from "@/lib/auth";
-import { isValidDate } from "@/lib/dateUtils";
+import { currentMonth, isValidDate, monthRange } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
 import { MonthlyFilter } from "./MonthlyFilter";
-
-function currentMonth(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-function monthRange(month: string): { from: string; to: string } {
-  const [year, mon] = month.split("-").map(Number);
-  const lastDay = new Date(year, mon, 0).getDate();
-  return {
-    from: `${month}-01`,
-    to: `${month}-${String(lastDay).padStart(2, "0")}`,
-  };
-}
 
 export default async function MonthlyViewPage({
   searchParams,

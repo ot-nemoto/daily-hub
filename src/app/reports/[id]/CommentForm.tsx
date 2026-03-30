@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { parseApiError } from "@/lib/apiError";
 
 type Props = {
   reportId: string;
@@ -29,7 +30,7 @@ export function CommentForm({ reportId }: Props) {
       });
 
       if (!res.ok) {
-        setError("コメントの投稿に失敗しました。入力内容を確認してください");
+        setError(await parseApiError(res, "コメントの投稿に失敗しました。入力内容を確認してください"));
       } else {
         formRef.current?.reset();
         router.refresh();
