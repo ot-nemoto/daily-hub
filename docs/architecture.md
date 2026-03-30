@@ -45,25 +45,25 @@ daily-hub/
 │   │   │       ├── page.tsx        # 詳細
 │   │   │       └── edit/page.tsx   # 編集
 │   │   ├── api/
-│   │       ├── me/
-│   │       │   └── route.ts        # PATCH(名前変更)
-│   │       ├── reports/
-│   │       │   ├── route.ts        # GET(一覧), POST(作成)
-│   │       │   └── [id]/
-│   │       │       ├── route.ts    # GET(詳細), PUT(編集)
-│   │       │       └── comments/
-│   │       │           ├── route.ts        # GET, POST
-│   │       │           └── [commentId]/
-│   │       │               └── route.ts    # DELETE
-│   │       ├── users/
-│   │       │   └── route.ts        # GET(ユーザー一覧)
-│   │       └── admin/              # 管理者専用API（Phase 7）
-│   │           ├── users/
-│   │           │   ├── route.ts    # GET(一覧), POST(作成)
-│   │           │   └── [id]/
-│   │           │       └── route.ts # PATCH(更新), DELETE(削除)
-│   │           └── invitations/
-│   │               └── route.ts    # GET(一覧), POST(発行)
+│   │   │   ├── me/
+│   │   │   │   └── route.ts        # PATCH(名前変更)
+│   │   │   ├── reports/
+│   │   │   │   ├── route.ts        # GET(一覧), POST(作成)
+│   │   │   │   └── [id]/
+│   │   │   │       ├── route.ts    # GET(詳細), PUT(編集)
+│   │   │   │       └── comments/
+│   │   │   │           ├── route.ts        # GET, POST
+│   │   │   │           └── [commentId]/
+│   │   │   │               └── route.ts    # DELETE
+│   │   │   ├── users/
+│   │   │   │   └── route.ts        # GET(ユーザー一覧)
+│   │   │   └── admin/              # 管理者専用API（Phase 7）
+│   │   │       ├── users/
+│   │   │       │   ├── route.ts    # GET(一覧), POST(作成)
+│   │   │       │   └── [id]/
+│   │   │       │       └── route.ts # PATCH(更新), DELETE(削除)
+│   │   │       └── invitations/
+│   │   │           └── route.ts    # GET(一覧), POST(発行)
 │   │   ├── settings/
 │   │   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
 │   │   └── admin/                  # 管理画面ページ（Phase 7）
