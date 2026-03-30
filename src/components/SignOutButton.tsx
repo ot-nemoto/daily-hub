@@ -10,20 +10,31 @@ type Props = {
 export function SignOutButton({ className }: Props) {
   const { signOut } = useClerk();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSignOut() {
     setLoading(true);
-    await signOut({ redirectUrl: "/login" });
+    setError(null);
+    try {
+      await signOut({ redirectUrl: "/login" });
+    } catch {
+      setError("ログアウトに失敗しました。時間をおいて再度お試しください");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <button
-      type="button"
-      disabled={loading}
-      onClick={handleSignOut}
-      className={className}
-    >
-      {loading ? "ログアウト中..." : "ログアウト"}
-    </button>
+    <div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      <button
+        type="button"
+        disabled={loading}
+        onClick={handleSignOut}
+        className={className}
+      >
+        {loading ? "ログアウト中..." : "ログアウト"}
+      </button>
+    </div>
   );
 }
