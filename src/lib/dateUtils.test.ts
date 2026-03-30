@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { isValidDate, isValidMonth, startOfTodayUtc } from "./dateUtils";
+import { currentMonth, isValidDate, isValidMonth, monthRange, startOfTodayUtc, today } from "./dateUtils";
 
 describe("startOfTodayUtc", () => {
   it("正常系: 時刻が UTC 00:00:00.000 であること", () => {
@@ -42,6 +42,59 @@ describe("isValidDate", () => {
     expect(isValidDate("2025-04-31")).toBe(false); // 4月31日
     expect(isValidDate("2025-13-01")).toBe(false); // 13月
     expect(isValidDate("2025-00-01")).toBe(false); // 0月
+  });
+});
+
+describe("today", () => {
+  it("正常系: YYYY-MM-DD 形式を返す", () => {
+    const result = today();
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("正常系: 今日の年月日と一致する", () => {
+    const now = new Date();
+    const result = today();
+    const [year, month, day] = result.split("-").map(Number);
+    expect(year).toBe(now.getFullYear());
+    expect(month).toBe(now.getMonth() + 1);
+    expect(day).toBe(now.getDate());
+  });
+});
+
+describe("currentMonth", () => {
+  it("正常系: YYYY-MM 形式を返す", () => {
+    const result = currentMonth();
+    expect(result).toMatch(/^\d{4}-\d{2}$/);
+  });
+
+  it("正常系: 今月の年月と一致する", () => {
+    const now = new Date();
+    const result = currentMonth();
+    const [year, month] = result.split("-").map(Number);
+    expect(year).toBe(now.getFullYear());
+    expect(month).toBe(now.getMonth() + 1);
+  });
+});
+
+describe("monthRange", () => {
+  it("正常系: 月初・月末の日付範囲を返す（1月）", () => {
+    expect(monthRange("2025-01")).toEqual({ from: "2025-01-01", to: "2025-01-31" });
+  });
+
+  it("正常系: 月初・月末の日付範囲を返す（2月・平年）", () => {
+    expect(monthRange("2025-02")).toEqual({ from: "2025-02-01", to: "2025-02-28" });
+  });
+
+  it("正常系: 月初・月末の日付範囲を返す（2月・閏年）", () => {
+    expect(monthRange("2024-02")).toEqual({ from: "2024-02-01", to: "2024-02-29" });
+  });
+
+  it("正常系: 月初・月末の日付範囲を返す（12月）", () => {
+    expect(monthRange("2025-12")).toEqual({ from: "2025-12-01", to: "2025-12-31" });
+  });
+
+  it("正常系: 月末日が正しくゼロ埋めされる（4月）", () => {
+    expect(monthRange("2025-04")).toEqual({ from: "2025-04-01", to: "2025-04-30" });
   });
 });
 

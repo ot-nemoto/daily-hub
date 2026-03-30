@@ -20,3 +20,30 @@ export function isValidMonth(value: string): boolean {
   const mon = Number(value.split("-")[1]);
   return mon >= 1 && mon <= 12;
 }
+
+/** 今日の日付を YYYY-MM-DD 形式で返す（ローカル時刻基準） */
+export function today(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** 今月を YYYY-MM 形式で返す（ローカル時刻基準） */
+export function currentMonth(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+/** YYYY-MM 形式の月から月初・月末の日付範囲を返す */
+export function monthRange(month: string): { from: string; to: string } {
+  const [year, mon] = month.split("-").map(Number);
+  const lastDay = new Date(year, mon, 0).getDate();
+  return {
+    from: `${month}-01`,
+    to: `${month}-${String(lastDay).padStart(2, "0")}`,
+  };
+}
