@@ -209,9 +209,15 @@ export function UserTable({
 
       {/* 削除確認ダイアログ */}
       {deleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" aria-modal="true" role="dialog">
-          <div ref={dialogRef} className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-2 text-base font-bold text-zinc-900">ユーザーを削除</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+            className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl"
+          >
+            <h2 id="delete-dialog-title" className="mb-2 text-base font-bold text-zinc-900">ユーザーを削除</h2>
             <p className="mb-4 text-sm text-zinc-600">
               <span className="font-medium text-zinc-900">{deleteDialog.userName}</span>{" "}
               を削除します。この操作は取り消せません。
