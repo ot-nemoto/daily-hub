@@ -66,17 +66,22 @@ describe("today", () => {
 });
 
 describe("currentMonth", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-06-15T10:00:00"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("正常系: YYYY-MM 形式を返す", () => {
     const result = currentMonth();
     expect(result).toMatch(/^\d{4}-\d{2}$/);
   });
 
   it("正常系: 今月の年月と一致する", () => {
-    const now = new Date();
     const result = currentMonth();
-    const [year, month] = result.split("-").map(Number);
-    expect(year).toBe(now.getFullYear());
-    expect(month).toBe(now.getMonth() + 1);
+    expect(result).toBe("2025-06");
   });
 });
 
