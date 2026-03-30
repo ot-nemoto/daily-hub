@@ -148,7 +148,7 @@ model Comment {
 
 ## 初期データ（開発用シード）
 
-実行コマンド: `npx prisma db seed`（`prisma.config.ts` の `migrations.seed` で設定済み）
+実行コマンド: `npx tsx prisma/seed.ts`
 
 完全リセットして再投入する場合: `npx prisma migrate reset`
 
