@@ -2,7 +2,7 @@
 export function isValidDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(value);
-  if (isNaN(date.getTime())) return false;
+  if (Number.isNaN(date.getTime())) return false;
   // ロールオーバー（2/29 → 3/1 など）を検出するため、パース後の値と照合する
   const [y, m, d] = value.split("-").map(Number);
   return date.getUTCFullYear() === y && date.getUTCMonth() + 1 === m && date.getUTCDate() === d;

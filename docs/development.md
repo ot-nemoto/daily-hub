@@ -89,7 +89,7 @@ npx prisma migrate deploy
 npx prisma migrate reset --force
 
 # シードデータを投入
-npx prisma db seed
+npx tsx prisma/seed.ts
 ```
 
 ### Prisma クライアント再生成
@@ -117,15 +117,7 @@ npx prisma migrate status
 ### シードデータ投入
 
 ```bash
-npx prisma db seed
-```
-
-`prisma.config.ts` の `migrations.seed` で設定済み：
-
-```ts
-migrations: {
-  seed: "tsx prisma/seed.ts",
-}
+npx tsx prisma/seed.ts
 ```
 
 ### Prisma Studio（GUIでDBを確認）
@@ -205,7 +197,7 @@ E2E テストの実行には以下が必要。
 2. **シードデータの投入**（テストユーザーが DB に存在する必要がある）
 
    ```bash
-   npx prisma db seed
+   npx tsx prisma/seed.ts
    ```
 
 #### 実行コマンド

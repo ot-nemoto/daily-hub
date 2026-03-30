@@ -48,10 +48,11 @@ export default function NewUserPage() {
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
+              <label htmlFor="name" className="mb-1 block text-sm font-medium text-zinc-700">
                 名前
               </label>
               <input
+                id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -60,10 +61,11 @@ export default function NewUserPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-zinc-700">
                 メールアドレス
               </label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -72,10 +74,11 @@ export default function NewUserPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
+              <label htmlFor="role" className="mb-1 block text-sm font-medium text-zinc-700">
                 ロール
               </label>
               <select
+                id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as "MEMBER" | "VIEWER")}
                 className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"

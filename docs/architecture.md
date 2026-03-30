@@ -30,7 +30,7 @@ daily-hub/
 │   ├── schema.prisma   # DBスキーマ定義
 │   ├── seed.ts         # 開発用シードデータ
 │   └── migrations/     # マイグレーションファイル
-├── prisma.config.ts    # Prisma 7 設定（datasource URL・seed コマンド）
+├── prisma.config.ts    # Prisma 7 設定（datasource URL）
 ├── src/
 │   ├── app/            # Next.js App Router
 │   │   ├── (auth)/

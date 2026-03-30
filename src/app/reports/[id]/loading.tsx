@@ -35,6 +35,7 @@ export default function ReportDetailLoading() {
           <div className="mb-4 h-5 w-24 animate-pulse rounded bg-zinc-200" />
           <div className="space-y-4">
             {[...Array(2)].map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
               <div key={i} className="rounded-md bg-zinc-50 px-4 py-3">
                 <div className="mb-2 h-3 w-20 animate-pulse rounded bg-zinc-200" />
                 <div className="space-y-1">

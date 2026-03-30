@@ -13,6 +13,7 @@ export default function DailyViewLoading() {
 
         {/* Report card skeletons */}
         {[...Array(3)].map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
           <div key={i} className="rounded-lg bg-white p-6 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div className="space-y-1.5">
