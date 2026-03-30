@@ -5,8 +5,7 @@
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  // コンテナ作成後に依存関係をインストール・Playwright ブラウザをセットアップ
-  "postCreateCommand": "npm install && npx playwright install --with-deps chromium",
+  "postCreateCommand": "npm install",
 
   "customizations": {
     "vscode": {

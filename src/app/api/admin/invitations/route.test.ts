@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
+  getSession: vi.fn(),
 }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -10,16 +10,16 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GET, POST } from "./route";
 
-const mockAuth = vi.mocked(auth);
+const mockAuth = vi.mocked(getSession);
 const mockCreate = vi.mocked(prisma.invitation.create);
 const mockFindMany = vi.mocked(prisma.invitation.findMany);
 
-const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
-const memberSession = { user: { id: "member-1", role: "MEMBER" } };
+const adminSession = { user: { id: "admin-1", role: "ADMIN", isActive: true } };
+const memberSession = { user: { id: "member-1", role: "MEMBER", isActive: true } };
 
 const makeRequest = (body: unknown) =>
   new Request("http://localhost/api/admin/invitations", {
@@ -51,7 +51,7 @@ describe("POST /api/admin/invitations", () => {
     expect(body).toMatchObject({
       id: "inv-1",
       token: "test-token-uuid",
-      inviteUrl: expect.stringContaining("/signup?token=test-token-uuid"),
+      inviteUrl: expect.stringContaining("/login"),
       expiresAt: expect.any(String),
     });
   });
@@ -97,7 +97,7 @@ describe("GET /api/admin/invitations", () => {
     expect(body[0]).toMatchObject({
       id: "inv-1",
       email: "invite@example.com",
-      inviteUrl: expect.stringContaining("/signup?token=test-token-uuid"),
+      inviteUrl: expect.stringContaining("/login"),
       usedAt: null,
     });
   });

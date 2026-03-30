@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -14,7 +14,7 @@ function getBaseUrl(request: Request): string {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     {
       id: invitation.id,
       token: invitation.token,
-      inviteUrl: `${baseUrl}/signup?token=${invitation.token}`,
+      inviteUrl: `${baseUrl}/login`,
       expiresAt: invitation.expiresAt,
     },
     { status: 201 },
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
   const result = invitations.map((inv) => ({
     id: inv.id,
     email: inv.email,
-    inviteUrl: `${baseUrl}/signup?token=${inv.token}`,
+    inviteUrl: `${baseUrl}/login`,
     expiresAt: inv.expiresAt,
     usedAt: inv.usedAt,
     createdAt: inv.createdAt,

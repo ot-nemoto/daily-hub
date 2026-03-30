@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isValidDate } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
 import { DailyFilter } from "./DailyFilter";
@@ -18,7 +18,7 @@ export default async function DailyViewPage({
 }: {
   searchParams: Promise<{ date?: string; userId?: string }>;
 }) {
-  const [session, params] = await Promise.all([auth(), searchParams]);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
   // 不正な日付が URL から渡された場合は today() にフォールバック
   const date = params.date && isValidDate(params.date) ? params.date : today();
   const userId = params.userId ?? "";

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { GET, PUT } from "./route";
 
 vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
+  getSession: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -17,8 +17,8 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com", role: "MEMBER" } };
-const mockViewerSession = { user: { id: "user-2", name: "閲覧 ユーザー", email: "viewer@example.com", role: "VIEWER" } };
+const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com", role: "MEMBER", isActive: true } };
+const mockViewerSession = { user: { id: "user-2", name: "閲覧 ユーザー", email: "viewer@example.com", role: "VIEWER", isActive: true } };
 
 const now = new Date("2026-03-06T12:00:00.000Z");
 const mockReport = {
@@ -54,8 +54,8 @@ describe("GET /api/reports/[id]", () => {
   });
 
   it("正常系: 日報が存在する場合 200 と詳細を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.report.findUnique).mockResolvedValue(mockReport as never);
 
     const res = await GET(new Request("http://localhost/api/reports/report-1"), makeContext("report-1"));
@@ -93,8 +93,8 @@ describe("GET /api/reports/[id]", () => {
   });
 
   it("正常系: コメントなしの日報も正しく返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.report.findUnique).mockResolvedValue({ ...mockReport, comments: [] } as never);
 
     const res = await GET(new Request("http://localhost/api/reports/report-1"), makeContext("report-1"));
@@ -105,8 +105,8 @@ describe("GET /api/reports/[id]", () => {
   });
 
   it("異常系: 未認証で 401 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(null as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(null as never);
 
     const res = await GET(new Request("http://localhost/api/reports/report-1"), makeContext("report-1"));
 
@@ -115,8 +115,8 @@ describe("GET /api/reports/[id]", () => {
   });
 
   it("異常系: 存在しない ID で 404 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
 
     const res = await GET(new Request("http://localhost/api/reports/nonexistent"), makeContext("nonexistent"));
@@ -140,8 +140,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("正常系: 自分の日報を更新して 200 と id を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-1" } as never);
     vi.mocked(prisma.report.update).mockResolvedValue({ id: "report-1" } as never);
 
@@ -164,8 +164,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("正常系: notes 省略時は空文字で更新される", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-1" } as never);
     vi.mocked(prisma.report.update).mockResolvedValue({ id: "report-1" } as never);
 
@@ -184,8 +184,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("異常系: 未認証で 401 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(null as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(null as never);
 
     const res = await PUT(
       new Request("http://localhost/api/reports/report-1", {
@@ -200,8 +200,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("異常系: workContent が空で 400 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
 
     const res = await PUT(
       new Request("http://localhost/api/reports/report-1", {
@@ -216,8 +216,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("異常系: 存在しない ID で 404 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
 
     const res = await PUT(
@@ -233,8 +233,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("異常系: 他ユーザーの日報で 403 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
     // authorId が別ユーザー
     vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-99" } as never);
 
@@ -251,8 +251,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("異常系: 不正な JSON で 400 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockSession as never);
 
     const res = await PUT(
       new Request("http://localhost/api/reports/report-1", {
@@ -266,8 +266,8 @@ describe("PUT /api/reports/[id]", () => {
   });
 
   it("異常系: VIEWER ロールで 403 を返す", async () => {
-    const { auth } = await import("@/lib/auth");
-    vi.mocked(auth).mockResolvedValue(mockViewerSession as never);
+    const { getSession } = await import("@/lib/auth");
+    vi.mocked(getSession).mockResolvedValue(mockViewerSession as never);
 
     const res = await PUT(
       new Request("http://localhost/api/reports/report-1", {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const UpdateReportSchema = z.object({
@@ -11,7 +11,7 @@ const UpdateReportSchema = z.object({
 });
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -54,7 +54,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

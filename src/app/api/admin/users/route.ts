@@ -1,5 +1,4 @@
-import bcrypt from "bcryptjs";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startOfTodayUtc } from "@/lib/dateUtils";
 import { NextResponse } from "next/server";
@@ -8,12 +7,11 @@ import { z } from "zod";
 const CreateUserSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
-  password: z.string().min(8),
   role: z.enum(["MEMBER", "VIEWER"]).optional().default("MEMBER"),
 });
 
 export async function GET() {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -68,7 +66,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -83,18 +81,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error.flatten() }, { status: 400 });
   }
 
-  const { name, email, password, role } = result.data;
+  const { name, email, role } = result.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return NextResponse.json({ error: "Email already in use" }, { status: 409 });
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
-
   try {
     const user = await prisma.user.create({
-      data: { name, email, passwordHash, role },
+      data: { name, email, role },
     });
     return NextResponse.json({ id: user.id }, { status: 201 });
   } catch (error) {

@@ -7,7 +7,6 @@ export default function NewUserPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [role, setRole] = useState<"MEMBER" | "VIEWER">("MEMBER");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -20,7 +19,7 @@ export default function NewUserPage() {
     const res = await fetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role }),
+      body: JSON.stringify({ name, email, role }),
     });
 
     setSubmitting(false);
@@ -44,12 +43,16 @@ export default function NewUserPage() {
       <div className="mx-auto max-w-lg px-4">
         <div className="rounded-lg bg-white p-6 shadow-sm">
           <h1 className="mb-6 text-lg font-bold text-zinc-900">ユーザー追加</h1>
+          <p className="mb-4 text-sm text-zinc-500">
+            ユーザーを作成します。作成後、対象者が Clerk でログインすると自動的に紐付けられます。
+          </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
+              <label htmlFor="name" className="mb-1 block text-sm font-medium text-zinc-700">
                 名前
               </label>
               <input
+                id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -58,10 +61,11 @@ export default function NewUserPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-zinc-700">
                 メールアドレス
               </label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -70,10 +74,11 @@ export default function NewUserPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
+              <label htmlFor="role" className="mb-1 block text-sm font-medium text-zinc-700">
                 ロール
               </label>
               <select
+                id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as "MEMBER" | "VIEWER")}
                 className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -81,19 +86,6 @@ export default function NewUserPage() {
                 <option value="MEMBER">MEMBER（日報作成・閲覧）</option>
                 <option value="VIEWER">VIEWER（閲覧のみ）</option>
               </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
-                初期パスワード（8文字以上）
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-              />
             </div>
             {error && (
               <p className="text-sm text-red-600">{error}</p>

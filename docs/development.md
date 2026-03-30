@@ -17,10 +17,18 @@ npm install
 `.env.local` をプロジェクトルートに作成する（`.env` ではなく `.env.local` を使う）：
 
 ```env
+# Neon PostgreSQL
 DATABASE_URL="postgresql://<user>:<password>@<host>-pooler.<region>.aws.neon.tech/<db>?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
 DIRECT_URL="postgresql://<user>:<password>@<host>.<region>.aws.neon.tech/<db>?sslmode=require&channel_binding=require"
-NEXTAUTH_SECRET="<openssl rand -base64 32 で生成>"
-NEXTAUTH_URL="http://localhost:3000"
+
+# Clerk（Neon ダッシュボードから取得）
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+CLERK_SECRET_KEY=sk_test_xxx
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
+
+# ローカル開発用モック（Clerk をバイパスして DB ユーザーを直接使用）
+MOCK_USER_ID=<DB の users.id>
 ```
 
 ### 設定済み MCP サーバー
@@ -29,7 +37,6 @@ NEXTAUTH_URL="http://localhost:3000"
 
 | サーバー | 主な用途 | 認証 |
 |----------|----------|------|
-| `playwright` | ブラウザ操作・E2E テストの自動実行 | 不要 |
 | `context7` | ライブラリの最新ドキュメント参照 | 不要 |
 
 ### 必須ツール
@@ -61,6 +68,8 @@ Prisma 7 では接続設定が2箇所に分離されている。
 
 ### マイグレーション
 
+マイグレーションは**常に手動で実行**する（ビルドスクリプトによる自動実行は行わない）。
+
 ```bash
 # スキーマ変更後に新しいマイグレーションを作成・適用
 npx prisma migrate dev --name <migration-name>
@@ -68,8 +77,18 @@ npx prisma migrate dev --name <migration-name>
 # 例：初回
 npx prisma migrate dev --name init
 
-# 本番への適用（デプロイ時に実行）
+# 本番・ステージング環境への適用（デプロイ前に手動実行）
 npx prisma migrate deploy
+```
+
+#### DB を完全リセットしてシードを投入し直す場合
+
+```bash
+# DB をリセット（全テーブル削除・マイグレーション再適用）
+npx prisma migrate reset --force
+
+# シードデータを投入
+npx tsx prisma/seed.ts
 ```
 
 ### Prisma クライアント再生成
@@ -97,15 +116,7 @@ npx prisma migrate status
 ### シードデータ投入
 
 ```bash
-npx prisma db seed
-```
-
-`prisma.config.ts` の `migrations.seed` で設定済み：
-
-```ts
-migrations: {
-  seed: "tsx prisma/seed.ts",
-}
+npx tsx prisma/seed.ts
 ```
 
 ### Prisma Studio（GUIでDBを確認）
@@ -124,14 +135,6 @@ npx prisma studio
 2. **Connection pooling ON** の文字列 → `DATABASE_URL`
    - 末尾に `&pgbouncer=true&connection_limit=1` を追加
 3. **Connection pooling OFF** の文字列 → `DIRECT_URL`
-
----
-
-## NEXTAUTH_SECRET の生成
-
-```bash
-openssl rand -base64 32
-```
 
 ---
 
@@ -178,49 +181,13 @@ npm run test:ui
 npm run test:coverage
 ```
 
-### E2E テスト（Playwright）
-
-#### 前提条件
-
-E2E テストの実行には以下が必要。
-
-1. **Chromium のインストール**（devcontainer では `postCreateCommand` で自動実行済み）
-
-   ```bash
-   npx playwright install --with-deps chromium
-   ```
-
-2. **シードデータの投入**（テストユーザー `tanaka@example.com` が DB に存在する必要がある）
-
-   ```bash
-   npx prisma db seed
-   ```
-
-#### 実行コマンド
-
-```bash
-# ヘッドレスで実行（setup プロジェクトによる認証セッション生成を含む）
-npm run test:e2e
-
-# UI モードで実行
-npm run test:e2e:ui
-```
-
-#### 仕組み
-
-- `playwright.config.ts` の `setup` プロジェクトが最初に実行され、`tanaka@example.com` でログインしてセッション情報を `e2e/.auth/user.json` に保存する
-- 後続のテストは `e2e/fixtures.ts` の `loggedInPage` fixture を通じてこのセッションを再利用する
-- `e2e/.auth/` は `.gitignore` で除外されているため、テスト実行のたびに生成される
-
----
-
 ## デプロイ（Vercel）
 
-1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`）
-2. `main` ブランチにプッシュすると自動デプロイ
-3. デプロイ後に `prisma migrate deploy` を実行（Vercel の Build Command に追加推奨）
+1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`）
+2. デプロイ前に**手動**でマイグレーションを適用する
 
-```
-# Vercel Build Command の例
-npx prisma migrate deploy && next build
-```
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+3. `main` ブランチにプッシュすると自動デプロイ（Build Command は `next build` のみ）

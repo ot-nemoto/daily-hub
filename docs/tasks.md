@@ -73,19 +73,11 @@
 
 フェーズ 5 以降のタスクはすべて GitHub Issues で管理する。tasks.md には記載しない。
 
-- Issues: https://github.com/ot-nemoto/daily-hub/issues
-
----
-
-## 実装順まとめ
-
-```
-フェーズ0（セットアップ）
-  → フェーズ1（認証）
-    → フェーズ2（日報CRUD）
-      → フェーズ3（コメント）
-      → フェーズ4（閲覧ビュー）
-        → フェーズ5（仕上げ）
-```
-
-フェーズ3とフェーズ4は並行して進めることができる。
+- [Issues — Phase 5: 仕上げ・品質](https://github.com/ot-nemoto/daily-hub/milestone/1)
+- [Issues — Phase 6: Vercel デプロイ](https://github.com/ot-nemoto/daily-hub/milestone/2)
+- [Issues — Phase 7a: ユーザー管理（最小構成）](https://github.com/ot-nemoto/daily-hub/milestone/3)
+- [Issues — Phase 7b: ユーザー招待・追加](https://github.com/ot-nemoto/daily-hub/milestone/4)
+- [Issues — Phase 7c: 詳細管理](https://github.com/ot-nemoto/daily-hub/milestone/5)
+- [Issues — Phase 8: CI/CD](https://github.com/ot-nemoto/daily-hub/milestone/6)
+- [Issues — Phase 9: 個人管理](https://github.com/ot-nemoto/daily-hub/milestone/7)
+- [Issues — Phase 10: 認証基盤移行（Clerk）](https://github.com/ot-nemoto/daily-hub/milestone/8)

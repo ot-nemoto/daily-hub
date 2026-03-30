@@ -1,13 +1,13 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@/generated/prisma/client";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -71,7 +71,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

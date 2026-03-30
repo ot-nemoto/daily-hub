@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { SignOutButton as ClerkSignOutButton } from "@clerk/nextjs";
 
 type Props = {
   className?: string;
@@ -9,12 +9,10 @@ type Props = {
 
 export function SignOutButton({ className, children = "ログアウト" }: Props) {
   return (
-    <button
-      type="button"
-      onClick={() => signOut({ callbackUrl: "/login" })}
-      className={className}
-    >
-      {children}
-    </button>
+    <ClerkSignOutButton redirectUrl="/login">
+      <button type="button" className={className}>
+        {children}
+      </button>
+    </ClerkSignOutButton>
   );
 }
