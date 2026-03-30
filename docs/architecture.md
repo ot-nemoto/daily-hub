@@ -14,7 +14,6 @@
 | 認証 | Clerk (@clerk/nextjs v7, @clerk/backend v3) | eval-hubと同一Clerkアプリを共有・セッション共有。clerkId経由でDBユーザーと紐付け |
 | ホスティング | Vercel (Hobby) | Next.jsの開発元、無料枠・無期限、デプロイが最も簡単 |
 | ユニットテスト | Vitest + Testing Library | 高速、Vite互換、React コンポーネントテスト対応 |
-| E2Eテスト | Playwright | ブラウザ操作・認証フロー・フォーム送信の自動テスト |
 | 開発サーバー | Turbopack | Next.js 16 デフォルト、HMR が高速 |
 | パッケージ管理 | npm | devcontainerのデフォルト環境に合わせる |
 
@@ -75,11 +74,9 @@ daily-hub/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
 │   │   └── auth.ts     # getSession()（Clerk + DB統合）
 │   └── types/          # 共通型定義
-├── e2e/                # Playwright E2Eテスト
 ├── CLAUDE.md
 ├── biome.json          # Biome 設定
 ├── vitest.config.ts    # Vitest 設定
-├── playwright.config.ts # Playwright 設定
 └── package.json
 ```
 
