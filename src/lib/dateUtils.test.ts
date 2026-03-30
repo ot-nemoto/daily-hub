@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { currentMonth, isValidDate, isValidMonth, monthRange, startOfTodayUtc, today } from "./dateUtils";
 
@@ -46,18 +46,22 @@ describe("isValidDate", () => {
 });
 
 describe("today", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-06-15T10:00:00"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("正常系: YYYY-MM-DD 形式を返す", () => {
     const result = today();
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   it("正常系: 今日の年月日と一致する", () => {
-    const now = new Date();
     const result = today();
-    const [year, month, day] = result.split("-").map(Number);
-    expect(year).toBe(now.getFullYear());
-    expect(month).toBe(now.getMonth() + 1);
-    expect(day).toBe(now.getDate());
+    expect(result).toBe("2025-06-15");
   });
 });
 
