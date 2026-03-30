@@ -11,7 +11,7 @@
 
 - `/reports/daily` / `/reports/new` / `/reports/[id]` に未ログインでアクセス
 - サインイン成功後に `/reports/daily` に戻るか
-- `isActive=false` のユーザーでログインしたとき `/auth-error` にリダイレクトされるか
+- `isActive=false` のユーザーでログインしたとき保護ページにアクセスできず `/login` に戻されるか
 
 ---
 
