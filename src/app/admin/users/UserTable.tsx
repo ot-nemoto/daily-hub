@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type User = {
   id: string;
@@ -28,6 +28,48 @@ export function UserTable({
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
   const [deleteNameInput, setDeleteNameInput] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // モーダル表示時に input へ自動フォーカス
+  useEffect(() => {
+    if (deleteDialog) {
+      inputRef.current?.focus();
+    }
+  }, [deleteDialog]);
+
+  // ESC キーでダイアログを閉じる
+  useEffect(() => {
+    if (!deleteDialog) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setDeleteDialog(null);
+        setDeleteNameInput("");
+        setDeleteError("");
+      }
+      // フォーカストラップ: Tab キーをダイアログ内に限定
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [deleteDialog]);
 
   async function handleRoleChange(id: string, role: string) {
     setLoading(`role-${id}`);
@@ -167,8 +209,8 @@ export function UserTable({
 
       {/* 削除確認ダイアログ */}
       {deleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" aria-modal="true" role="dialog">
+          <div ref={dialogRef} className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
             <h2 className="mb-2 text-base font-bold text-zinc-900">ユーザーを削除</h2>
             <p className="mb-4 text-sm text-zinc-600">
               <span className="font-medium text-zinc-900">{deleteDialog.userName}</span>{" "}
@@ -177,6 +219,7 @@ export function UserTable({
               確認のため、ユーザー名を入力してください。
             </p>
             <input
+              ref={inputRef}
               type="text"
               value={deleteNameInput}
               onChange={(e) => { setDeleteNameInput(e.target.value); setDeleteError(""); }}
