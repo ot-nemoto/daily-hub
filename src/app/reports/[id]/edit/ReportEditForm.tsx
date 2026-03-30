@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
-import { parseApiError } from "@/lib/apiError";
+import { type FieldErrors, parseFieldErrors } from "@/lib/apiError";
 
 type Props = {
   id: string;
@@ -15,15 +15,24 @@ type Props = {
   };
 };
 
+const MAX_LENGTH = 5000;
+
 export function ReportEditForm({ id, defaultValues }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [pending, setPending] = useState(false);
+  const [counts, setCounts] = useState({
+    workContent: defaultValues.workContent.length,
+    tomorrowPlan: defaultValues.tomorrowPlan.length,
+    notes: defaultValues.notes.length,
+  });
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError(null);
+    setFieldErrors({});
 
     const data = new FormData(e.currentTarget);
     try {
@@ -40,7 +49,9 @@ export function ReportEditForm({ id, defaultValues }: Props) {
       if (res.status === 403) {
         setError("この日報を編集する権限がありません");
       } else if (!res.ok) {
-        setError(await parseApiError(res, "保存に失敗しました。入力内容を確認してください"));
+        const parsed = await parseFieldErrors(res);
+        setError(parsed.message);
+        setFieldErrors(parsed.fieldErrors);
       } else {
         router.push(`/reports/${id}`);
         router.refresh();
@@ -63,11 +74,18 @@ export function ReportEditForm({ id, defaultValues }: Props) {
           id="workContent"
           name="workContent"
           required
-          maxLength={5000}
+          maxLength={MAX_LENGTH}
           rows={6}
           defaultValue={defaultValues.workContent}
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          onChange={(e) => setCounts((prev) => ({ ...prev, workContent: e.target.value.length }))}
         />
+        <p className={`mt-1 text-right text-xs ${counts.workContent > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+          {counts.workContent.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
+        </p>
+        {fieldErrors.workContent?.[0] && (
+          <p className="text-xs text-red-600">{fieldErrors.workContent[0]}</p>
+        )}
       </div>
       <div>
         <label htmlFor="tomorrowPlan" className="block text-sm font-medium text-zinc-700">
@@ -77,11 +95,18 @@ export function ReportEditForm({ id, defaultValues }: Props) {
           id="tomorrowPlan"
           name="tomorrowPlan"
           required
-          maxLength={5000}
+          maxLength={MAX_LENGTH}
           rows={4}
           defaultValue={defaultValues.tomorrowPlan}
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          onChange={(e) => setCounts((prev) => ({ ...prev, tomorrowPlan: e.target.value.length }))}
         />
+        <p className={`mt-1 text-right text-xs ${counts.tomorrowPlan > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+          {counts.tomorrowPlan.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
+        </p>
+        {fieldErrors.tomorrowPlan?.[0] && (
+          <p className="text-xs text-red-600">{fieldErrors.tomorrowPlan[0]}</p>
+        )}
       </div>
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-zinc-700">
@@ -91,11 +116,18 @@ export function ReportEditForm({ id, defaultValues }: Props) {
         <textarea
           id="notes"
           name="notes"
-          maxLength={5000}
+          maxLength={MAX_LENGTH}
           rows={3}
           defaultValue={defaultValues.notes}
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          onChange={(e) => setCounts((prev) => ({ ...prev, notes: e.target.value.length }))}
         />
+        <p className={`mt-1 text-right text-xs ${counts.notes > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+          {counts.notes.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
+        </p>
+        {fieldErrors.notes?.[0] && (
+          <p className="text-xs text-red-600">{fieldErrors.notes[0]}</p>
+        )}
       </div>
       <div className="flex gap-3">
         <button

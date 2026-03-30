@@ -4,18 +4,23 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
-import { parseApiError } from "@/lib/apiError";
+import { type FieldErrors, parseFieldErrors } from "@/lib/apiError";
 import { today } from "@/lib/dateUtils";
+
+const MAX_LENGTH = 5000;
 
 export function ReportNewForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [pending, setPending] = useState(false);
+  const [counts, setCounts] = useState({ workContent: 0, tomorrowPlan: 0, notes: 0 });
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError(null);
+    setFieldErrors({});
 
     const data = new FormData(e.currentTarget);
     try {
@@ -33,7 +38,9 @@ export function ReportNewForm() {
       if (res.status === 409) {
         setError("この日付の日報はすでに作成済みです");
       } else if (!res.ok) {
-        setError(await parseApiError(res, "保存に失敗しました。入力内容を確認してください"));
+        const parsed = await parseFieldErrors(res);
+        setError(parsed.message);
+        setFieldErrors(parsed.fieldErrors);
       } else {
         const { id } = await res.json();
         router.push(`/reports/${id}`);
@@ -60,6 +67,9 @@ export function ReportNewForm() {
           defaultValue={today()}
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
         />
+        {fieldErrors.date?.[0] && (
+          <p className="mt-1 text-xs text-red-600">{fieldErrors.date[0]}</p>
+        )}
       </div>
       <div>
         <label htmlFor="workContent" className="block text-sm font-medium text-zinc-700">
@@ -69,10 +79,17 @@ export function ReportNewForm() {
           id="workContent"
           name="workContent"
           required
-          maxLength={5000}
+          maxLength={MAX_LENGTH}
           rows={6}
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          onChange={(e) => setCounts((prev) => ({ ...prev, workContent: e.target.value.length }))}
         />
+        <p className={`mt-1 text-right text-xs ${counts.workContent > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+          {counts.workContent.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
+        </p>
+        {fieldErrors.workContent?.[0] && (
+          <p className="text-xs text-red-600">{fieldErrors.workContent[0]}</p>
+        )}
       </div>
       <div>
         <label htmlFor="tomorrowPlan" className="block text-sm font-medium text-zinc-700">
@@ -82,10 +99,17 @@ export function ReportNewForm() {
           id="tomorrowPlan"
           name="tomorrowPlan"
           required
-          maxLength={5000}
+          maxLength={MAX_LENGTH}
           rows={4}
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          onChange={(e) => setCounts((prev) => ({ ...prev, tomorrowPlan: e.target.value.length }))}
         />
+        <p className={`mt-1 text-right text-xs ${counts.tomorrowPlan > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+          {counts.tomorrowPlan.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
+        </p>
+        {fieldErrors.tomorrowPlan?.[0] && (
+          <p className="text-xs text-red-600">{fieldErrors.tomorrowPlan[0]}</p>
+        )}
       </div>
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-zinc-700">
@@ -95,10 +119,17 @@ export function ReportNewForm() {
         <textarea
           id="notes"
           name="notes"
-          maxLength={5000}
+          maxLength={MAX_LENGTH}
           rows={3}
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          onChange={(e) => setCounts((prev) => ({ ...prev, notes: e.target.value.length }))}
         />
+        <p className={`mt-1 text-right text-xs ${counts.notes > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+          {counts.notes.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
+        </p>
+        {fieldErrors.notes?.[0] && (
+          <p className="text-xs text-red-600">{fieldErrors.notes[0]}</p>
+        )}
       </div>
       <div className="flex gap-3">
         <button
