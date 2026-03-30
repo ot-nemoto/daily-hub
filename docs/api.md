@@ -5,6 +5,28 @@
 
 ---
 
+## エンドポイント一覧
+
+| メソッド | パス | 概要 | 認可 |
+|---------|------|------|------|
+| PATCH | `/api/me` | ログイン中ユーザーの名前変更 | 要ログイン |
+| GET | `/api/users` | ユーザー一覧取得 | 要ログイン |
+| GET | `/api/reports` | 日報一覧取得（日次・月次） | 要ログイン |
+| POST | `/api/reports` | 日報作成 | VIEWER 以外（MEMBER・ADMIN） |
+| GET | `/api/reports/[id]` | 日報詳細取得 | 要ログイン |
+| PUT | `/api/reports/[id]` | 日報編集 | 本人かつ VIEWER 以外（MEMBER・ADMIN） |
+| GET | `/api/reports/[id]/comments` | コメント一覧取得 | 要ログイン |
+| POST | `/api/reports/[id]/comments` | コメント追加 | 要ログイン |
+| DELETE | `/api/reports/[id]/comments/[commentId]` | コメント削除 | 本人のみ |
+| GET | `/api/admin/users` | ユーザー一覧取得（管理用） | ADMIN のみ |
+| POST | `/api/admin/users` | ユーザー作成 | ADMIN のみ |
+| PATCH | `/api/admin/users/[id]` | ユーザー情報更新（ロール・有効化） | ADMIN のみ |
+| DELETE | `/api/admin/users/[id]` | ユーザー完全削除 | ADMIN のみ |
+| POST | `/api/admin/invitations` | 招待リンク発行 | ADMIN のみ |
+| GET | `/api/admin/invitations` | 招待リンク一覧取得 | ADMIN のみ |
+
+---
+
 ## ユーザー
 
 ### PATCH /api/me
@@ -201,7 +223,7 @@
 
 ## 管理者（ADMIN ロール必須）
 
-> 全エンドポイントは `ADMIN` ロールのユーザーのみアクセス可能。`ADMIN` 以外は `403 Forbidden`。
+> 全エンドポイントは `ADMIN` ロールのユーザーのみアクセス可能。未認証・`ADMIN` 以外のロールを問わず `403 Forbidden` を返す（401 は返さない）。
 
 ### GET /api/admin/users
 ユーザー一覧取得（管理画面用）
@@ -295,12 +317,10 @@
 {
   "id": "cuid",
   "token": "uuid-token",
-  "inviteUrl": "https://daily-hub.vercel.app/signup?token=uuid-token",
+  "inviteUrl": "https://daily-hub.vercel.app/login",
   "expiresAt": "2026-03-14T00:00:00Z"
 }
 ```
-
-- `inviteUrl` の `/signup` ページは Phase 7b で別途実装予定（現時点では未実装）
 
 **Errors**
 - `400` — メールアドレス形式が不正
@@ -316,13 +336,51 @@
   {
     "id": "cuid",
     "email": "invite@example.com",
-    "inviteUrl": "https://daily-hub.vercel.app/signup?token=uuid-token",
+    "inviteUrl": "https://daily-hub.vercel.app/login",
     "expiresAt": "2026-03-14T00:00:00Z",
     "usedAt": null,
     "createdAt": "2026-03-11T00:00:00Z"
   }
 ]
 ```
+
+---
+
+## エラーレスポンス定義
+
+### 共通レスポンス形式
+
+エラーは JSON 形式で統一して返す。
+
+```json
+{ "error": "エラーメッセージ" }
+```
+
+ほとんどのエンドポイントではバリデーションエラー時に Zod の `flatten()` 形式を返す。
+
+```json
+{
+  "error": {
+    "formErrors": [],
+    "fieldErrors": {
+      "date": ["YYYY-MM-DD 形式で入力してください"],
+      "workContent": ["必須項目です"]
+    }
+  }
+}
+```
+
+ただし `PATCH /api/me` は内部的に flatten() を使って最初のエラーメッセージを取り出し、`{ "error": "文字列" }` の形式で返す。
+
+### 共通ステータスコード
+
+| ステータス | 説明 |
+|-----------|------|
+| `400 Bad Request` | バリデーション失敗（フィールド不足・形式不正など） |
+| `401 Unauthorized` | 未認証（Clerk セッションなし） |
+| `403 Forbidden` | 認可エラー（他ユーザーのリソースへのアクセス、権限不足） |
+| `404 Not Found` | 指定リソースが存在しない |
+| `409 Conflict` | リソースの重複（同日日報など） |
 
 ---
 
