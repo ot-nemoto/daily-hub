@@ -28,10 +28,7 @@ NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
 
 # ローカル開発用モック（Clerk をバイパスして DB ユーザーを直接使用）
-# MOCK_USER_ID と MOCK_USER_EMAIL は同時に設定しない（MOCK_USER_ID が優先される）
-# 対象ユーザーが DB に存在しない場合は console.error が出力され getSession() は null を返す
 MOCK_USER_ID=<DB の users.id>
-# MOCK_USER_EMAIL=<DB の users.email>
 ```
 
 ### 設定済み MCP サーバー
