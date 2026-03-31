@@ -13,14 +13,21 @@ export type Session = {
   };
 };
 
-export async function getSession(): Promise<Session | null> {
+export async function getSession(options?: { redirectOnInactive?: boolean }): Promise<Session | null> {
+  const redirectOnInactive = options?.redirectOnInactive ?? false;
+
   // 非本番環境: MOCK_USER_ID が設定されている場合は DB から直接セッションを返す
   if (process.env.NODE_ENV !== "production" && process.env.MOCK_USER_ID) {
     const user = await prisma.user.findUnique({
       where: { id: process.env.MOCK_USER_ID },
       select: { id: true, name: true, role: true, isActive: true },
     });
-    return user ? { user } : null;
+    if (!user) return null;
+    if (!user.isActive) {
+      if (redirectOnInactive) redirect("/auth-error?reason=inactive");
+      return null;
+    }
+    return { user };
   }
 
   const { userId } = await auth();
@@ -88,10 +95,11 @@ export async function getSession(): Promise<Session | null> {
     }
   }
 
-  // isActive=false のユーザーは /auth-error にリダイレクト
-  // API ルートからの呼び出し時も同様に redirect するが、
-  // 未認証（Clerk セッションなし）の場合は null を返して各 API ルートが 401 を返す
-  if (!user.isActive) redirect("/auth-error?reason=inactive");
+  // isActive=false のユーザー: ページ（redirectOnInactive=true）はリダイレクト、API は null を返す
+  if (!user.isActive) {
+    if (redirectOnInactive) redirect("/auth-error?reason=inactive");
+    return null;
+  }
 
   return { user };
 }

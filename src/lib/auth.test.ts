@@ -69,6 +69,23 @@ describe("getSession", () => {
       expect(result).toBeNull();
       expect(mockAuth).not.toHaveBeenCalled();
     });
+
+    it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+
+    it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
   });
 
   it("Clerk にユーザーがいない場合は null を返す", async () => {
@@ -185,13 +202,23 @@ describe("getSession", () => {
       expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
-    it("isActive=false のユーザーは /auth-error?reason=inactive にリダイレクトする", async () => {
+    it("isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
       // @ts-expect-error
       mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
 
-      await expect(getSession()).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+    });
+
+    it("isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
+      // @ts-expect-error
+      mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      const result = await getSession();
+      expect(result).toBeNull();
     });
 
     it("既に別の clerkId に紐付き済みの DB ユーザーは /auth-error にリダイレクトする", async () => {

@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function ReportNewPage() {
-  const session = await getSession();
+  const session = await getSession({ redirectOnInactive: true });
   if (!session) redirect("/login");
   if (session.user.role === "VIEWER") redirect("/reports/daily");
 

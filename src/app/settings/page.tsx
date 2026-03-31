@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { SettingsForm } from "./SettingsForm";
 
 export default async function SettingsPage() {
-  const session = await getSession();
+  const session = await getSession({ redirectOnInactive: true });
   if (!session?.user) redirect("/login");
 
   const dbUser = await prisma.user.findUnique({
