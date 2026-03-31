@@ -30,21 +30,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  reports     Report[]
-  comments    Comment[]
-  invitations Invitation[] @relation("InvitedBy")
-}
-
-model Invitation {
-  id          String    @id @default(cuid())
-  token       String    @unique                               // URL に埋め込む使い捨てトークン
-  email       String?                                         // 招待先メール（任意、指定時はそのメールのみ利用可）
-  expiresAt   DateTime  @map("expires_at")                   // 有効期限（発行から72時間）
-  usedAt      DateTime? @map("used_at")                      // 使用済み日時（null = 未使用）
-  createdAt   DateTime  @default(now()) @map("created_at")
-
-  invitedById String @map("invited_by_id")
-  invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id])
+  reports  Report[]
+  comments Comment[]
 }
 
 model Report {
@@ -111,19 +98,8 @@ erDiagram
         String authorId FK
         DateTime createdAt
     }
-    Invitation {
-        String id PK
-        String token UK
-        String email "nullable"
-        DateTime expiresAt
-        DateTime usedAt "nullable"
-        String invitedById FK
-        DateTime createdAt
-    }
-
     User ||--o{ Report : "作成"
     User ||--o{ Comment : "投稿"
-    User ||--o{ Invitation : "発行"
     Report ||--o{ Comment : "コメント"
 ```
 
@@ -143,18 +119,6 @@ erDiagram
 | isActive | Boolean | `false` でログイン不可（データは保持）、デフォルト `true` |
 | createdAt | DateTime | 作成日時 |
 | updatedAt | DateTime | 更新日時 |
-
-### Invitation（Phase 7b）
-
-| カラム | 型 | 説明 |
-|--------|-----|------|
-| id | String (CUID) | 主キー |
-| token | String | ユニーク、URLに埋め込む使い捨てトークン（`crypto.randomUUID()`） |
-| email | String? | 招待先メール（任意、指定時はそのメールのみ利用可） |
-| expiresAt | DateTime | 有効期限（発行から72時間） |
-| usedAt | DateTime? | 使用済み日時（null = 未使用） |
-| invitedById | String | 外部キー → User.id（招待した管理者） |
-| createdAt | DateTime | 作成日時 |
 
 ### Report
 
@@ -191,7 +155,6 @@ erDiagram
 | Report | `date` | 日次ビュー（特定日付の全ユーザー日報取得） |
 | Report | `(authorId, date)` | ユニーク制約として自動作成。月次ビュー用インデックスを兼ねる |
 | Comment | `reportId` | 日報詳細のコメント取得 |
-| Invitation | `token` | 招待リンクのトークン検索 |
 
 ---
 

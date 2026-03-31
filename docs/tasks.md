@@ -76,7 +76,7 @@
 - [Issues — Phase 5: 仕上げ・品質](https://github.com/ot-nemoto/daily-hub/milestone/1)
 - [Issues — Phase 6: Vercel デプロイ](https://github.com/ot-nemoto/daily-hub/milestone/2)
 - [Issues — Phase 7a: ユーザー管理（最小構成）](https://github.com/ot-nemoto/daily-hub/milestone/3)
-- [Issues — Phase 7b: ユーザー招待・追加](https://github.com/ot-nemoto/daily-hub/milestone/4)
+- [Issues — Phase 7b: ユーザー招待・追加](https://github.com/ot-nemoto/daily-hub/milestone/4)（廃止 — Clerk の機能で代替。#102 参照）
 - [Issues — Phase 7c: 詳細管理](https://github.com/ot-nemoto/daily-hub/milestone/5)
 - [Issues — Phase 8: CI/CD](https://github.com/ot-nemoto/daily-hub/milestone/6)
 - [Issues — Phase 9: 個人管理](https://github.com/ot-nemoto/daily-hub/milestone/7)

@@ -23,25 +23,10 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  reports     Report[]
-  comments    Comment[]
-  invitations Invitation[] @relation("InvitedBy")
+  reports  Report[]
+  comments Comment[]
 
   @@map("User")
-}
-
-model Invitation {
-  id          String    @id @default(cuid())
-  token       String    @unique
-  email       String?
-  expiresAt   DateTime  @map("expires_at")
-  usedAt      DateTime? @map("used_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-
-  invitedById String @map("invited_by_id")
-  invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id])
-
-  @@map("Invitation")
 }
 
 model Report {

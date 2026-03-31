@@ -58,19 +58,15 @@ daily-hub/
 │   │   │   │   └── route.ts        # GET(ユーザー一覧)
 │   │   │   └── admin/              # 管理者専用API（Phase 7）
 │   │   │       ├── users/
-│   │   │       │   ├── route.ts    # GET(一覧), POST(作成)
+│   │   │       │   ├── route.ts    # GET(一覧)
 │   │   │       │   └── [id]/
 │   │   │       │       └── route.ts # PATCH(更新), DELETE(削除)
-│   │   │       └── invitations/
-│   │   │           └── route.ts    # GET(一覧), POST(発行)
+
 │   │   ├── settings/
 │   │   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
 │   │   └── admin/                  # 管理画面ページ（Phase 7）
-│   │       ├── users/
-│   │       │   ├── page.tsx        # ユーザー一覧
-│   │       │   └── new/page.tsx    # ユーザー作成（Phase 7b）
-│   │       └── invitations/
-│   │           └── page.tsx        # 招待リンク発行・一覧（Phase 7b）
+│   │       └── users/
+│   │           └── page.tsx        # ユーザー一覧
 │   ├── components/     # 再利用UIコンポーネント
 │   ├── lib/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
