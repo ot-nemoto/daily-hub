@@ -33,7 +33,7 @@
     → Clerk の auth() で userId を取得
     → userId で DB の clerkId を検索
     → 未ヒット: メールで突合し clerkId を自動紐付け（初回ログイン）
-    → DB 未存在の新規ユーザーは自動作成（DB にユーザーが0人なら role="ADMIN"、1人以上なら role="MEMBER"）
+    → DB 未存在の新規ユーザーは自動作成（DB にユーザーが0人なら role="ADMIN"、1人以上なら role="MEMBER"。並行初回ログイン時に複数 ADMIN が作成される可能性はチームツールの性質上まれなケースとして許容）
     → isActive === false → /auth-error?reason=inactive にリダイレクト
     → 削除済みユーザーが同一メール・Clerk アカウントで再ログインした場合は新規 MEMBER として自動再作成
   → セッションなし（未認証）→ null を返す（API は 401、画面は /login へ）
