@@ -11,7 +11,7 @@ export default async function ReportDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [session, { id }] = await Promise.all([getSession(), params]);
+  const [session, { id }] = await Promise.all([getSession({ redirectOnInactive: true }), params]);
 
   const report = await prisma.report.findUnique({
     where: { id },

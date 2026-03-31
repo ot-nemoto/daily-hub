@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { UserTable } from "./UserTable";
 
 export default async function AdminUsersPage() {
-  const session = await getSession();
+  const session = await getSession({ redirectOnInactive: true });
   if (!session?.user) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/");
 
