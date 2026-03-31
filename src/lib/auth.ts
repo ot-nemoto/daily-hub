@@ -88,7 +88,10 @@ export async function getSession(): Promise<Session | null> {
     }
   }
 
-  if (!user.isActive) return null;
+  // isActive=false のユーザーは /auth-error にリダイレクト
+  // API ルートからの呼び出し時も同様に redirect するが、
+  // 未認証（Clerk セッションなし）の場合は null を返して各 API ルートが 401 を返す
+  if (!user.isActive) redirect("/auth-error?reason=inactive");
 
   return { user };
 }

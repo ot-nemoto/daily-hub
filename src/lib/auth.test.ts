@@ -185,14 +185,13 @@ describe("getSession", () => {
       expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
-    it("isActive=false のユーザーは null を返す", async () => {
+    it("isActive=false のユーザーは /auth-error?reason=inactive にリダイレクトする", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
       // @ts-expect-error
       mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
 
-      const result = await getSession();
-      expect(result).toBeNull();
+      await expect(getSession()).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
     });
 
     it("既に別の clerkId に紐付き済みの DB ユーザーは /auth-error にリダイレクトする", async () => {
