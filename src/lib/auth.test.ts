@@ -96,7 +96,8 @@ describe("getSession", () => {
     const originalEnv = process.env;
 
     beforeEach(() => {
-      process.env = { ...originalEnv, NODE_ENV: "development", MOCK_USER_EMAIL: "mock@example.com" };
+      const { MOCK_USER_ID, ...envWithoutMockUserId } = originalEnv;
+      process.env = { ...envWithoutMockUserId, NODE_ENV: "development", MOCK_USER_EMAIL: "mock@example.com" };
     });
 
     afterEach(() => {
