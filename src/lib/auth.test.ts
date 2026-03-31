@@ -16,6 +16,7 @@ vi.mock("./prisma", () => ({
       findUnique: vi.fn(),
       updateMany: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -29,6 +30,7 @@ const mockCurrentUser = vi.mocked(currentUser);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUpdateMany = vi.mocked(prisma.user.updateMany);
 const mockCreate = vi.mocked(prisma.user.create);
+const mockCount = vi.mocked(prisma.user.count);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -236,7 +238,7 @@ describe("getSession", () => {
       });
     });
 
-    it("DB に存在しない新規サインアップユーザーを自動作成してセッションを返す", async () => {
+    it("DB にユーザーが存在しない場合（初回ログイン）は ADMIN ロールで自動作成してセッションを返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-new123" });
       // @ts-expect-error
@@ -246,18 +248,49 @@ describe("getSession", () => {
       // @ts-expect-error
       mockCurrentUser.mockResolvedValue({
         primaryEmailAddress: { emailAddress: "new@example.com" },
+        fullName: "初回ユーザー",
+        firstName: null,
+      });
+      // @ts-expect-error
+      mockCount.mockResolvedValue(0); // DB にユーザーなし
+      // @ts-expect-error
+      mockCreate.mockResolvedValue({ id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true });
+
+      const result = await getSession();
+      expect(result).toEqual({
+        user: { id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true },
+      });
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: { clerkId: "clerk-new123", email: "new@example.com", name: "初回ユーザー", role: "ADMIN" },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+      expect(mockUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it("DB にユーザーが既に存在する場合は MEMBER ロールで自動作成してセッションを返す", async () => {
+      // @ts-expect-error
+      mockAuth.mockResolvedValue({ userId: "clerk-new456" });
+      // @ts-expect-error
+      mockFindUnique
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
+        .mockResolvedValueOnce(null); // email 検索 → 未ヒット
+      // @ts-expect-error
+      mockCurrentUser.mockResolvedValue({
+        primaryEmailAddress: { emailAddress: "new2@example.com" },
         fullName: "新規ユーザー",
         firstName: null,
       });
       // @ts-expect-error
-      mockCreate.mockResolvedValue({ id: "new-uuid", name: "新規ユーザー", role: "MEMBER", isActive: true });
+      mockCount.mockResolvedValue(1); // DB にユーザーあり
+      // @ts-expect-error
+      mockCreate.mockResolvedValue({ id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true });
 
       const result = await getSession();
       expect(result).toEqual({
-        user: { id: "new-uuid", name: "新規ユーザー", role: "MEMBER", isActive: true },
+        user: { id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true },
       });
       expect(mockCreate).toHaveBeenCalledWith({
-        data: { clerkId: "clerk-new123", email: "new@example.com", name: "新規ユーザー", role: "MEMBER" },
+        data: { clerkId: "clerk-new456", email: "new2@example.com", name: "新規ユーザー", role: "MEMBER" },
         select: { id: true, name: true, role: true, isActive: true },
       });
       expect(mockUpdateMany).not.toHaveBeenCalled();
