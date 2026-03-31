@@ -58,7 +58,7 @@ daily-hub/
 │   │   │   │   └── route.ts        # GET(ユーザー一覧)
 │   │   │   └── admin/              # 管理者専用API（Phase 7）
 │   │   │       ├── users/
-│   │   │       │   ├── route.ts    # GET(一覧), POST(作成)
+│   │   │       │   ├── route.ts    # GET(一覧)
 │   │   │       │   └── [id]/
 │   │   │       │       └── route.ts # PATCH(更新), DELETE(削除)
 
