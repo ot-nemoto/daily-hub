@@ -28,7 +28,8 @@
 ```
 クライアント → リクエスト
   → getSession() を呼び出し
-    → MOCK_USER_ID が設定されている場合（非本番）: DB から直接返す
+    → MOCK_USER_ID が設定されている場合（非本番）: id で DB を検索して直接返す（未存在なら console.error + null）
+    → MOCK_USER_EMAIL が設定されている場合（非本番）: email で DB を検索して直接返す（未存在なら console.error + null）
     → Clerk の auth() で userId を取得
     → userId で DB の clerkId を検索
     → 未ヒット: メールで突合し clerkId を自動紐付け（初回ログイン）
@@ -114,7 +115,8 @@ const userId = session?.user?.id;
 | `CLERK_SECRET_KEY` | Clerk のシークレットキー |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | サインイン URL（`/login`） |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | サインイン後のデフォルトリダイレクト先 |
-| `MOCK_USER_ID` | 非本番環境でのモックユーザー ID（Clerk をバイパス） |
+| `MOCK_USER_ID` | 非本番環境でのモックユーザー ID（Clerk をバイパス。対象未存在時は `console.error` + `null`） |
+| `MOCK_USER_EMAIL` | 非本番環境でのモックユーザーメール（Clerk をバイパス。`MOCK_USER_ID` との同時設定は推奨しない（設定した場合は ID 優先）。対象未存在時は `console.error` + `null`） |
 
 ---
 

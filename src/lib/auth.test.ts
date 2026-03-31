@@ -39,7 +39,8 @@ describe("getSession", () => {
     const originalEnv = process.env;
 
     beforeEach(() => {
-      process.env = { ...originalEnv, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
+      const { MOCK_USER_EMAIL, ...envWithoutMockUserEmail } = originalEnv;
+      process.env = { ...envWithoutMockUserEmail, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
     });
 
     afterEach(() => {
@@ -61,13 +62,16 @@ describe("getSession", () => {
       });
     });
 
-    it("MOCK_USER_ID に対応する DB ユーザーが存在しない場合は null を返す", async () => {
+    it("MOCK_USER_ID に対応する DB ユーザーが存在しない場合は console.error を出力し null を返す", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       // @ts-expect-error
       mockFindUnique.mockResolvedValue(null);
 
       const result = await getSession();
       expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("MOCK_USER_ID"));
       expect(mockAuth).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
 
     it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
@@ -81,6 +85,63 @@ describe("getSession", () => {
     it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
       // @ts-expect-error
       mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("MOCK_USER_EMAIL モード（非本番環境）", () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      const { MOCK_USER_ID, ...envWithoutMockUserId } = originalEnv;
+      process.env = { ...envWithoutMockUserId, NODE_ENV: "development", MOCK_USER_EMAIL: "mock@example.com" };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it("MOCK_USER_EMAIL に対応する DB ユーザーのセッションを返す", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "モックユーザー", role: "MEMBER", isActive: true });
+
+      const result = await getSession();
+      expect(result).toEqual({
+        user: { id: "user-uuid", name: "モックユーザー", role: "MEMBER", isActive: true },
+      });
+      expect(mockAuth).not.toHaveBeenCalled();
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { email: "mock@example.com" },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+    });
+
+    it("MOCK_USER_EMAIL に対応する DB ユーザーが存在しない場合は console.error を出力し null を返す", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue(null);
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("MOCK_USER_EMAIL"));
+      expect(mockAuth).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it("MOCK_USER_EMAIL ユーザーが isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+
+    it("MOCK_USER_EMAIL ユーザーが isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
 
       const result = await getSession();
       expect(result).toBeNull();

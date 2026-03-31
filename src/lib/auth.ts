@@ -16,18 +16,39 @@ export type Session = {
 export async function getSession(options?: { redirectOnInactive?: boolean }): Promise<Session | null> {
   const redirectOnInactive = options?.redirectOnInactive ?? false;
 
-  // 非本番環境: MOCK_USER_ID が設定されている場合は DB から直接セッションを返す
-  if (process.env.NODE_ENV !== "production" && process.env.MOCK_USER_ID) {
-    const user = await prisma.user.findUnique({
-      where: { id: process.env.MOCK_USER_ID },
-      select: { id: true, name: true, role: true, isActive: true },
-    });
-    if (!user) return null;
-    if (!user.isActive) {
-      if (redirectOnInactive) redirect("/auth-error?reason=inactive");
-      return null;
+  // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合は DB から直接セッションを返す
+  if (process.env.NODE_ENV !== "production") {
+    if (process.env.MOCK_USER_ID) {
+      const user = await prisma.user.findUnique({
+        where: { id: process.env.MOCK_USER_ID },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+      if (!user) {
+        console.error(`[MOCK] MOCK_USER_ID="${process.env.MOCK_USER_ID}" に対応するユーザーが DB に存在しません`);
+        return null;
+      }
+      if (!user.isActive) {
+        if (redirectOnInactive) redirect("/auth-error?reason=inactive");
+        return null;
+      }
+      return { user };
     }
-    return { user };
+
+    if (process.env.MOCK_USER_EMAIL) {
+      const user = await prisma.user.findUnique({
+        where: { email: process.env.MOCK_USER_EMAIL },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+      if (!user) {
+        console.error(`[MOCK] MOCK_USER_EMAIL="${process.env.MOCK_USER_EMAIL}" に対応するユーザーが DB に存在しません`);
+        return null;
+      }
+      if (!user.isActive) {
+        if (redirectOnInactive) redirect("/auth-error?reason=inactive");
+        return null;
+      }
+      return { user };
+    }
   }
 
   const { userId } = await auth();
