@@ -16,6 +16,7 @@ vi.mock("./prisma", () => ({
       findUnique: vi.fn(),
       updateMany: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -29,6 +30,7 @@ const mockCurrentUser = vi.mocked(currentUser);
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUpdateMany = vi.mocked(prisma.user.updateMany);
 const mockCreate = vi.mocked(prisma.user.create);
+const mockCount = vi.mocked(prisma.user.count);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -39,7 +41,8 @@ describe("getSession", () => {
     const originalEnv = process.env;
 
     beforeEach(() => {
-      process.env = { ...originalEnv, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
+      const { MOCK_USER_EMAIL, ...envWithoutMockUserEmail } = originalEnv;
+      process.env = { ...envWithoutMockUserEmail, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
     });
 
     afterEach(() => {
@@ -61,9 +64,86 @@ describe("getSession", () => {
       });
     });
 
-    it("MOCK_USER_ID に対応する DB ユーザーが存在しない場合は null を返す", async () => {
+    it("MOCK_USER_ID に対応する DB ユーザーが存在しない場合は console.error を出力し null を返す", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       // @ts-expect-error
       mockFindUnique.mockResolvedValue(null);
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("MOCK_USER_ID"));
+      expect(mockAuth).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+
+    it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("MOCK_USER_EMAIL モード（非本番環境）", () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      const { MOCK_USER_ID, ...envWithoutMockUserId } = originalEnv;
+      process.env = { ...envWithoutMockUserId, NODE_ENV: "development", MOCK_USER_EMAIL: "mock@example.com" };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it("MOCK_USER_EMAIL に対応する DB ユーザーのセッションを返す", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "モックユーザー", role: "MEMBER", isActive: true });
+
+      const result = await getSession();
+      expect(result).toEqual({
+        user: { id: "user-uuid", name: "モックユーザー", role: "MEMBER", isActive: true },
+      });
+      expect(mockAuth).not.toHaveBeenCalled();
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { email: "mock@example.com" },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+    });
+
+    it("MOCK_USER_EMAIL に対応する DB ユーザーが存在しない場合は console.error を出力し null を返す", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue(null);
+
+      const result = await getSession();
+      expect(result).toBeNull();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("MOCK_USER_EMAIL"));
+      expect(mockAuth).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it("MOCK_USER_EMAIL ユーザーが isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      expect(mockAuth).not.toHaveBeenCalled();
+    });
+
+    it("MOCK_USER_EMAIL ユーザーが isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
 
       const result = await getSession();
       expect(result).toBeNull();
@@ -158,7 +238,7 @@ describe("getSession", () => {
       });
     });
 
-    it("DB に存在しない新規サインアップユーザーを自動作成してセッションを返す", async () => {
+    it("DB にユーザーが存在しない場合（初回ログイン）は ADMIN ロールで自動作成してセッションを返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-new123" });
       // @ts-expect-error
@@ -168,24 +248,64 @@ describe("getSession", () => {
       // @ts-expect-error
       mockCurrentUser.mockResolvedValue({
         primaryEmailAddress: { emailAddress: "new@example.com" },
-        fullName: "新規ユーザー",
+        fullName: "初回ユーザー",
         firstName: null,
       });
       // @ts-expect-error
-      mockCreate.mockResolvedValue({ id: "new-uuid", name: "新規ユーザー", role: "MEMBER", isActive: true });
+      mockCount.mockResolvedValue(0); // DB にユーザーなし
+      // @ts-expect-error
+      mockCreate.mockResolvedValue({ id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true });
 
       const result = await getSession();
       expect(result).toEqual({
-        user: { id: "new-uuid", name: "新規ユーザー", role: "MEMBER", isActive: true },
+        user: { id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true },
       });
       expect(mockCreate).toHaveBeenCalledWith({
-        data: { clerkId: "clerk-new123", email: "new@example.com", name: "新規ユーザー", role: "MEMBER" },
+        data: { clerkId: "clerk-new123", email: "new@example.com", name: "初回ユーザー", role: "ADMIN" },
         select: { id: true, name: true, role: true, isActive: true },
       });
       expect(mockUpdateMany).not.toHaveBeenCalled();
     });
 
-    it("isActive=false のユーザーは null を返す", async () => {
+    it("DB にユーザーが既に存在する場合は MEMBER ロールで自動作成してセッションを返す", async () => {
+      // @ts-expect-error
+      mockAuth.mockResolvedValue({ userId: "clerk-new456" });
+      // @ts-expect-error
+      mockFindUnique
+        .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
+        .mockResolvedValueOnce(null); // email 検索 → 未ヒット
+      // @ts-expect-error
+      mockCurrentUser.mockResolvedValue({
+        primaryEmailAddress: { emailAddress: "new2@example.com" },
+        fullName: "新規ユーザー",
+        firstName: null,
+      });
+      // @ts-expect-error
+      mockCount.mockResolvedValue(1); // DB にユーザーあり
+      // @ts-expect-error
+      mockCreate.mockResolvedValue({ id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true });
+
+      const result = await getSession();
+      expect(result).toEqual({
+        user: { id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true },
+      });
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: { clerkId: "clerk-new456", email: "new2@example.com", name: "新規ユーザー", role: "MEMBER" },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+      expect(mockUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it("isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
+      // @ts-expect-error
+      mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
+      // @ts-expect-error
+      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+    });
+
+    it("isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
       // @ts-expect-error

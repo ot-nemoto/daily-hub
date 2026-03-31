@@ -10,7 +10,7 @@ export default async function DailyViewPage({
 }: {
   searchParams: Promise<{ date?: string; userId?: string }>;
 }) {
-  const [session, params] = await Promise.all([getSession(), searchParams]);
+  const [session, params] = await Promise.all([getSession({ redirectOnInactive: true }), searchParams]);
   // 不正な日付が URL から渡された場合は today() にフォールバック
   const date = params.date && isValidDate(params.date) ? params.date : today();
   const userId = params.userId ?? "";

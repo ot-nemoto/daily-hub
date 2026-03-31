@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { SignOutButton } from "./SignOutButton";
 
 export async function Header() {
-  const session = await getSession();
+  const session = await getSession({ redirectOnInactive: true });
 
   return (
     <header className="border-b border-zinc-200 bg-white">
@@ -33,20 +33,12 @@ export async function Header() {
               日報作成
             </Link>
             {session?.user?.role === "ADMIN" && (
-              <>
-                <Link
-                  href="/admin/users"
-                  className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
-                >
-                  ユーザー管理
-                </Link>
-                <Link
-                  href="/admin/invitations"
-                  className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
-                >
-                  招待リンク
-                </Link>
-              </>
+              <Link
+                href="/admin/users"
+                className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
+              >
+                ユーザー管理
+              </Link>
             )}
           </nav>
         </div>

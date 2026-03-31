@@ -10,7 +10,7 @@ export default async function MonthlyViewPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string; authorId?: string }>;
 }) {
-  const [session, params] = await Promise.all([getSession(), searchParams]);
+  const [session, params] = await Promise.all([getSession({ redirectOnInactive: true }), searchParams]);
 
   const month = currentMonth();
   // 不正な日付が URL から渡された場合は今月にフォールバック

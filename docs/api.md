@@ -21,8 +21,6 @@
 | GET | `/api/admin/users` | ユーザー一覧取得（管理用） | ADMIN のみ |
 | PATCH | `/api/admin/users/[id]` | ユーザー情報更新（ロール・有効化） | ADMIN のみ |
 | DELETE | `/api/admin/users/[id]` | ユーザー完全削除 | ADMIN のみ |
-| POST | `/api/admin/invitations` | 招待リンク発行 | ADMIN のみ |
-| GET | `/api/admin/invitations` | 招待リンク一覧取得 | ADMIN のみ |
 
 ---
 
@@ -276,49 +274,6 @@
 **Errors**
 - `403` — 自分自身を削除しようとした
 - `404` — ユーザーが存在しない
-
----
-
-### POST /api/admin/invitations
-招待リンク発行（Phase 7b）
-
-**Request Body**
-```json
-{ "email": "invite@example.com" }
-```
-- `email` は任意。指定した場合はそのメールアドレスのみ利用可
-
-**Response 201**
-```json
-{
-  "id": "cuid",
-  "token": "uuid-token",
-  "inviteUrl": "https://daily-hub.vercel.app/login",
-  "expiresAt": "2026-03-14T00:00:00Z"
-}
-```
-
-**Errors**
-- `400` — メールアドレス形式が不正
-
----
-
-### GET /api/admin/invitations
-招待リンク一覧取得（Phase 7b）
-
-**Response 200**
-```json
-[
-  {
-    "id": "cuid",
-    "email": "invite@example.com",
-    "inviteUrl": "https://daily-hub.vercel.app/login",
-    "expiresAt": "2026-03-14T00:00:00Z",
-    "usedAt": null,
-    "createdAt": "2026-03-11T00:00:00Z"
-  }
-]
-```
 
 ---
 

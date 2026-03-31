@@ -13,7 +13,6 @@ vi.mock("@/lib/prisma", () => ({
     },
     comment: { deleteMany: vi.fn() },
     report: { deleteMany: vi.fn() },
-    invitation: { deleteMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));

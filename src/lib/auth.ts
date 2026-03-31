@@ -13,14 +13,42 @@ export type Session = {
   };
 };
 
-export async function getSession(): Promise<Session | null> {
-  // 非本番環境: MOCK_USER_ID が設定されている場合は DB から直接セッションを返す
-  if (process.env.NODE_ENV !== "production" && process.env.MOCK_USER_ID) {
-    const user = await prisma.user.findUnique({
-      where: { id: process.env.MOCK_USER_ID },
-      select: { id: true, name: true, role: true, isActive: true },
-    });
-    return user ? { user } : null;
+export async function getSession(options?: { redirectOnInactive?: boolean }): Promise<Session | null> {
+  const redirectOnInactive = options?.redirectOnInactive ?? false;
+
+  // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合は DB から直接セッションを返す
+  if (process.env.NODE_ENV !== "production") {
+    if (process.env.MOCK_USER_ID) {
+      const user = await prisma.user.findUnique({
+        where: { id: process.env.MOCK_USER_ID },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+      if (!user) {
+        console.error(`[MOCK] MOCK_USER_ID="${process.env.MOCK_USER_ID}" に対応するユーザーが DB に存在しません`);
+        return null;
+      }
+      if (!user.isActive) {
+        if (redirectOnInactive) redirect("/auth-error?reason=inactive");
+        return null;
+      }
+      return { user };
+    }
+
+    if (process.env.MOCK_USER_EMAIL) {
+      const user = await prisma.user.findUnique({
+        where: { email: process.env.MOCK_USER_EMAIL },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+      if (!user) {
+        console.error(`[MOCK] MOCK_USER_EMAIL="${process.env.MOCK_USER_EMAIL}" に対応するユーザーが DB に存在しません`);
+        return null;
+      }
+      if (!user.isActive) {
+        if (redirectOnInactive) redirect("/auth-error?reason=inactive");
+        return null;
+      }
+      return { user };
+    }
   }
 
   const { userId } = await auth();
@@ -46,10 +74,15 @@ export async function getSession(): Promise<Session | null> {
     if (!existingUser) {
       // DB に存在しない新規サインアップユーザーを自動作成
       // 並行リクエストによるレースコンディション対策: P2002 をキャッチして既存レコードを返す
+      // DB にユーザーが0人の場合は初回ログインとみなし ADMIN として作成する
+      // 注意: count と create の間に別ユーザーが同時に初回ログインすると複数 ADMIN が作成される可能性があるが、
+      // チームツールの性質上（初回デプロイ時の同時ログインは極めてまれ）仕様として許容している
+      const userCount = await prisma.user.count();
+      const role = userCount === 0 ? "ADMIN" : "MEMBER";
       const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email;
       try {
         user = await prisma.user.create({
-          data: { clerkId: userId, email, name, role: "MEMBER" },
+          data: { clerkId: userId, email, name, role },
           select: { id: true, name: true, role: true, isActive: true },
         });
       } catch (e) {
@@ -88,7 +121,11 @@ export async function getSession(): Promise<Session | null> {
     }
   }
 
-  if (!user.isActive) return null;
+  // isActive=false のユーザー: ページ（redirectOnInactive=true）はリダイレクト、API は null を返す
+  if (!user.isActive) {
+    if (redirectOnInactive) redirect("/auth-error?reason=inactive");
+    return null;
+  }
 
   return { user };
 }

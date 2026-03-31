@@ -58,19 +58,15 @@ daily-hub/
 │   │   │   │   └── route.ts        # GET(ユーザー一覧)
 │   │   │   └── admin/              # 管理者専用API（Phase 7）
 │   │   │       ├── users/
-│   │   │       │   ├── route.ts    # GET(一覧), POST(作成)
+│   │   │       │   ├── route.ts    # GET(一覧)
 │   │   │       │   └── [id]/
 │   │   │       │       └── route.ts # PATCH(更新), DELETE(削除)
-│   │   │       └── invitations/
-│   │   │           └── route.ts    # GET(一覧), POST(発行)
+
 │   │   ├── settings/
 │   │   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
 │   │   └── admin/                  # 管理画面ページ（Phase 7）
-│   │       ├── users/
-│   │       │   ├── page.tsx        # ユーザー一覧
-│   │       │   └── new/page.tsx    # ユーザー作成（Phase 7b）
-│   │       └── invitations/
-│   │           └── page.tsx        # 招待リンク発行・一覧（Phase 7b）
+│   │       └── users/
+│   │           └── page.tsx        # ユーザー一覧
 │   ├── components/     # 再利用UIコンポーネント
 │   ├── lib/
 │   │   ├── prisma.ts   # Prismaクライアントシングルトン
@@ -88,20 +84,23 @@ daily-hub/
 未認証ユーザー
   → proxy.ts（clerkMiddleware）でセッション確認
   → 未認証なら /login にリダイレクト（Clerk が処理）
-  → MOCK_USER_ID が設定されている場合はバイパス（ローカル開発用）
+  → MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合はバイパス（ローカル開発用）
 
 ログイン
   → Clerk の SignIn UI（/login）でメール+パスワード認証
   → Clerk がセッション Cookie を発行
 
 getSession()（src/lib/auth.ts）
-  → MOCK_USER_ID 環境変数が設定されている場合は DB ユーザーを直接返す
+  → MOCK_USER_ID 環境変数が設定されている場合は id で DB ユーザーを直接返す
+  → MOCK_USER_EMAIL 環境変数が設定されている場合は email で DB ユーザーを直接返す
+  → どちらも対象ユーザーが DB に存在しない場合は console.error を出力し null を返す
   → Clerk auth() で userId（clerkId）を取得
   → clerkId で DB ユーザーを検索
   → 未ヒット時：Clerk currentUser() でメールを取得し DB ユーザーと突合
     → 突合成功：clerkId を DB に書き込み（自動紐付け）
     → 突合失敗かつ Clerk にユーザーあり：DB に新規作成
-  → isActive === false なら null を返す（API は 401、画面は /auth-error へ）
+  → isActive === false なら: ページ（redirectOnInactive=true）は /auth-error?reason=inactive にリダイレクト、API は null を返す（401）
+  → 未認証（Clerk セッションなし）なら null を返す（API は 401、画面は /login へ）
   → Session 型 { user: { id, name, role, isActive } } を返す
 ```
 
@@ -179,7 +178,10 @@ NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
 
 # ローカル開発用モック（Clerk をバイパスして DB ユーザーを直接使用）
+# MOCK_USER_ID と MOCK_USER_EMAIL は同時に設定しない（MOCK_USER_ID が優先）
+# 対象ユーザーが DB に存在しない場合は console.error を出力し getSession() は null を返す
 MOCK_USER_ID=<DB の users.id>
+# MOCK_USER_EMAIL=<DB の users.email>
 ```
 
 ## Prisma 7 の接続構成

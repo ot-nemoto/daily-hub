@@ -95,7 +95,6 @@ export async function DELETE(
       where: { OR: [{ report: { authorId: id } }, { authorId: id }] },
     }),
     prisma.report.deleteMany({ where: { authorId: id } }),
-    prisma.invitation.deleteMany({ where: { invitedById: id } }),
     prisma.user.delete({ where: { id } }),
   ]);
 
