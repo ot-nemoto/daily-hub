@@ -97,7 +97,7 @@ getSession()（src/lib/auth.ts）
   → 未ヒット時：Clerk currentUser() でメールを取得し DB ユーザーと突合
     → 突合成功：clerkId を DB に書き込み（自動紐付け）
     → 突合失敗かつ Clerk にユーザーあり：DB に新規作成
-  → isActive === false なら /auth-error?reason=inactive にリダイレクト（画面・API ともに redirect）
+  → isActive === false なら: ページ（redirectOnInactive=true）は /auth-error?reason=inactive にリダイレクト、API は null を返す（401）
   → 未認証（Clerk セッションなし）なら null を返す（API は 401、画面は /login へ）
   → Session 型 { user: { id, name, role, isActive } } を返す
 ```
