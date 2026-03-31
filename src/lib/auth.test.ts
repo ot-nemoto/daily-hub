@@ -39,7 +39,8 @@ describe("getSession", () => {
     const originalEnv = process.env;
 
     beforeEach(() => {
-      process.env = { ...originalEnv, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
+      const { MOCK_USER_EMAIL, ...envWithoutMockUserEmail } = originalEnv;
+      process.env = { ...envWithoutMockUserEmail, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
     });
 
     afterEach(() => {
