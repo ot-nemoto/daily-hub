@@ -24,6 +24,7 @@
 | [docs/auth.md](docs/auth.md) | 認証フロー・保護ルート |
 | [docs/development.md](docs/development.md) | ローカルセットアップ・Prisma操作・デプロイ手順 |
 | [docs/tasks.md](docs/tasks.md) | フェーズ別マイルストーン |
+| [docs/testing.md](docs/testing.md) | 自動テスト方針・カバレッジ規約・実行手順 |
 | [docs/manual-testing.md](docs/manual-testing.md) | 手動テスト手順 |
 
 ## クイックスタート
