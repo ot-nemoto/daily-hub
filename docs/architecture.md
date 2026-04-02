@@ -216,7 +216,7 @@ git push origin master
 
 | ライブラリ | 事象 | 正しい仕様 |
 |-----------|------|-----------|
-| Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | `proxy.ts` は Next.js 16 以降の middleware ファイル名。変更不要 |
+| Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | Next.js 16 以降、Middleware は Proxy に改称され `proxy.ts` が公式ファイル名となった。変更不要（[公式ドキュメント](https://nextjs.org/docs/app/getting-started/proxy)） |
 
 ---
 
