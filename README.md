@@ -33,5 +33,6 @@
 
 ```bash
 npm install
+# 環境変数を設定してから起動（docs/development.md 参照）
 npm run dev   # http://localhost:3000
 ```
