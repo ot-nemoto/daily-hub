@@ -37,7 +37,11 @@ src/lib/utils.test.ts
 Prisma・外部サービス（Clerk、bcrypt 等）は `vi.mock` でモック化する。
 
 ```ts
-vi.mock("@/lib/prisma", () => ({ default: { user: { findUnique: vi.fn() } } }))
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    user: { findUnique: vi.fn() },
+  },
+}))
 ```
 
 ## カバレッジ方針
