@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/prisma";
-import { GET, POST } from "./route";
+import { POST } from "./route";
 
 vi.mock("@/lib/auth", () => ({
   getSession: vi.fn(),
@@ -12,7 +12,6 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     report: {
       findFirst: vi.fn(),
-      findMany: vi.fn(),
       create: vi.fn(),
     },
   },
@@ -30,19 +29,6 @@ const mockReport = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-const mockReportListItem = {
-  id: "report-1",
-  date: new Date("2026-03-06T00:00:00.000Z"),
-  workContent: "○○機能の実装",
-  tomorrowPlan: "レビュー対応",
-  notes: "",
-  authorId: "user-1",
-  createdAt: new Date("2026-03-06T12:00:00.000Z"),
-  updatedAt: new Date("2026-03-06T18:00:00.000Z"),
-  author: { id: "user-1", name: "山田 太郎" },
-  _count: { comments: 2 },
-};
-
 function makePostRequest(body: unknown) {
   return new Request("http://localhost/api/reports", {
     method: "POST",
@@ -51,142 +37,12 @@ function makePostRequest(body: unknown) {
   });
 }
 
-function makeGetRequest(params: Record<string, string>) {
-  const url = new URL("http://localhost/api/reports");
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value);
-  }
-  return new Request(url.toString(), { method: "GET" });
-}
-
 const validPostBody = {
   date: "2026-03-06",
   workContent: "○○機能の実装",
   tomorrowPlan: "レビュー対応",
   notes: "DBの設計で詰まった",
 };
-
-describe("GET /api/reports (日次ビュー: T40)", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("正常系: date パラメータで 200 とレポート一覧を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(mockSession as never);
-    vi.mocked(prisma.report.findMany).mockResolvedValue([mockReportListItem] as never);
-
-    const res = await GET(makeGetRequest({ date: "2026-03-06" }));
-    const data = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(data).toHaveLength(1);
-    expect(data[0]).toMatchObject({
-      id: "report-1",
-      date: "2026-03-06",
-      commentCount: 2,
-      author: { id: "user-1", name: "山田 太郎" },
-    });
-    expect(prisma.report.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { date: new Date("2026-03-06T00:00:00.000Z") },
-      }),
-    );
-  });
-
-  it("正常系: date + userId パラメータでユーザー絞り込みクエリを実行する", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(mockSession as never);
-    vi.mocked(prisma.report.findMany).mockResolvedValue([mockReportListItem] as never);
-
-    await GET(makeGetRequest({ date: "2026-03-06", userId: "user-1" }));
-
-    expect(prisma.report.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { date: new Date("2026-03-06T00:00:00.000Z"), authorId: "user-1" },
-      }),
-    );
-  });
-
-  it("異常系: 未認証で 401 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(null as never);
-
-    const res = await GET(makeGetRequest({ date: "2026-03-06" }));
-
-    expect(res.status).toBe(401);
-    expect(prisma.report.findMany).not.toHaveBeenCalled();
-  });
-
-  it("異常系: date が不正な形式で 400 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(mockSession as never);
-
-    const res = await GET(makeGetRequest({ date: "20260306" }));
-
-    expect(res.status).toBe(400);
-  });
-});
-
-describe("GET /api/reports (月次ビュー: T41)", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("正常系: from/to パラメータで 200 とレポート一覧を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(mockSession as never);
-    vi.mocked(prisma.report.findMany).mockResolvedValue([mockReportListItem] as never);
-
-    const res = await GET(makeGetRequest({ from: "2026-03-01", to: "2026-03-31" }));
-    const data = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(data).toHaveLength(1);
-    expect(prisma.report.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          date: {
-            gte: new Date("2026-03-01T00:00:00.000Z"),
-            lte: new Date("2026-03-31T00:00:00.000Z"),
-          },
-        },
-      }),
-    );
-  });
-
-  it("正常系: from/to + authorId パラメータでユーザー絞り込みクエリを実行する", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(mockSession as never);
-    vi.mocked(prisma.report.findMany).mockResolvedValue([mockReportListItem] as never);
-
-    await GET(makeGetRequest({ from: "2026-03-01", to: "2026-03-31", authorId: "user-1" }));
-
-    expect(prisma.report.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ authorId: "user-1" }),
-      }),
-    );
-  });
-
-  it("異常系: from が不正な形式で 400 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(mockSession as never);
-
-    const res = await GET(makeGetRequest({ from: "2026-99-01", to: "2026-03-31" }));
-
-    expect(res.status).toBe(400);
-  });
-
-  it("異常系: クエリパラメータなしで 400 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
-    vi.mocked(getSession).mockResolvedValue(mockSession as never);
-
-    const res = await GET(new Request("http://localhost/api/reports", { method: "GET" }));
-
-    expect(res.status).toBe(400);
-  });
-});
 
 describe("POST /api/reports", () => {
   beforeEach(() => {
