@@ -212,6 +212,14 @@ git push origin master
       → リリースノートをコミット・PR から自動生成
 ```
 
+## バージョン固有の仕様・既知の指摘パターン
+
+| ライブラリ | 事象 | 正しい仕様 |
+|-----------|------|-----------|
+| Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | Next.js 16 以降、Middleware は Proxy に改称され `proxy.ts` が公式ファイル名となった。変更不要（[公式ドキュメント](https://nextjs.org/docs/app/getting-started/proxy)） |
+
+---
+
 ## 将来の移行パス
 
 | 項目 | 現在（MVP） | 将来 |
