@@ -73,7 +73,7 @@ npx vitest run
 npx vitest run --reporter=verbose
 
 # ウォッチモードで実行（開発中）
-npm test
+npm run test:watch
 
 # UI モードで実行（ブラウザで結果確認）
 npm run test:ui
