@@ -1,27 +1,20 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/lib/prisma";
-import { POST } from "./route";
-
 vi.mock("@/lib/auth", () => ({
   getSession: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    report: {
-      findUnique: vi.fn(),
-    },
-    comment: {
-      create: vi.fn(),
-    },
-  },
+vi.mock("@/lib/comments", () => ({
+  createComment: vi.fn(),
 }));
 
+import { getSession } from "@/lib/auth";
+import { createComment } from "@/lib/comments";
+import { NotFoundError } from "@/lib/errors";
+import { POST } from "./route";
+
 const mockSession = { user: { id: "user-1", name: "山田 太郎", email: "yamada@example.com", isActive: true } };
-const mockReport = { id: "report-1" };
-const mockComment = { id: "comment-1" };
 
 function makeRequest(reportId: string, body: unknown) {
   return new Request(`http://localhost/api/reports/${reportId}/comments`, {
@@ -39,10 +32,8 @@ describe("POST /api/reports/[id]/comments", () => {
   });
 
   it("正常系: 有効な入力で 201 と id を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
     vi.mocked(getSession).mockResolvedValue(mockSession as never);
-    vi.mocked(prisma.report.findUnique).mockResolvedValue(mockReport as never);
-    vi.mocked(prisma.comment.create).mockResolvedValue(mockComment as never);
+    vi.mocked(createComment).mockResolvedValue({ id: "comment-1" });
 
     const res = await POST(makeRequest("report-1", validBody), {
       params: Promise.resolve({ id: "report-1" }),
@@ -51,14 +42,14 @@ describe("POST /api/reports/[id]/comments", () => {
 
     expect(res.status).toBe(201);
     expect(data).toEqual({ id: "comment-1" });
-    expect(prisma.comment.create).toHaveBeenCalledWith({
-      data: { body: "お疲れ様です", reportId: "report-1", authorId: "user-1" },
-      select: { id: true },
+    expect(createComment).toHaveBeenCalledWith({
+      reportId: "report-1",
+      authorId: "user-1",
+      body: "お疲れ様です",
     });
   });
 
   it("異常系: 未認証で 401 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
     vi.mocked(getSession).mockResolvedValue(null as never);
 
     const res = await POST(makeRequest("report-1", validBody), {
@@ -66,11 +57,10 @@ describe("POST /api/reports/[id]/comments", () => {
     });
 
     expect(res.status).toBe(401);
-    expect(prisma.report.findUnique).not.toHaveBeenCalled();
+    expect(createComment).not.toHaveBeenCalled();
   });
 
   it("異常系: body が空で 400 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
     vi.mocked(getSession).mockResolvedValue(mockSession as never);
 
     const res = await POST(makeRequest("report-1", { body: "" }), {
@@ -81,7 +71,6 @@ describe("POST /api/reports/[id]/comments", () => {
   });
 
   it("異常系: body が 1000 文字超で 400 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
     vi.mocked(getSession).mockResolvedValue(mockSession as never);
 
     const res = await POST(makeRequest("report-1", { body: "a".repeat(1001) }), {
@@ -92,20 +81,17 @@ describe("POST /api/reports/[id]/comments", () => {
   });
 
   it("異常系: 存在しない reportId で 404 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
     vi.mocked(getSession).mockResolvedValue(mockSession as never);
-    vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
+    vi.mocked(createComment).mockRejectedValue(new NotFoundError("Report not found"));
 
     const res = await POST(makeRequest("nonexistent", validBody), {
       params: Promise.resolve({ id: "nonexistent" }),
     });
 
     expect(res.status).toBe(404);
-    expect(prisma.comment.create).not.toHaveBeenCalled();
   });
 
   it("異常系: 不正な JSON で 400 を返す", async () => {
-    const { getSession } = await import("@/lib/auth");
     vi.mocked(getSession).mockResolvedValue(mockSession as never);
 
     const res = await POST(
