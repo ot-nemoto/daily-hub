@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { deleteComment } from "@/lib/comments";
+import { ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function DELETE(
   _request: Request,
@@ -14,20 +15,12 @@ export async function DELETE(
 
   const { id: reportId, commentId } = await params;
 
-  const comment = await prisma.comment.findUnique({
-    where: { id: commentId },
-    select: { authorId: true, reportId: true },
-  });
-
-  if (!comment || comment.reportId !== reportId) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+  try {
+    await deleteComment({ commentId, reportId, authorId: session.user.id });
+    return new Response(null, { status: 204 });
+  } catch (e) {
+    if (e instanceof NotFoundError) return NextResponse.json({ error: e.message }, { status: 404 });
+    if (e instanceof ForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
+    throw e;
   }
-
-  if (comment.authorId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  await prisma.comment.delete({ where: { id: commentId } });
-
-  return new Response(null, { status: 204 });
 }

@@ -1,7 +1,9 @@
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { Role } from "@/generated/prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
+
+import { Role } from "@/generated/prisma/client";
+import { getSession } from "@/lib/auth";
+import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { deleteUser, updateUserAdmin } from "@/lib/users";
 
 export async function PATCH(
   request: NextRequest,
@@ -35,36 +37,19 @@ export async function PATCH(
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
   }
 
-  // 自分自身の ADMIN ロールを降格しようとした場合は 403
-  if (id === session.user.id && role !== undefined && role !== "ADMIN") {
-    return NextResponse.json(
-      { error: "Cannot demote yourself from ADMIN" },
-      { status: 403 }
-    );
-  }
-
-  // 自分自身の isActive を変更しようとした場合は 403
-  if (id === session.user.id && isActive !== undefined) {
-    return NextResponse.json(
-      { error: "Cannot change your own active status" },
-      { status: 403 }
-    );
-  }
-
-  const existing = await prisma.user.findUnique({ where: { id } });
-  if (!existing) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  const updated = await prisma.user.update({
-    where: { id },
-    data: {
+  try {
+    const updated = await updateUserAdmin({
+      id,
+      currentUserId: session.user.id,
       ...(role !== undefined && { role: role as Role }),
       ...(isActive !== undefined && { isActive: isActive as boolean }),
-    },
-  });
-
-  return NextResponse.json({ id: updated.id });
+    });
+    return NextResponse.json({ id: updated.id });
+  } catch (e) {
+    if (e instanceof ForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
+    if (e instanceof NotFoundError) return NextResponse.json({ error: e.message }, { status: 404 });
+    throw e;
+  }
 }
 
 export async function DELETE(
@@ -78,25 +63,12 @@ export async function DELETE(
 
   const { id } = await params;
 
-  // 自分自身の削除は禁止
-  if (id === session.user.id) {
-    return NextResponse.json({ error: "Cannot delete yourself" }, { status: 403 });
+  try {
+    await deleteUser({ id, currentUserId: session.user.id });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof ForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
+    if (e instanceof NotFoundError) return NextResponse.json({ error: e.message }, { status: 404 });
+    throw e;
   }
-
-  const existing = await prisma.user.findUnique({ where: { id } });
-  if (!existing) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  // FK制約の順序でカスケード削除
-  // 本人の日報に他ユーザーが付けたコメントと、本人が書いたコメントを両方削除
-  await prisma.$transaction([
-    prisma.comment.deleteMany({
-      where: { OR: [{ report: { authorId: id } }, { authorId: id }] },
-    }),
-    prisma.report.deleteMany({ where: { authorId: id } }),
-    prisma.user.delete({ where: { id } }),
-  ]);
-
-  return NextResponse.json({ ok: true });
 }

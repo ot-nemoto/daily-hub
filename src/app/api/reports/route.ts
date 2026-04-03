@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { ConflictError } from "@/lib/errors";
+import { createReport } from "@/lib/reports";
 
 const ReportSchema = z.object({
   date: z.string().date(),
@@ -33,23 +34,19 @@ export async function POST(request: Request) {
   const { date, workContent, tomorrowPlan, notes } = result.data;
   const dateObj = new Date(`${date}T00:00:00.000Z`);
 
-  const existing = await prisma.report.findFirst({
-    where: { authorId: session.user.id, date: dateObj },
-  });
-  if (existing) {
-    return NextResponse.json({ error: "Report already exists for this date" }, { status: 409 });
-  }
-
   try {
-    const report = await prisma.report.create({
-      data: { date: dateObj, workContent, tomorrowPlan, notes, authorId: session.user.id },
+    const report = await createReport({
+      date: dateObj,
+      workContent,
+      tomorrowPlan,
+      notes,
+      authorId: session.user.id,
     });
     return NextResponse.json({ id: report.id }, { status: 201 });
-  } catch (error) {
-    // 同時リクエストによる競合（DB unique 制約違反）を 409 にマッピング
-    if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2002") {
-      return NextResponse.json({ error: "Report already exists for this date" }, { status: 409 });
+  } catch (e) {
+    if (e instanceof ConflictError) {
+      return NextResponse.json({ error: e.message }, { status: 409 });
     }
-    throw error;
+    throw e;
   }
 }

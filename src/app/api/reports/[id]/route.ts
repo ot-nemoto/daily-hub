@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { updateReport } from "@/lib/reports";
 
 const UpdateReportSchema = z.object({
   workContent: z.string().min(1).max(5000),
@@ -33,20 +34,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
 
-  const existing = await prisma.report.findUnique({ where: { id }, select: { authorId: true } });
-  if (!existing) {
-    return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  try {
+    const updated = await updateReport({
+      id,
+      authorId: session.user.id,
+      ...parsed.data,
+    });
+    return NextResponse.json({ id: updated.id });
+  } catch (e) {
+    if (e instanceof NotFoundError) return NextResponse.json({ error: e.message }, { status: 404 });
+    if (e instanceof ForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
+    throw e;
   }
-  if (existing.authorId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const { workContent, tomorrowPlan, notes } = parsed.data;
-  const updated = await prisma.report.update({
-    where: { id },
-    data: { workContent, tomorrowPlan, notes },
-    select: { id: true },
-  });
-
-  return NextResponse.json({ id: updated.id });
 }

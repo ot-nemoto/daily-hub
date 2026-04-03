@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { createComment } from "@/lib/comments";
+import { NotFoundError } from "@/lib/errors";
 
 const CommentSchema = z.object({
   body: z.string().min(1).max(1000),
@@ -31,15 +32,15 @@ export async function POST(
 
   const { id: reportId } = await params;
 
-  const report = await prisma.report.findUnique({ where: { id: reportId }, select: { id: true } });
-  if (!report) {
-    return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  try {
+    const comment = await createComment({
+      reportId,
+      authorId: session.user.id,
+      body: parsed.data.body,
+    });
+    return NextResponse.json({ id: comment.id }, { status: 201 });
+  } catch (e) {
+    if (e instanceof NotFoundError) return NextResponse.json({ error: e.message }, { status: 404 });
+    throw e;
   }
-
-  const comment = await prisma.comment.create({
-    data: { body: parsed.data.body, reportId, authorId: session.user.id },
-    select: { id: true },
-  });
-
-  return NextResponse.json({ id: comment.id }, { status: 201 });
 }

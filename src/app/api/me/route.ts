@@ -1,7 +1,9 @@
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+
+import { getSession } from "@/lib/auth";
+import { NotFoundError } from "@/lib/errors";
+import { updateMe } from "@/lib/users";
 
 const UpdateMeSchema = z
   .object({
@@ -31,16 +33,11 @@ export async function PATCH(request: Request) {
 
   const { name } = result.data;
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  try {
+    const updated = await updateMe({ id: session.user.id, name });
+    return NextResponse.json(updated);
+  } catch (e) {
+    if (e instanceof NotFoundError) return NextResponse.json({ error: e.message }, { status: 404 });
+    throw e;
   }
-
-  const updated = await prisma.user.update({
-    where: { id: session.user.id },
-    data: { name },
-    select: { id: true, name: true, email: true },
-  });
-
-  return NextResponse.json(updated);
 }
