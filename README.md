@@ -25,7 +25,7 @@
 | [docs/development.md](docs/development.md) | ローカルセットアップ・Prisma操作・デプロイ手順 |
 | [docs/tasks.md](docs/tasks.md) | フェーズ別マイルストーン |
 | [docs/testing.md](docs/testing.md) | 自動テスト方針・カバレッジ規約・実行手順 |
-| [docs/manual-testing.md](docs/manual-testing.md) | 手動テスト手順 |
+| [docs/e2e-scenarios.md](docs/e2e-scenarios.md) | E2Eテストシナリオ・手動テスト観点 |
 
 ## クイックスタート
 
