@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
-import { parseApiError } from "@/lib/apiError";
+import { createComment } from "./actions";
 
 type Props = {
   reportId: string;
@@ -23,14 +23,13 @@ export function CommentForm({ reportId }: Props) {
 
     const data = new FormData(e.currentTarget);
     try {
-      const res = await fetch(`/api/reports/${reportId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: data.get("body") }),
+      const result = await createComment({
+        reportId,
+        body: data.get("body") as string,
       });
 
-      if (!res.ok) {
-        setError(await parseApiError(res, "コメントの投稿に失敗しました。入力内容を確認してください"));
+      if (result.error) {
+        setError(result.error);
       } else {
         formRef.current?.reset();
         router.refresh();

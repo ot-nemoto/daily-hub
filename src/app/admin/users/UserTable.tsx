@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { deleteUser, updateUserAdmin } from "./actions";
+
 type User = {
   id: string;
   name: string;
@@ -73,22 +75,14 @@ export function UserTable({
 
   async function handleRoleChange(id: string, role: string) {
     setLoading(`role-${id}`);
-    await fetch(`/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
+    await updateUserAdmin({ id, role: role as never });
     setLoading(null);
     router.refresh();
   }
 
   async function handleToggleActive(id: string, isActive: boolean) {
     setLoading(`active-${id}`);
-    await fetch(`/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !isActive }),
-    });
+    await updateUserAdmin({ id, isActive: !isActive });
     setLoading(null);
     router.refresh();
   }
@@ -97,10 +91,10 @@ export function UserTable({
     if (!deleteDialog) return;
     setDeleteError("");
     setLoading(`delete-${deleteDialog.userId}`);
-    const res = await fetch(`/api/admin/users/${deleteDialog.userId}`, { method: "DELETE" });
+    const result = await deleteUser({ id: deleteDialog.userId });
     setLoading(null);
-    if (!res.ok) {
-      setDeleteError("削除に失敗しました");
+    if (result.error) {
+      setDeleteError(result.error);
       return;
     }
     setDeleteDialog(null);

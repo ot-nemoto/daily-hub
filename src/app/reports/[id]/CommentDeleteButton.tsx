@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
+import { deleteComment } from "./actions";
 
 type Props = {
   reportId: string;
@@ -19,14 +20,12 @@ export function CommentDeleteButton({ reportId, commentId }: Props) {
     setPending(true);
     setError(null);
     try {
-      const res = await fetch(`/api/reports/${reportId}/comments/${commentId}`, {
-        method: "DELETE",
-      });
+      const result = await deleteComment({ reportId, commentId });
 
-      if (res.ok) {
-        router.refresh();
+      if (result.error) {
+        setError(result.error);
       } else {
-        setError("コメントの削除に失敗しました。時間をおいて再度お試しください");
+        router.refresh();
       }
     } catch {
       setError("コメントの削除に失敗しました。時間をおいて再度お試しください");
