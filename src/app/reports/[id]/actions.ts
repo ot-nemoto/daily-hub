@@ -2,11 +2,22 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
 import { createComment as libCreateComment, deleteComment as libDeleteComment } from "@/lib/comments";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { updateReport as libUpdateReport } from "@/lib/reports";
+
+const UpdateReportSchema = z.object({
+  workContent: z.string().min(1).max(5000),
+  tomorrowPlan: z.string().min(1).max(5000),
+  notes: z.string().max(5000).optional().default(""),
+});
+
+const CreateCommentSchema = z.object({
+  body: z.string().min(1).max(1000),
+});
 
 export async function updateReport(input: {
   id: string;
@@ -18,13 +29,16 @@ export async function updateReport(input: {
   if (!session) return redirect("/login");
   if (session.user.role === "VIEWER") return { error: "日報を編集する権限がありません" };
 
+  const parsed = UpdateReportSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.errors[0].message };
+
   try {
     await libUpdateReport({
       id: input.id,
       authorId: session.user.id,
-      workContent: input.workContent,
-      tomorrowPlan: input.tomorrowPlan,
-      notes: input.notes,
+      workContent: parsed.data.workContent,
+      tomorrowPlan: parsed.data.tomorrowPlan,
+      notes: parsed.data.notes,
     });
     revalidatePath(`/reports/${input.id}`);
     return {};
@@ -42,11 +56,14 @@ export async function createComment(input: {
   const session = await getSession();
   if (!session) return redirect("/login");
 
+  const parsed = CreateCommentSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.errors[0].message };
+
   try {
     const comment = await libCreateComment({
       reportId: input.reportId,
       authorId: session.user.id,
-      body: input.body,
+      body: parsed.data.body,
     });
     revalidatePath(`/reports/${input.reportId}`);
     return { id: comment.id };
