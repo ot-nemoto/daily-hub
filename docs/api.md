@@ -170,13 +170,13 @@
 
 **ファイル:** `src/app/admin/users/actions.ts`
 
-**引数**（変更したいフィールドのみ指定）
+**引数**（`role` と `isActive` はいずれかが必須）
 
 | フィールド | 型 | 必須 | 制約 |
 |-----------|-----|------|------|
 | `id` | `string` | YES | ユーザー ID |
-| `role` | `Role` | NO | `"ADMIN"` / `"MEMBER"` / `"VIEWER"` |
-| `isActive` | `boolean` | NO | — |
+| `role` | `Role` | いずれか必須 | `"ADMIN"` / `"MEMBER"` / `"VIEWER"` |
+| `isActive` | `boolean` | いずれか必須 | — |
 
 **戻り値**
 
