@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { currentMonth, formatDateJa, isValidDate, isValidMonth, monthRange, startOfTodayUtc, today } from "./dateUtils";
+import { currentMonth, formatDateJa, formatMonthJa, isValidDate, isValidMonth, monthRange, startOfTodayUtc, today } from "./dateUtils";
 
 describe("startOfTodayUtc", () => {
   it("正常系: 時刻が UTC 00:00:00.000 であること", () => {
@@ -115,6 +115,17 @@ describe("formatDateJa", () => {
   it("正常系: 月・日のゼロ埋めが除去される", () => {
     expect(formatDateJa("2025-01-01")).toBe("2025年1月1日");
     expect(formatDateJa("2025-12-31")).toBe("2025年12月31日");
+  });
+});
+
+describe("formatMonthJa", () => {
+  it("正常系: YYYY-MM を YYYY年M月 形式に変換する", () => {
+    expect(formatMonthJa("2026-04")).toBe("2026年4月");
+  });
+
+  it("正常系: 月のゼロ埋めが除去される", () => {
+    expect(formatMonthJa("2025-01")).toBe("2025年1月");
+    expect(formatMonthJa("2025-12")).toBe("2025年12月");
   });
 });
 

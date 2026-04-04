@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getSession } from "@/lib/auth";
-import { currentMonth, isValidDate, monthRange } from "@/lib/dateUtils";
+import { currentMonth, formatMonthJa, isValidDate, monthRange } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
 import { MonthlyFilter } from "./MonthlyFilter";
 
@@ -58,7 +58,7 @@ export default async function MonthlyViewPage({
           {reports.length === 0 ? (
             <div className="rounded-lg bg-white p-6 shadow-sm">
               <p className="text-sm text-zinc-500">
-                {displayMonth} の日報はありません
+                {formatMonthJa(displayMonth)} の日報はありません
               </p>
             </div>
           ) : (
