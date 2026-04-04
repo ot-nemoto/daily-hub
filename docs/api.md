@@ -32,7 +32,7 @@
 | `date` | `string` | YES | `YYYY-MM-DD` 形式 |
 | `workContent` | `string` | YES | 最大 5000 文字 |
 | `tomorrowPlan` | `string` | YES | 最大 5000 文字 |
-| `notes` | `string` | NO | 最大 5000 文字 |
+| `notes` | `string` | YES | 最大 5000 文字、空文字可 |
 
 **戻り値**
 
