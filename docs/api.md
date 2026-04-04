@@ -1,7 +1,8 @@
 # api.md — Server Actions 定義
 
 > 本プロジェクトは REST API Routes を使用せず、Next.js Server Actions で全データ操作を行う。
-> 全 Action は認証必須。未認証の場合は `/login` にリダイレクトする。
+> 全 Action は認証必須。未認証の場合は原則 `/login` にリダイレクトする。
+> ただし、管理系 Action（`updateUserAdmin` / `deleteUser`）は ADMIN 権限必須で、未認証時・権限不足時ともに `/` にリダイレクトする。
 
 ---
 
@@ -223,7 +224,8 @@
 
 | 条件 | 挙動 |
 |------|------|
-| 未認証 | `/login` にリダイレクト |
+| 未認証（管理系 Action 以外） | `/login` にリダイレクト |
+| 未認証（管理系 Action） | `/` にリダイレクト |
 | VIEWER ロールが作成・編集を試みる | `error` フィールドにメッセージを返す |
 | ADMIN 以外が管理 Action を呼ぶ | `/` にリダイレクト |
 
