@@ -27,6 +27,7 @@ export function UserTable({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState("");
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
   const [deleteNameInput, setDeleteNameInput] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -74,16 +75,26 @@ export function UserTable({
   }, [deleteDialog]);
 
   async function handleRoleChange(id: string, role: string) {
+    setActionError("");
     setLoading(`role-${id}`);
-    await updateUserAdmin({ id, role: role as never });
+    const result = await updateUserAdmin({ id, role: role as never });
     setLoading(null);
+    if (result.error) {
+      setActionError(result.error);
+      return;
+    }
     router.refresh();
   }
 
   async function handleToggleActive(id: string, isActive: boolean) {
+    setActionError("");
     setLoading(`active-${id}`);
-    await updateUserAdmin({ id, isActive: !isActive });
+    const result = await updateUserAdmin({ id, isActive: !isActive });
     setLoading(null);
+    if (result.error) {
+      setActionError(result.error);
+      return;
+    }
     router.refresh();
   }
 
@@ -104,6 +115,9 @@ export function UserTable({
 
   return (
     <>
+      {actionError && (
+        <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{actionError}</p>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
