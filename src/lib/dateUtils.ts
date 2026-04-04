@@ -27,6 +27,12 @@ export function formatDateJa(date: string): string {
   return `${year}年${month}月${day}日`;
 }
 
+/** YYYY-MM 形式の月を「YYYY年M月」形式に変換する */
+export function formatMonthJa(month: string): string {
+  const [year, mon] = month.split("-").map(Number);
+  return `${year}年${mon}月`;
+}
+
 /** 今日の日付を YYYY-MM-DD 形式で返す（ローカル時刻基準） */
 export function today(): string {
   const now = new Date();
