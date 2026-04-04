@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { deleteUser, updateUserAdmin } from "./actions";
+
 type User = {
   id: string;
   name: string;
@@ -25,6 +27,7 @@ export function UserTable({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState("");
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
   const [deleteNameInput, setDeleteNameInput] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -72,24 +75,26 @@ export function UserTable({
   }, [deleteDialog]);
 
   async function handleRoleChange(id: string, role: string) {
+    setActionError("");
     setLoading(`role-${id}`);
-    await fetch(`/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
+    const result = await updateUserAdmin({ id, role: role as never });
     setLoading(null);
+    if (result.error) {
+      setActionError(result.error);
+      return;
+    }
     router.refresh();
   }
 
   async function handleToggleActive(id: string, isActive: boolean) {
+    setActionError("");
     setLoading(`active-${id}`);
-    await fetch(`/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !isActive }),
-    });
+    const result = await updateUserAdmin({ id, isActive: !isActive });
     setLoading(null);
+    if (result.error) {
+      setActionError(result.error);
+      return;
+    }
     router.refresh();
   }
 
@@ -97,10 +102,10 @@ export function UserTable({
     if (!deleteDialog) return;
     setDeleteError("");
     setLoading(`delete-${deleteDialog.userId}`);
-    const res = await fetch(`/api/admin/users/${deleteDialog.userId}`, { method: "DELETE" });
+    const result = await deleteUser({ id: deleteDialog.userId });
     setLoading(null);
-    if (!res.ok) {
-      setDeleteError("削除に失敗しました");
+    if (result.error) {
+      setDeleteError(result.error);
       return;
     }
     setDeleteDialog(null);
@@ -110,6 +115,9 @@ export function UserTable({
 
   return (
     <>
+      {actionError && (
+        <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{actionError}</p>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

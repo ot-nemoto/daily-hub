@@ -1,9 +1,10 @@
 "use client";
 
-import { ErrorMessage } from "@/components/ErrorMessage";
-import { parseApiError } from "@/lib/apiError";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { ErrorMessage } from "@/components/ErrorMessage";
+import { updateMe } from "./actions";
 
 type Props = {
   initialName: string;
@@ -26,16 +27,12 @@ export function SettingsForm({ initialName, email }: Props) {
     const name = data.get("name") as string;
 
     try {
-      const res = await fetch("/api/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      if (res.ok) {
+      const result = await updateMe({ name });
+      if (result.error) {
+        setNameError(result.error);
+      } else {
         setNameSuccess(true);
         router.refresh();
-      } else {
-        setNameError(await parseApiError(res, "名前の更新に失敗しました"));
       }
     } catch {
       setNameError("通信エラーが発生しました");

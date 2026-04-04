@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
-import { type FieldErrors, parseFieldErrors } from "@/lib/apiError";
+import { updateReport } from "../actions";
 
 type Props = {
   id: string;
@@ -20,7 +20,6 @@ const MAX_LENGTH = 5000;
 export function ReportEditForm({ id, defaultValues }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [pending, setPending] = useState(false);
   const [counts, setCounts] = useState({
     workContent: defaultValues.workContent.length,
@@ -32,29 +31,20 @@ export function ReportEditForm({ id, defaultValues }: Props) {
     e.preventDefault();
     setPending(true);
     setError(null);
-    setFieldErrors({});
 
     const data = new FormData(e.currentTarget);
     try {
-      const res = await fetch(`/api/reports/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workContent: data.get("workContent"),
-          tomorrowPlan: data.get("tomorrowPlan"),
-          notes: data.get("notes") ?? "",
-        }),
+      const result = await updateReport({
+        id,
+        workContent: data.get("workContent") as string,
+        tomorrowPlan: data.get("tomorrowPlan") as string,
+        notes: (data.get("notes") as string) ?? "",
       });
 
-      if (res.status === 403) {
-        setError("この日報を編集する権限がありません");
-      } else if (!res.ok) {
-        const parsed = await parseFieldErrors(res);
-        setError(parsed.message);
-        setFieldErrors(parsed.fieldErrors);
+      if (result.error) {
+        setError(result.error);
       } else {
         router.push(`/reports/${id}`);
-        router.refresh();
       }
     } catch {
       setError("保存に失敗しました。時間をおいて再度お試しください");
@@ -83,9 +73,6 @@ export function ReportEditForm({ id, defaultValues }: Props) {
         <p className={`mt-1 text-right text-xs ${counts.workContent > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
           {counts.workContent.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
         </p>
-        {fieldErrors.workContent?.[0] && (
-          <p className="text-xs text-red-600">{fieldErrors.workContent[0]}</p>
-        )}
       </div>
       <div>
         <label htmlFor="tomorrowPlan" className="block text-sm font-medium text-zinc-700">
@@ -104,9 +91,6 @@ export function ReportEditForm({ id, defaultValues }: Props) {
         <p className={`mt-1 text-right text-xs ${counts.tomorrowPlan > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
           {counts.tomorrowPlan.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
         </p>
-        {fieldErrors.tomorrowPlan?.[0] && (
-          <p className="text-xs text-red-600">{fieldErrors.tomorrowPlan[0]}</p>
-        )}
       </div>
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-zinc-700">
@@ -125,9 +109,6 @@ export function ReportEditForm({ id, defaultValues }: Props) {
         <p className={`mt-1 text-right text-xs ${counts.notes > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
           {counts.notes.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
         </p>
-        {fieldErrors.notes?.[0] && (
-          <p className="text-xs text-red-600">{fieldErrors.notes[0]}</p>
-        )}
       </div>
       <div className="flex gap-3">
         <button

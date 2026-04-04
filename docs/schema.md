@@ -166,22 +166,25 @@ erDiagram
 
 | データ | 件数 | 詳細 |
 |--------|------|------|
-| User | 5 | eval-hub と同一ユーザーセット（下表参照） |
-| Report | 21 | MEMBER 3名 × 過去 7 日分 |
-| Comment | 5 | ユーザー間の相互コメント |
+| User | 6 | 下表参照 |
+| Report | 15 | MEMBER 2名 × 今日を基準とした過去 7 日分 + 管理操作対象 1件 |
+| Comment | 5 | ユーザー間の相互コメント（VIEWER によるコメントを含む） |
 
-**シードユーザー一覧**（eval-hub と共通）
+**シードユーザー一覧**
 
-| email | 名前 | ロール |
-|-------|------|--------|
-| doigaki@example.com | 土井垣将 | ADMIN |
-| shiranui@example.com | 不知火守 | ADMIN |
-| yamada@example.com | 山田太郎 | MEMBER |
-| satonaka@example.com | 里中智 | MEMBER |
-| iwaki@example.com | 岩鬼正美 | MEMBER |
+| email | 名前 | ロール | isActive | 用途 |
+|-------|------|--------|----------|------|
+| bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用） |
+| tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー |
+| tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
+| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用 |
+| sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
+| torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
 
+- シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される
+- ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive はシード再実行でリセットされる
 - `CLERK_SECRET_KEY` が設定されている場合、シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
-- 初期パスワード: `AmericanDogs`（Clerk 上に作成される場合）
-- シードを再実行すると既存データを全削除してから投入する
+- 初期パスワード: `Yakitori2026`
+- シードを再実行するとレポート・コメントは全削除して再投入する（ユーザーは upsert のため削除しない）
 
 Neon では開発用と本番用でブランチを分けることができる（無料枠で利用可能）。
