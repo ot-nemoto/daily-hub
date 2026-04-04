@@ -240,11 +240,15 @@ git push origin master
 
 **本番環境での影響：** なし（Vercel 本番環境は dev browser チェックが存在しない）
 
-**回避策：** `.env.local` に以下を設定することで Clerk 認証をバイパスできる
+**回避策：** `.env.local` に以下のいずれか1つを設定することで Clerk 認証をバイパスできる
 
-```
+> **注意:** `MOCK_USER_ID` と `MOCK_USER_EMAIL` は同時に設定しないこと。両方設定した場合は `MOCK_USER_ID` が優先される。
+
+```env
+# どちらか片方のみ設定
 MOCK_USER_ID=<DBのユーザーID>
-MOCK_USER_EMAIL=<DBのメールアドレス>
+# または
+# MOCK_USER_EMAIL=<DBのメールアドレス>
 ```
 
 **E2E テスト（Playwright）での対応：** `MOCK_USER_ID` または `MOCK_USER_EMAIL` を設定した状態でテストを実行すること（`prisma/seed.ts` のシードデータに含まれるユーザーを使用）
