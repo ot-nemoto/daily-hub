@@ -19,7 +19,7 @@ export async function updateMe(input: {
   if (!session) return redirect("/login");
 
   const parsed = UpdateMeSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
     await libUpdateMe({ id: session.user.id, name: parsed.data.name });

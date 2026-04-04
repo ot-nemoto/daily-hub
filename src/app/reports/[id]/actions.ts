@@ -30,7 +30,7 @@ export async function updateReport(input: {
   if (session.user.role === "VIEWER") return { error: "日報を編集する権限がありません" };
 
   const parsed = UpdateReportSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
     await libUpdateReport({
@@ -57,7 +57,7 @@ export async function createComment(input: {
   if (!session) return redirect("/login");
 
   const parsed = CreateCommentSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
     const comment = await libCreateComment({

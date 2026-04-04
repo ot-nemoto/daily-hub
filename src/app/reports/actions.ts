@@ -26,7 +26,7 @@ export async function createReport(input: {
   if (session.user.role === "VIEWER") return { error: "日報を作成する権限がありません" };
 
   const parsed = CreateReportSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   try {
     const report = await libCreateReport({
