@@ -26,7 +26,7 @@ export async function Header() {
             >
               月次ビュー
             </Link>
-            {session?.user?.role !== "VIEWER" && (
+            {(session?.user?.role === "ADMIN" || session?.user?.role === "MEMBER") && (
               <Link
                 href="/reports/new"
                 className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
