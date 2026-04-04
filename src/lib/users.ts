@@ -11,6 +11,10 @@ export async function updateUserAdmin(input: {
 }): Promise<{ id: string }> {
   const { id, currentUserId, role, isActive } = input;
 
+  if (role === undefined && isActive === undefined) {
+    throw new Error("At least one of role or isActive must be specified");
+  }
+
   // 自分自身の ADMIN ロールを降格しようとした場合は禁止
   if (id === currentUserId && role !== undefined && role !== "ADMIN") {
     throw new ForbiddenError("Cannot demote yourself from ADMIN");
