@@ -45,7 +45,7 @@ export default async function DailyViewPage({
           {reports.length === 0 ? (
             <div className="rounded-lg bg-white p-6 shadow-sm">
               <p className="text-sm text-zinc-500">
-                {date} の日報はありません
+                この日の日報はありません
               </p>
             </div>
           ) : (
