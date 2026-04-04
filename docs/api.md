@@ -1,327 +1,233 @@
-# api.md — APIエンドポイント定義
+# api.md — Server Actions 定義
 
-> 全エンドポイントは認証必須。未認証の場合は `401 Unauthorized` を返す。
-> 認証は Clerk（Phase 10〜）。サーバー側では `getSession()` でセッションを取得する。
-
----
-
-## エンドポイント一覧
-
-| メソッド | パス | 概要 | 認可 |
-|---------|------|------|------|
-| PATCH | `/api/me` | ログイン中ユーザーの名前変更 | 要ログイン |
-| GET | `/api/users` | ユーザー一覧取得 | 要ログイン |
-| GET | `/api/reports` | 日報一覧取得（日次・月次） | 要ログイン |
-| POST | `/api/reports` | 日報作成 | VIEWER 以外（MEMBER・ADMIN） |
-| GET | `/api/reports/[id]` | 日報詳細取得 | 要ログイン |
-| PUT | `/api/reports/[id]` | 日報編集 | 本人かつ VIEWER 以外（MEMBER・ADMIN） |
-| GET | `/api/reports/[id]/comments` | コメント一覧取得 | 要ログイン |
-| POST | `/api/reports/[id]/comments` | コメント追加 | 要ログイン |
-| DELETE | `/api/reports/[id]/comments/[commentId]` | コメント削除 | 本人のみ |
-| GET | `/api/admin/users` | ユーザー一覧取得（管理用） | ADMIN のみ |
-| PATCH | `/api/admin/users/[id]` | ユーザー情報更新（ロール・有効化） | ADMIN のみ |
-| DELETE | `/api/admin/users/[id]` | ユーザー完全削除 | ADMIN のみ |
+> 本プロジェクトは REST API Routes を使用せず、Next.js Server Actions で全データ操作を行う。
+> 全 Action は認証必須。未認証の場合は `/login` にリダイレクトする。
 
 ---
 
-## ユーザー
+## Action 一覧
 
-### PATCH /api/me
-ログイン中ユーザーの名前変更
-
-**Request Body**
-```json
-{ "name": "新しい名前" }
-```
-
-**Response 200**
-```json
-{ "id": "cuid", "name": "新しい名前", "email": "user@example.com" }
-```
-
-**Errors**
-- `400` — バリデーションエラー（名前が空・100文字超）
-- `401` — 未認証
-
----
-
-### GET /api/users
-全ユーザー一覧（日次ビューのユーザー選択用）
-
-**Response 200**
-```json
-[
-  { "id": "cuid", "name": "山田 太郎", "email": "yamada@example.com" }
-]
-```
+| Action | ファイル | 概要 | 認可 |
+|--------|---------|------|------|
+| `createReport` | `src/app/reports/actions.ts` | 日報作成 | VIEWER 以外（MEMBER・ADMIN） |
+| `updateReport` | `src/app/reports/[id]/actions.ts` | 日報編集 | 本人かつ VIEWER 以外（MEMBER・ADMIN） |
+| `createComment` | `src/app/reports/[id]/actions.ts` | コメント追加 | 要ログイン |
+| `deleteComment` | `src/app/reports/[id]/actions.ts` | コメント削除 | 本人のみ |
+| `updateMe` | `src/app/settings/actions.ts` | プロフィール更新 | 要ログイン |
+| `updateUserAdmin` | `src/app/admin/users/actions.ts` | ユーザー情報更新 | ADMIN のみ |
+| `deleteUser` | `src/app/admin/users/actions.ts` | ユーザー削除 | ADMIN のみ |
 
 ---
 
 ## 日報
 
-### GET /api/reports
-日報一覧取得（クエリパラメータで絞り込み）
+### `createReport`
 
-**Query Parameters**
+**ファイル:** `src/app/reports/actions.ts`
 
-| パラメータ | 型 | 必須 | 説明 |
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
 |-----------|-----|------|------|
-| `date` | `YYYY-MM-DD` | いずれか1つ | 指定日の全ユーザー日報（日次ビュー） |
-| `userId` | string | - | 特定ユーザーに絞り込み（`date` と併用） |
-| `from` | `YYYY-MM-DD` | いずれか1つ | 期間開始（月次ビュー） |
-| `to` | `YYYY-MM-DD` | `from` と同時 | 期間終了（月次ビュー） |
-| `authorId` | string | - | 特定ユーザーに絞り込み（`from/to` と併用） |
+| `date` | `string` | YES | `YYYY-MM-DD` 形式 |
+| `workContent` | `string` | YES | 最大 5000 文字 |
+| `tomorrowPlan` | `string` | YES | 最大 5000 文字 |
+| `notes` | `string` | NO | 最大 5000 文字 |
 
-**Response 200**
-```json
-[
-  {
-    "id": "cuid",
-    "date": "2026-03-06",
-    "workContent": "○○機能の実装",
-    "tomorrowPlan": "レビュー対応",
-    "notes": "DBの設計で詰まった",
-    "author": { "id": "cuid", "name": "山田 太郎" },
-    "commentCount": 2,
-    "createdAt": "2026-03-06T12:00:00Z",
-    "updatedAt": "2026-03-06T18:00:00Z"
-  }
-]
+**戻り値**
+
+```ts
+{ id?: string; error?: string }
 ```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"日報を作成する権限がありません"` | VIEWER ロール |
+| `"この日付の日報はすでに作成済みです"` | 同日に日報が存在する（ConflictError） |
+| バリデーションエラーメッセージ | フィールド不足・形式不正 |
 
 ---
 
-### POST /api/reports
-日報作成
+### `updateReport`
 
-**Request Body**
-```json
-{
-  "date": "2026-03-06",
-  "workContent": "○○機能の実装",
-  "tomorrowPlan": "レビュー対応",
-  "notes": "DBの設計で詰まった"
-}
+**ファイル:** `src/app/reports/[id]/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `string` | YES | 日報 ID |
+| `workContent` | `string` | YES | 最大 5000 文字 |
+| `tomorrowPlan` | `string` | YES | 最大 5000 文字 |
+| `notes` | `string` | NO | 最大 5000 文字 |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-**Response 201**
-```json
-{ "id": "cuid" }
-```
+**エラー**
 
-**Errors**
-- `400` — バリデーションエラー（フィールド不足・形式不正）
-- `409` — 同日にすでに日報が存在する
-
----
-
-### GET /api/reports/[id]
-日報詳細取得
-
-**Response 200**
-```json
-{
-  "id": "cuid",
-  "date": "2026-03-06",
-  "workContent": "○○機能の実装",
-  "tomorrowPlan": "レビュー対応",
-  "notes": "DBの設計で詰まった",
-  "author": { "id": "cuid", "name": "山田 太郎" },
-  "comments": [
-    {
-      "id": "cuid",
-      "body": "お疲れ様です",
-      "author": { "id": "cuid", "name": "鈴木 花子" },
-      "createdAt": "2026-03-06T19:00:00Z"
-    }
-  ],
-  "createdAt": "2026-03-06T12:00:00Z",
-  "updatedAt": "2026-03-06T18:00:00Z"
-}
-```
-
-**Errors**
-- `404` — 日報が存在しない
-
----
-
-### PUT /api/reports/[id]
-日報編集（自分の日報のみ）
-
-**Request Body**
-```json
-{
-  "workContent": "○○機能の実装（完了）",
-  "tomorrowPlan": "レビュー対応",
-  "notes": "解決できた"
-}
-```
-
-**Response 200**
-```json
-{ "id": "cuid" }
-```
-
-**Errors**
-- `400` — バリデーションエラー
-- `403` — 他ユーザーの日報を編集しようとした
-- `404` — 日報が存在しない
+| error | 原因 |
+|-------|------|
+| `"日報を編集する権限がありません"` | VIEWER ロール |
+| `"日報が見つかりません"` | 指定 ID の日報が存在しない（NotFoundError） |
+| `"この日報を編集する権限がありません"` | 他ユーザーの日報（ForbiddenError） |
+| バリデーションエラーメッセージ | フィールド不足・形式不正 |
 
 ---
 
 ## コメント
 
-### GET /api/reports/[id]/comments
-コメント一覧（日報詳細取得時に含めるため基本的に使わないが定義する）
+### `createComment`
 
-**Response 200**
-```json
-[
-  {
-    "id": "cuid",
-    "body": "お疲れ様です",
-    "author": { "id": "cuid", "name": "鈴木 花子" },
-    "createdAt": "2026-03-06T19:00:00Z"
-  }
-]
+**ファイル:** `src/app/reports/[id]/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `reportId` | `string` | YES | 日報 ID |
+| `body` | `string` | YES | 1〜1000 文字 |
+
+**戻り値**
+
+```ts
+{ id?: string; error?: string }
 ```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"日報が見つかりません"` | 指定 ID の日報が存在しない（NotFoundError） |
+| バリデーションエラーメッセージ | 空文字・1000 文字超 |
 
 ---
 
-### POST /api/reports/[id]/comments
-コメント追加
+### `deleteComment`
 
-**Request Body**
-```json
-{ "body": "お疲れ様です" }
+**ファイル:** `src/app/reports/[id]/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 |
+|-----------|-----|------|
+| `reportId` | `string` | YES |
+| `commentId` | `string` | YES |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-**Response 201**
-```json
-{ "id": "cuid" }
-```
+**エラー**
 
-**Errors**
-- `400` — バリデーションエラー（空文字・1000文字超）
-- `404` — 日報が存在しない
+| error | 原因 |
+|-------|------|
+| `"コメントが見つかりません"` | 指定 ID のコメントが存在しない（NotFoundError） |
+| `"このコメントを削除する権限がありません"` | 他ユーザーのコメント（ForbiddenError） |
 
 ---
 
-### DELETE /api/reports/[id]/comments/[commentId]
-コメント削除（自分のコメントのみ）
+## プロフィール
 
-**Response 204** — No Content
+### `updateMe`
 
-**Errors**
-- `403` — 他ユーザーのコメントを削除しようとした
-- `404` — コメントが存在しない
+**ファイル:** `src/app/settings/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `name` | `string` | YES | 最大 100 文字 |
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"ユーザーが見つかりません"` | セッションユーザーが DB に存在しない（NotFoundError） |
+| バリデーションエラーメッセージ | 空文字・100 文字超 |
 
 ---
 
 ## 管理者（ADMIN ロール必須）
 
-> 全エンドポイントは `ADMIN` ロールのユーザーのみアクセス可能。未認証・`ADMIN` 以外のロールを問わず `403 Forbidden` を返す（401 は返さない）。
+> ADMIN 以外のロールは `/` にリダイレクトされる。
 
-### GET /api/admin/users
-ユーザー一覧取得（管理画面用）
+### `updateUserAdmin`
 
-**Response 200**
-```json
-[
-  {
-    "id": "cuid",
-    "name": "土井垣将",
-    "email": "doigaki@example.com",
-    "role": "ADMIN",
-    "isActive": true,
-    "createdAt": "2026-01-01T00:00:00Z",
-    "lastReportAt": "2026-03-10T00:00:00Z",
-    "submissionRate30d": 0.85
-  }
-]
+**ファイル:** `src/app/admin/users/actions.ts`
+
+**引数**（変更したいフィールドのみ指定）
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `id` | `string` | YES | ユーザー ID |
+| `role` | `Role` | NO | `"ADMIN"` / `"MEMBER"` / `"VIEWER"` |
+| `isActive` | `boolean` | NO | — |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-- `lastReportAt`: 最後に日報を投稿した日付（投稿なしは `null`）
-- `submissionRate30d`: 直近30日間のうち日報を提出した割合（0〜1）
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"自分自身のロールをADMINから変更することはできません"` | 自分の ADMIN ロール降格（ForbiddenError） |
+| `"ユーザーが見つかりません"` | 指定 ID のユーザーが存在しない（NotFoundError） |
 
 ---
 
-### PATCH /api/admin/users/[id]
-ユーザー情報更新（ロール変更・有効化／無効化）
+### `deleteUser`
 
-**Request Body**（変更したいフィールドのみ指定）
-```json
-{ "role": "MEMBER", "isActive": false }
+**ファイル:** `src/app/admin/users/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 |
+|-----------|-----|------|
+| `id` | `string` | YES |
+
+**戻り値**
+
+```ts
+{ error?: string }
 ```
 
-**Response 200**
-```json
-{ "id": "cuid" }
-```
+**エラー**
 
-**Errors**
-- `400` — バリデーションエラー（不正なロール値など）
-- `403` — 自分自身の `ADMIN` ロールを降格しようとした
-- `404` — ユーザーが存在しない
+| error | 原因 |
+|-------|------|
+| `"自分自身を削除することはできません"` | 自分自身を削除しようとした（ForbiddenError） |
+| `"ユーザーが見つかりません"` | 指定 ID のユーザーが存在しない（NotFoundError） |
 
 ---
 
-### DELETE /api/admin/users/[id]
-ユーザー完全削除（日報・コメントを含む）（Phase 7c）
+## 共通仕様
 
-**Response 204** — No Content
+### 認証・認可
 
-**Errors**
-- `403` — 自分自身を削除しようとした
-- `404` — ユーザーが存在しない
+| 条件 | 挙動 |
+|------|------|
+| 未認証 | `/login` にリダイレクト |
+| VIEWER ロールが作成・編集を試みる | `error` フィールドにメッセージを返す |
+| ADMIN 以外が管理 Action を呼ぶ | `/` にリダイレクト |
 
----
+### エラー戻り値の形式
 
-## エラーレスポンス定義
-
-### 共通レスポンス形式
-
-エラーは JSON 形式で統一して返す。
-
-```json
-{ "error": "エラーメッセージ" }
-```
-
-ほとんどのエンドポイントではバリデーションエラー時に Zod の `flatten()` 形式を返す。
-
-```json
-{
-  "error": {
-    "formErrors": [],
-    "fieldErrors": {
-      "date": ["YYYY-MM-DD 形式で入力してください"],
-      "workContent": ["必須項目です"]
-    }
-  }
-}
-```
-
-ただし `PATCH /api/me` は内部的に flatten() を使って最初のエラーメッセージを取り出し、`{ "error": "文字列" }` の形式で返す。
-
-### 共通ステータスコード
-
-| ステータス | 説明 |
-|-----------|------|
-| `400 Bad Request` | バリデーション失敗（フィールド不足・形式不正など） |
-| `401 Unauthorized` | 未認証（Clerk セッションなし） |
-| `403 Forbidden` | 認可エラー（他ユーザーのリソースへのアクセス、権限不足） |
-| `404 Not Found` | 指定リソースが存在しない |
-| `409 Conflict` | リソースの重複（同日日報など） |
-
----
-
-## バリデーションルール（共通）
-
-| フィールド | 必須 | 制約 |
-|-----------|------|------|
-| `date` | YES | YYYY-MM-DD 形式 |
-| `workContent` | YES | 最大 5000 文字 |
-| `tomorrowPlan` | YES | 最大 5000 文字 |
-| `notes` | NO | 最大 5000 文字 |
-| コメント `body` | YES | 1〜1000 文字 |
-| ユーザー `name` | YES | 最大 100 文字 |
+全 Action は成功時 `error` フィールドなし、失敗時 `{ error: "メッセージ文字列" }` を返す。
+リダイレクトが必要な場合は `redirect()` を呼ぶため戻り値は返らない。
