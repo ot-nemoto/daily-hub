@@ -61,7 +61,7 @@
 | `id` | `string` | YES | 日報 ID |
 | `workContent` | `string` | YES | 最大 5000 文字 |
 | `tomorrowPlan` | `string` | YES | 最大 5000 文字 |
-| `notes` | `string` | NO | 最大 5000 文字 |
+| `notes` | `string` | YES | 最大 5000 文字、空文字可 |
 
 **戻り値**
 
