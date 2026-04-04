@@ -26,12 +26,14 @@ export async function Header() {
             >
               月次ビュー
             </Link>
-            <Link
-              href="/reports/new"
-              className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
-            >
-              日報作成
-            </Link>
+            {(session?.user?.role === "ADMIN" || session?.user?.role === "MEMBER") && (
+              <Link
+                href="/reports/new"
+                className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
+              >
+                日報作成
+              </Link>
+            )}
             {session?.user?.role === "ADMIN" && (
               <Link
                 href="/admin/users"
