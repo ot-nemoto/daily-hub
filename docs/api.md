@@ -214,7 +214,7 @@
 
 | error | 原因 |
 |-------|------|
-| `"自分自身を削除することはできません"` | 自分自身を削除しようとした（ForbiddenError） |
+| `"Cannot delete yourself"` | 自分自身を削除しようとした（ForbiddenError） |
 | `"ユーザーが見つかりません"` | 指定 ID のユーザーが存在しない（NotFoundError） |
 
 ---
