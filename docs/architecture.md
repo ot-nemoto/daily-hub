@@ -217,7 +217,7 @@ git push origin master
 | ライブラリ | 事象 | 正しい仕様 |
 |-----------|------|-----------|
 | Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | Next.js 16 以降、Middleware は Proxy に改称され `proxy.ts` が公式ファイル名となった。変更不要（[公式ドキュメント](https://nextjs.org/docs/app/getting-started/proxy)） |
-| Next.js 16 + `@clerk/nextjs` v7 | 開発環境の初回ブラウザアクセス時に全ルートが 404 になる（T127） | **既知の不具合。Clerk 側の対応待ち。** `proxy.ts` は Node.js runtime で動作するが、`clerkMiddleware` は Edge Runtime 向けに設計されており、dev browser トークン未設定時の handshake リダイレクトが正しく処理されない。本番環境では発生しない（dev browser チェックが存在しないため）。ローカル開発・E2E テストでは `.env.local` に `MOCK_USER_ID` または `MOCK_USER_EMAIL` を設定して Clerk 認証をバイパスすること。 |
+| Next.js 16 + `@clerk/nextjs` v7 | 開発環境の初回ブラウザアクセス時に全ルートが 404 になる（T127） | **既知の不具合。詳細は [T127](#t127-開発環境の初回ブラウザアクセスで-404-になる) を参照。** |
 
 ---
 
