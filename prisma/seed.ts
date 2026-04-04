@@ -18,10 +18,13 @@ config();
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
 
+const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+if (!clerkSecretKey) throw new Error("CLERK_SECRET_KEY is not set");
+
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY ?? "" });
+const clerk = createClerkClient({ secretKey: clerkSecretKey });
 
 // テストユーザーの共通パスワード
 const SEED_PASSWORD = "Yakitori2026";
