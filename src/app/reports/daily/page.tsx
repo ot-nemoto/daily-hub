@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getSession } from "@/lib/auth";
-import { isValidDate, today } from "@/lib/dateUtils";
+import { formatDateJa, isValidDate, today } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
 import { DailyFilter } from "./DailyFilter";
 
@@ -45,7 +45,7 @@ export default async function DailyViewPage({
           {reports.length === 0 ? (
             <div className="rounded-lg bg-white p-6 shadow-sm">
               <p className="text-sm text-zinc-500">
-                この日の日報はありません
+                {formatDateJa(date)} の日報はありません
               </p>
             </div>
           ) : (

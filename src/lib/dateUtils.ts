@@ -21,6 +21,12 @@ export function isValidMonth(value: string): boolean {
   return mon >= 1 && mon <= 12;
 }
 
+/** YYYY-MM-DD 形式の日付を「YYYY年M月D日」形式に変換する */
+export function formatDateJa(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return `${year}年${month}月${day}日`;
+}
+
 /** 今日の日付を YYYY-MM-DD 形式で返す（ローカル時刻基準） */
 export function today(): string {
   const now = new Date();
