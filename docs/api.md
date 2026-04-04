@@ -188,7 +188,8 @@
 
 | error | 原因 |
 |-------|------|
-| `"自分自身のロールをADMINから変更することはできません"` | 自分の ADMIN ロール降格（ForbiddenError） |
+| `"Cannot demote yourself from ADMIN"` | 自分の ADMIN ロール降格（ForbiddenError） |
+| `"Cannot change your own active status"` | 自分自身の isActive 変更（ForbiddenError） |
 | `"ユーザーが見つかりません"` | 指定 ID のユーザーが存在しない（NotFoundError） |
 
 ---
