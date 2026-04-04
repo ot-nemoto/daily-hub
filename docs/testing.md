@@ -65,6 +65,53 @@ vi.mock("@/lib/prisma", () => ({
 
 ---
 
+## E2E テスト（Playwright MCP）
+
+### 制約：T127 Clerk dev browser 問題
+
+開発環境では `proxy.ts`（Node.js runtime）と `@clerk/nextjs` の `clerkMiddleware`（Edge Runtime 向け設計）の非互換により、**Clerk dev browser cookie 未設定の初回ブラウザアクセスが 404 になる**（Clerk 側の対応待ち）。
+
+そのため、E2E テストでは `MOCK_USER_EMAIL` を使って Clerk 認証をバイパスする。
+
+| テストの種類 | MOCK の要否 |
+|------------|------------|
+| 機能テスト・ロールベースのシナリオ | MOCK 使用 |
+| isActive=false の挙動（sunagimo） | MOCK 使用（代替可能） |
+| 実際の Clerk ログイン・ログアウトフロー | T127 解消まで自動テスト対象外 |
+| 未ログイン → /login リダイレクト | T127 解消まで自動テスト対象外 |
+
+### テストユーザー（`prisma/seed.ts` のシードデータ）
+
+| メール | ロール | isActive | 主な用途 |
+|--------|--------|----------|---------|
+| `bonjiri@example.com` | ADMIN | true | 管理画面の操作確認 |
+| `tsukune@example.com` | MEMBER | true | 日報・コメントのメインユーザー |
+| `tebasaki@example.com` | MEMBER | true | ユーザー分離テスト |
+| `nankotsu@example.com` | VIEWER | true | VIEWER 制限の確認 |
+| `sunagimo@example.com` | MEMBER | false | isActive=false のリダイレクト確認 |
+| `torikawa@example.com` | MEMBER | true | 管理画面での操作対象 |
+
+### Playwright MCP への指示例
+
+```
+以下の手順で E2E テストを実施してください。
+
+## 事前準備
+1. `npx tsx prisma/seed.ts` を実行してテストデータを初期化する
+2. `.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定する
+3. `npm run dev` でサーバーを起動する（ポート: 3000）
+
+## 制約
+- Clerk dev browser の既知バグ（T127）により、MOCK_USER_EMAIL を必ず設定すること
+- MOCK_USER_EMAIL を設定した状態では Clerk の実認証フロー・未ログイン挙動は確認できない
+- テストユーザーを切り替える場合は .env.local を書き換えてサーバーを再起動すること
+
+## テスト対象
+docs/e2e-scenarios.md の [テストしたいセクション名] を参照してテストを実施してください。
+```
+
+---
+
 ## テストデータ投入（Seed）
 
 ### 概要
