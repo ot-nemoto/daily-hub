@@ -22,7 +22,7 @@ export default async function SettingsPage() {
           <SettingsForm
             initialName={session.user.name}
             email={dbUser?.email ?? ""}
-            initialApiKey={dbUser?.apiKey ?? null}
+            hasInitialApiKey={dbUser?.apiKey !== null}
           />
         </div>
       </div>
