@@ -149,6 +149,7 @@ External Client
 ## セキュリティ方針
 
 - APIルートは全て `getSession()` でセッション確認してから処理
+  - **例外:** `POST /api/reports`（Phase 11〜）は外部連携用 REST API のため、`Authorization: Bearer <api-key>` ヘッダーを使ったAPIキー認証を採用する。`getSession()` ではなく `prisma.user.findUnique({ where: { apiKey } })` でユーザーを照合する。
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
 - 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
 - 入力値は Zod でバリデーション
