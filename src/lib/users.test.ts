@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "./errors";
-import { deleteUser, updateMe, updateUserAdmin } from "./users";
+import { deleteUser, generateApiKey, revokeApiKey, updateMe, updateUserAdmin } from "./users";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -138,6 +138,54 @@ describe("updateMe", () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
     await expect(updateMe({ id: "no-user", name: "名前" })).rejects.toThrow(NotFoundError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("generateApiKey", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: API キーを生成して返す", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
+
+    const result = await generateApiKey({ id: "user-1" });
+
+    expect(result.apiKey).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { apiKey: result.apiKey },
+    });
+  });
+
+  it("異常系: 存在しないユーザーで NotFoundError を投げる", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+    await expect(generateApiKey({ id: "no-user" })).rejects.toThrow(NotFoundError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("revokeApiKey", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: API キーを null に更新する", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
+
+    await expect(revokeApiKey({ id: "user-1" })).resolves.toBeUndefined();
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { apiKey: null },
+    });
+  });
+
+  it("異常系: 存在しないユーザーで NotFoundError を投げる", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+    await expect(revokeApiKey({ id: "no-user" })).rejects.toThrow(NotFoundError);
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });

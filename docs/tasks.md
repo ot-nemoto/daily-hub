@@ -81,3 +81,4 @@
 - [Issues — Phase 8: CI/CD](https://github.com/ot-nemoto/daily-hub/milestone/6)
 - [Issues — Phase 9: 個人管理](https://github.com/ot-nemoto/daily-hub/milestone/7)
 - [Issues — Phase 10: 認証基盤移行（Clerk）](https://github.com/ot-nemoto/daily-hub/milestone/8)
+- [Issues — Phase 11: 外部API連携](https://github.com/ot-nemoto/daily-hub/milestone/9)
