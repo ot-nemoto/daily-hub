@@ -105,6 +105,11 @@ describe("POST /api/reports", () => {
       expect(res.status).toBe(422);
     });
 
+    it("date が存在しない日付の場合 422 を返す", async () => {
+      const res = await POST(makeRequest({ ...VALID_BODY, date: "2026-99-99" }, VALID_API_KEY));
+      expect(res.status).toBe(422);
+    });
+
     it("workContent が空の場合 422 を返す", async () => {
       const res = await POST(makeRequest({ ...VALID_BODY, workContent: "" }, VALID_API_KEY));
       expect(res.status).toBe(422);
