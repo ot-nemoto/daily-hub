@@ -242,7 +242,8 @@ applyTo: "**"
 ## テストの書き方
 
 - ファイル先頭に `// @vitest-environment node` を付ける
-- `vi.mock("@/lib/prisma", ...)` で Prisma クライアントをモックする
+- Prisma を直接参照するユニットテストでは `vi.mock("@/lib/prisma", ...)` で Prisma クライアントをモックする
+- Server Action など Prisma を直接触らない場合は、必要な `@/lib/*` をモックするパターンも許容する
 - `beforeEach` で `vi.clearAllMocks()` を呼び出す
 - `vi.mocked()` でモック関数を型付きで参照する
 - トップレベルの `describe()` は関数名、`it()` は日本語でテストケースを説明する
