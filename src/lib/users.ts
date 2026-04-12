@@ -66,6 +66,40 @@ export async function deleteUser(input: {
   ]);
 }
 
+export async function generateApiKey(input: {
+  id: string;
+}): Promise<{ apiKey: string }> {
+  const { id } = input;
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  const apiKey = crypto.randomUUID();
+  await prisma.user.update({
+    where: { id },
+    data: { apiKey },
+  });
+  return { apiKey };
+}
+
+export async function revokeApiKey(input: {
+  id: string;
+}): Promise<void> {
+  const { id } = input;
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  await prisma.user.update({
+    where: { id },
+    data: { apiKey: null },
+  });
+}
+
 export async function updateMe(input: {
   id: string;
   name: string;
