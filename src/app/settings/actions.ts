@@ -6,7 +6,42 @@ import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
 import { NotFoundError } from "@/lib/errors";
-import { updateMe as libUpdateMe } from "@/lib/users";
+import {
+  generateApiKey as libGenerateApiKey,
+  revokeApiKey as libRevokeApiKey,
+  updateMe as libUpdateMe,
+} from "@/lib/users";
+
+export async function generateApiKey(): Promise<{
+  apiKey?: string;
+  error?: string;
+}> {
+  const session = await getSession();
+  if (!session) return redirect("/login");
+
+  try {
+    const result = await libGenerateApiKey({ id: session.user.id });
+    revalidatePath("/settings");
+    return { apiKey: result.apiKey };
+  } catch (e) {
+    if (e instanceof NotFoundError) return { error: "ユーザーが見つかりません" };
+    throw e;
+  }
+}
+
+export async function revokeApiKey(): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) return redirect("/login");
+
+  try {
+    await libRevokeApiKey({ id: session.user.id });
+    revalidatePath("/settings");
+    return {};
+  } catch (e) {
+    if (e instanceof NotFoundError) return { error: "ユーザーが見つかりません" };
+    throw e;
+  }
+}
 
 const UpdateMeSchema = z.object({
   name: z.string().min(1).max(100),

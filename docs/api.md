@@ -1,8 +1,49 @@
-# api.md — Server Actions 定義
+# api.md — API 定義
 
-> 本プロジェクトは REST API Routes を使用せず、Next.js Server Actions で全データ操作を行う。
+> データ操作は原則 Next.js Server Actions で行う。
 > 全 Action は認証必須。未認証の場合は原則 `/login` にリダイレクトする。
 > ただし、管理系 Action（`updateUserAdmin` / `deleteUser`）は ADMIN 権限必須で、未認証時・権限不足時ともに `/` にリダイレクトする。
+>
+> Phase 11 より、外部連携用の REST API エンドポイントを追加している（APIキー認証）。
+
+---
+
+## REST API エンドポイント（APIキー認証）
+
+### `POST /api/reports` — 日報作成
+
+**認証:** `Authorization: Bearer <api-key>` ヘッダー必須（個人設定で発行）
+
+**リクエスト**
+
+```http
+POST /api/reports
+Authorization: Bearer <api-key>
+Content-Type: application/json
+
+{
+  "date": "YYYY-MM-DD",
+  "workContent": "作業内容（必須・最大5000文字）",
+  "tomorrowPlan": "明日の予定（必須・最大5000文字）",
+  "notes": "所感（省略可・最大5000文字）"
+}
+```
+
+**レスポンス**
+
+| ステータス | 内容 |
+|---|---|
+| 201 | `{ "id": "<report-id>" }` |
+| 401 | APIキーなし・無効・アカウント無効 |
+| 403 | VIEWER ロールによるアクセス |
+| 409 | 同日の日報が既存 |
+| 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
+
+**権限ルール**
+
+- `MEMBER` / `ADMIN` ロールのみ作成可能（`VIEWER` は 403）
+- 自分の日報のみ作成可能（1ユーザー1日1件）
+- `isActive=false` のユーザーは 401
 
 ---
 

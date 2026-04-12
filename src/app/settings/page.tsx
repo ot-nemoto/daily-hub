@@ -10,7 +10,7 @@ export default async function SettingsPage() {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { email: true },
+    select: { email: true, apiKey: true },
   });
 
   return (
@@ -22,6 +22,7 @@ export default async function SettingsPage() {
           <SettingsForm
             initialName={session.user.name}
             email={dbUser?.email ?? ""}
+            hasInitialApiKey={dbUser?.apiKey !== null}
           />
         </div>
       </div>

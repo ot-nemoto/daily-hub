@@ -44,23 +44,8 @@ daily-hub/
 │   │   │       ├── page.tsx        # 詳細
 │   │   │       └── edit/page.tsx   # 編集
 │   │   ├── api/
-│   │   │   ├── me/
-│   │   │   │   └── route.ts        # PATCH(名前変更)
-│   │   │   ├── reports/
-│   │   │   │   ├── route.ts        # GET(一覧), POST(作成)
-│   │   │   │   └── [id]/
-│   │   │   │       ├── route.ts    # GET(詳細), PUT(編集)
-│   │   │   │       └── comments/
-│   │   │   │           ├── route.ts        # GET, POST
-│   │   │   │           └── [commentId]/
-│   │   │   │               └── route.ts    # DELETE
-│   │   │   ├── users/
-│   │   │   │   └── route.ts        # GET(ユーザー一覧)
-│   │   │   └── admin/              # 管理者専用API（Phase 7）
-│   │   │       ├── users/
-│   │   │       │   ├── route.ts    # GET(一覧)
-│   │   │       │   └── [id]/
-│   │   │       │       └── route.ts # PATCH(更新), DELETE(削除)
+│   │   │   └── reports/
+│   │   │       └── route.ts        # POST(作成) ※APIキー認証（Phase 11）
 
 │   │   ├── settings/
 │   │   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
@@ -129,9 +114,15 @@ getSession()（src/lib/auth.ts）
 ## データフロー
 
 ```
+# ブラウザ操作（通常フロー）
 Client (React)
-  → Server Action / fetch()
-  → API Route (src/app/api/...)
+  → Server Action
+  → Prisma Client
+  → Neon PostgreSQL
+
+# 外部API連携（Phase 11〜）
+External Client
+  → REST API Route (POST /api/reports) ※Authorization: Bearer <api-key>
   → Prisma Client
   → Neon PostgreSQL
 ```
@@ -158,6 +149,7 @@ Client (React)
 ## セキュリティ方針
 
 - APIルートは全て `getSession()` でセッション確認してから処理
+  - **例外:** `POST /api/reports`（Phase 11〜）は外部連携用 REST API のため、`Authorization: Bearer <api-key>` ヘッダーを使ったAPIキー認証を採用する。`getSession()` ではなく `prisma.user.findUnique({ where: { apiKey } })` でユーザーを照合する。
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
 - 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
 - 入力値は Zod でバリデーション
