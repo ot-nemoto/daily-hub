@@ -32,7 +32,7 @@ applyTo: "**"
 ## Server Actions 規約
 
 - 各ページディレクトリに `actions.ts` を配置する（`"use server"` ディレクティブ）
-- 戻り値の型は `Promise<{ error?: string }>` に統一する
+- 戻り値の型は最低限 `error?: string` を含む型にする（成功時に `id` などの追加フィールドを返すことは許容）
 - 各 Server Action の先頭で `getSession()` を呼び出して認証チェックをする
   - 未認証: `redirect("/login")`
   - 権限なし（非 ADMIN が admin 系 Action を呼んだ場合）: `redirect("/")`
@@ -44,7 +44,7 @@ applyTo: "**"
 | 違反内容 | 重大度 |
 |---|---|
 | Server Action の先頭に `getSession()` 呼び出しがない | **BLOCKER** |
-| 戻り値の型が `Promise<{ error?: string }>` 以外になっている | **MAJOR** |
+| 戻り値の型に `error?: string` が含まれていない | **MAJOR** |
 | `revalidatePath()` が呼ばれていない（DB 変更がある場合） | **MAJOR** |
 | 全例外を握りつぶして再 throw していない（`catch { return { error } }` のみ） | **MAJOR** |
 
