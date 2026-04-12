@@ -150,7 +150,7 @@ applyTo: "**"
 
 | 違反内容 | 重大度 |
 |---|---|
-| ユーザー入力を Prisma クエリの `where` に無加工で渡している | **BLOCKER** |
+| ユーザー入力を Prisma クエリの `where` などの検索条件に、入力バリデーションや認可条件なしで反映している | **BLOCKER** |
 | `dangerouslySetInnerHTML` を使用している | **BLOCKER** |
 | API ルートでロールチェックが行われていない | **BLOCKER** |
 | セッション情報を使わずリクエストパラメータのユーザー ID を信頼している | **BLOCKER** |
