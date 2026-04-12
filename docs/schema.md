@@ -23,6 +23,7 @@ enum Role {
 model User {
   id        String   @id @default(cuid())
   clerkId   String?  @unique @map("clerk_id")              // Phase 10: Clerk ユーザーID（初回ログイン時に紐付け）
+  apiKey    String?  @unique @map("api_key")               // Phase 11: 外部API用キー（nullable）
   name      String
   email     String   @unique
   role      Role     @default(MEMBER)                      // Phase 7a
@@ -74,6 +75,7 @@ erDiagram
     User {
         String id PK
         String clerkId UK "nullable"
+        String apiKey UK "nullable"
         String name
         String email UK
         Role role "ADMIN / MEMBER / VIEWER"
@@ -113,6 +115,7 @@ erDiagram
 |--------|-----|------|
 | id | String (CUID) | 主キー |
 | clerkId | String? | Clerk ユーザーID（nullable・ユニーク）。初回ログイン時に自動紐付け |
+| apiKey | String? | 外部API用キー（nullable・ユニーク）。ユーザーが個人設定で生成・失効 |
 | name | String | 表示名 |
 | email | String | ユニーク、Clerk 側のメールと紐付けに使用 |
 | role | Role (enum) | `ADMIN` / `MEMBER` / `VIEWER`、デフォルト `MEMBER` |
