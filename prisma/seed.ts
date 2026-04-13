@@ -44,8 +44,10 @@ const BONJIRI_NAME  = "bonjiri";
 
 // ---- tsukune: 日報・コメント・ユーザー分離テストのメインユーザー（MEMBER） ----
 // 今日を含む過去7日の日報あり。複数ユーザーからのコメントあり。
-const TSUKUNE_EMAIL = "tsukune@example.com";
-const TSUKUNE_NAME  = "tsukune";
+// apiKey を固定値で設定（REST API 動作確認用）
+const TSUKUNE_EMAIL  = "tsukune@example.com";
+const TSUKUNE_NAME   = "tsukune";
+const TSUKUNE_APIKEY = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const TSUKUNE_REPORTS = [
   { daysAgo: 0, workContent: "機能実装：ログイン画面のバリデーション追加",       tomorrowPlan: "日報詳細ページのUI実装を開始する",       notes: "特に問題なし。チームの連携がスムーズでよかった。" },
   { daysAgo: 1, workContent: "バグ修正：日報一覧が正しく表示されない問題を修正", tomorrowPlan: "コメント機能のAPI実装を進める",           notes: "" },
@@ -100,13 +102,13 @@ async function upsertClerkUser(email: string): Promise<string> {
   return created.id;
 }
 
-async function upsertUser(params: { email: string; name: string; role: Role; isActive: boolean }) {
-  const { email, name, role, isActive } = params;
+async function upsertUser(params: { email: string; name: string; role: Role; isActive: boolean; apiKey?: string }) {
+  const { email, name, role, isActive, apiKey } = params;
   const clerkId = await upsertClerkUser(email);
   return prisma.user.upsert({
     where: { email },
-    update: { name, role, isActive, clerkId },
-    create: { email, name, role, isActive, clerkId },
+    update: { name, role, isActive, clerkId, apiKey: apiKey ?? null },
+    create: { email, name, role, isActive, clerkId, apiKey: apiKey ?? null },
   });
 }
 
@@ -119,7 +121,7 @@ async function main() {
   // ユーザーを upsert（ロール・isActive をシード定義にリセット）
   const [bonjiri, tsukune, tebasaki, nankotsu, , torikawa] = await Promise.all([
     upsertUser({ email: BONJIRI_EMAIL,  name: BONJIRI_NAME,  role: "ADMIN",  isActive: true  }),
-    upsertUser({ email: TSUKUNE_EMAIL,  name: TSUKUNE_NAME,  role: "MEMBER", isActive: true  }),
+    upsertUser({ email: TSUKUNE_EMAIL,  name: TSUKUNE_NAME,  role: "MEMBER", isActive: true,  apiKey: TSUKUNE_APIKEY }),
     upsertUser({ email: TEBASAKI_EMAIL, name: TEBASAKI_NAME, role: "MEMBER", isActive: true  }),
     upsertUser({ email: NANKOTSU_EMAIL, name: NANKOTSU_NAME, role: "VIEWER", isActive: true  }),
     upsertUser({ email: SUNAGIMO_EMAIL, name: SUNAGIMO_NAME, role: "MEMBER", isActive: false }),
@@ -169,7 +171,7 @@ async function main() {
   console.log("\nSeed completed successfully!");
   console.log("\n--- Users ---");
   console.log(`  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者`);
-  console.log(`  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり`);
+  console.log(`  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり・apiKey: ${TSUKUNE_APIKEY}`);
   console.log(`  ${TEBASAKI_EMAIL} (MEMBER, active)   — 日報7件・コメントあり`);
   console.log(`  ${NANKOTSU_EMAIL} (VIEWER, active)   — コメントあり`);
   console.log(`  ${SUNAGIMO_EMAIL} (MEMBER, inactive) — 認証エラーリダイレクト確認用`);
