@@ -103,7 +103,7 @@ const userId = session?.user?.id;
 |------|------|------|
 | `/login` | 不要 | Clerk のサインインページ |
 | `/auth-error` | 不要 | 認証エラー表示ページ |
-| `/api/reports` | 不要 | 外部連携用 REST API。Clerk 認証ではなく APIキー認証（`Authorization: Bearer`）で認可する |
+| `/api/reports/**` | 不要 | 外部連携用 REST API。`/api/reports` 本体および配下のサブパスは、Clerk 認証ではなく APIキー認証（`Authorization: Bearer`）で認可する |
 | その他全パス | **必須** | 未認証なら Clerk が `/login` へリダイレクト |
 
 ---
