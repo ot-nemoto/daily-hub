@@ -151,6 +151,20 @@ erDiagram
 
 ---
 
+## カスケード動作
+
+Prisma スキーマに `onDelete` を指定していないため、全リレーションのデフォルトは **`Restrict`**（参照先レコードが存在する間は削除不可）となる。
+
+| リレーション | onDelete | 影響 |
+|-------------|----------|------|
+| Report → User | Restrict | User 削除前に Report を削除する必要がある |
+| Comment → User | Restrict | User 削除前に Comment を削除する必要がある |
+| Comment → Report | Restrict | Report 削除前に Comment を削除する必要がある |
+
+**`deleteUser`（ADM-11）実装時の注意：** User を削除する前に、その User が投稿した Comment および Report をアプリケーション側で先に削除すること。
+
+---
+
 ## インデックス設計
 
 | テーブル | インデックス | 用途 |

@@ -56,6 +56,8 @@ Content-Type: application/json
 | `createComment` | `src/app/reports/[id]/actions.ts` | コメント追加 | 要ログイン |
 | `deleteComment` | `src/app/reports/[id]/actions.ts` | コメント削除 | 本人のみ |
 | `updateMe` | `src/app/settings/actions.ts` | プロフィール更新 | 要ログイン |
+| `generateApiKey` | `src/app/settings/actions.ts` | APIキー生成・再生成 | 要ログイン |
+| `revokeApiKey` | `src/app/settings/actions.ts` | APIキー失効 | 要ログイン |
 | `updateUserAdmin` | `src/app/admin/users/actions.ts` | ユーザー情報更新 | ADMIN のみ |
 | `deleteUser` | `src/app/admin/users/actions.ts` | ユーザー削除 | ADMIN のみ |
 
@@ -200,6 +202,46 @@ Content-Type: application/json
 |-------|------|
 | `"ユーザーが見つかりません"` | セッションユーザーが DB に存在しない（NotFoundError） |
 | バリデーションエラーメッセージ | 空文字・100 文字超 |
+
+---
+
+### `generateApiKey`
+
+**ファイル:** `src/app/settings/actions.ts`
+
+**引数:** なし
+
+**戻り値**
+
+```ts
+{ apiKey?: string; error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"ユーザーが見つかりません"` | セッションユーザーが DB に存在しない（NotFoundError） |
+
+---
+
+### `revokeApiKey`
+
+**ファイル:** `src/app/settings/actions.ts`
+
+**引数:** なし
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"ユーザーが見つかりません"` | セッションユーザーが DB に存在しない（NotFoundError） |
 
 ---
 

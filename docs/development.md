@@ -14,23 +14,16 @@
 npm install
 ```
 
-`.env.local` をプロジェクトルートに作成する（`.env` ではなく `.env.local` を使う）：
+`.env.local` をプロジェクトルートに作成する（`.env` ではなく `.env.local` を使う）。環境変数の詳細は [`docs/architecture.md` — 環境変数](architecture.md#環境変数) を参照。
 
 ```env
-# Neon PostgreSQL
 DATABASE_URL="postgresql://<user>:<password>@<host>-pooler.<region>.aws.neon.tech/<db>?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
 DIRECT_URL="postgresql://<user>:<password>@<host>.<region>.aws.neon.tech/<db>?sslmode=require&channel_binding=require"
-
-# Clerk（Neon ダッシュボードから取得）
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
 CLERK_SECRET_KEY=sk_test_xxx
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
-
-# ローカル開発用モック（Clerk をバイパスして DB ユーザーを直接使用）
-# MOCK_USER_ID と MOCK_USER_EMAIL は同時に設定しない（MOCK_USER_ID が優先される）
-# 対象ユーザーが DB に存在しない場合は console.error が出力され getSession() は null を返す
-MOCK_USER_ID=<DB の users.id>
+# MOCK_USER_ID=<DB の users.id>
 # MOCK_USER_EMAIL=<DB の users.email>
 ```
 
@@ -62,12 +55,7 @@ npm run dev
 
 ### Prisma 7 のアーキテクチャ概要
 
-Prisma 7 では接続設定が2箇所に分離されている。
-
-- **`prisma.config.ts`**：CLI（migrate / generate）が使う設定。`DIRECT_URL`（直接接続）を使う。
-- **`src/lib/prisma.ts`**：ランタイムの `PrismaClient`。`@prisma/adapter-pg` 経由で `DATABASE_URL`（接続プール）を渡す。
-
-`schema.prisma` の `datasource db` ブロックには URL を書かない（Prisma 7 以降の仕様）。
+接続設定の詳細は [`docs/architecture.md` — Prisma 7 の接続構成](architecture.md#prisma-7-の接続構成) を参照。
 
 ### マイグレーション
 
@@ -165,24 +153,30 @@ npx prisma generate
 
 ## テスト
 
+詳細なテスト方針・カバレッジ規約は [`docs/testing.md`](testing.md) を参照。
+
 ### ユニットテスト（Vitest）
 
 ```bash
-# 1回だけ実行
-npx vitest run
-
-# 詳細表示（テストケース名を全て表示）
-npx vitest run --reporter=verbose
-
-# ウォッチモードで実行（開発中）
-npm test
-
-# UI モードで実行（ブラウザで結果確認）
-npm run test:ui
-
-# カバレッジレポート出力
-npm run test:coverage
+npm test                          # 1回実行
+npm run test:watch                # ウォッチモード（開発中）
+npx vitest run --reporter=verbose # テストケース名を全て表示
+npm run test:ui                   # UI モード（ブラウザで結果確認）
+npm run test:coverage             # カバレッジレポート出力
 ```
+
+### E2E テスト（Playwright MCP）
+
+E2E テストは Playwright MCP を使用して手動で実施する。詳細な手順・シナリオは [`docs/testing.md`](testing.md) を参照。
+
+事前準備：
+
+```bash
+# テストデータを初期化
+npx tsx prisma/seed.ts
+```
+
+`.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定してから `npm run dev` を起動する（T127 対応）。
 
 ## デプロイ（Vercel）
 
