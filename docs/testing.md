@@ -67,18 +67,18 @@ vi.mock("@/lib/prisma", () => ({
 
 ## E2E テスト（Playwright MCP）
 
-### 制約：T127 Clerk dev browser 問題
+### MOCK モードについて
 
-開発環境では `proxy.ts`（Node.js runtime）と `@clerk/nextjs` の `clerkMiddleware`（Edge Runtime 向け設計）の非互換により、**Clerk dev browser cookie 未設定の初回ブラウザアクセスが 404 になる**（Clerk 側の対応待ち）。
+`MOCK_USER_EMAIL`（または `MOCK_USER_ID`）を設定すると Clerk 認証をバイパスでき、ユーザー切り替えが容易になる。機能テストでは MOCK モードを推奨する。
 
-そのため、E2E テストでは `MOCK_USER_EMAIL` を使って Clerk 認証をバイパスする。
+> **注意:** `MOCK_USER_ID` と `MOCK_USER_EMAIL` は同時に設定しないこと。両方設定した場合は `MOCK_USER_ID` が優先される。
 
 | テストの種類 | MOCK の要否 |
 |------------|------------|
-| 機能テスト・ロールベースのシナリオ | MOCK 使用 |
-| isActive=false の挙動（sunagimo） | MOCK 使用（代替可能） |
-| 実際の Clerk ログイン・ログアウトフロー | T127 解消まで自動テスト対象外 |
-| 未ログイン → /login リダイレクト | T127 解消まで自動テスト対象外 |
+| 機能テスト・ロールベースのシナリオ | MOCK 使用（推奨） |
+| isActive=false の挙動（sunagimo） | MOCK 使用（推奨） |
+| 実際の Clerk ログイン・ログアウトフロー | MOCK なしで実施可能（`@clerk/nextjs` 7.1.0 で dev browser 問題解消） |
+| 未ログイン → /login リダイレクト | MOCK なしで実施可能 |
 
 ### テストユーザー（`prisma/seed.ts` のシードデータ）
 
@@ -102,7 +102,6 @@ vi.mock("@/lib/prisma", () => ({
 3. `npm run dev` でサーバーを起動する（ポート: 3000）
 
 ## 制約
-- Clerk dev browser の既知バグ（T127）により、MOCK_USER_EMAIL を必ず設定すること
 - MOCK_USER_EMAIL を設定した状態では Clerk の実認証フロー・未ログイン挙動は確認できない
 - テストユーザーを切り替える場合は .env.local を書き換えてサーバーを再起動すること
 
