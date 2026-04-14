@@ -106,9 +106,36 @@ npx prisma migrate status
 
 ### シードデータ投入
 
+手動テスト前に必ず実行してデータを初期化すること。
+
 ```bash
 npx tsx prisma/seed.ts
 ```
+
+#### 投入データ
+
+| データ | 件数 | 詳細 |
+|--------|------|------|
+| User | 6 | 下表参照 |
+| Report | 15 | MEMBER 2名 × 今日を基準とした過去 7 日分 + 管理操作対象 1件 |
+| Comment | 5 | ユーザー間の相互コメント（VIEWER によるコメントを含む） |
+
+#### シードユーザー一覧
+
+| email | 名前 | ロール | isActive | 用途 |
+|-------|------|--------|----------|------|
+| bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用） |
+| tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー |
+| tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
+| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用 |
+| sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
+| torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
+
+- 初期パスワード: `Yakitori2026`
+- シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される
+- ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive はシード再実行でリセットされる
+- シードを再実行するとレポート・コメントは全削除して再投入する（ユーザーは upsert のため削除しない）
+- `CLERK_SECRET_KEY` が設定されている場合、シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
 
 ### Prisma Studio（GUIでDBを確認）
 
@@ -126,6 +153,8 @@ npx prisma studio
 2. **Connection pooling ON** の文字列 → `DATABASE_URL`
    - 末尾に `&pgbouncer=true&connection_limit=1` を追加
 3. **Connection pooling OFF** の文字列 → `DIRECT_URL`
+
+開発用と本番用でブランチを分けることができる（無料枠で利用可能）。
 
 ---
 

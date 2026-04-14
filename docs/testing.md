@@ -84,7 +84,7 @@ vi.mock("@/lib/prisma", () => ({
 
 ### テストユーザー（`prisma/seed.ts` のシードデータ）
 
-シードユーザーの一覧は [`docs/schema.md` — 初期データ（開発用シード）](schema.md#初期データ開発用シード) を参照。
+シードユーザーの一覧は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
 
 ### Playwright MCP への指示例
 
@@ -136,7 +136,7 @@ docs/e2e-scenarios.md の [テストしたいセクション名] を参照して
 
 ### 投入データ
 
-シードデータの詳細（ユーザー一覧・日報・コメント件数）は [`docs/schema.md` — 初期データ（開発用シード）](schema.md#初期データ開発用シード) を参照。
+シードデータの詳細（ユーザー一覧・日報・コメント件数）は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
 
 ### 実行
 
