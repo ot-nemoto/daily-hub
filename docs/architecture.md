@@ -65,29 +65,7 @@ daily-hub/
 
 ## 認証フロー
 
-```
-未認証ユーザー
-  → proxy.ts（clerkMiddleware）でセッション確認
-  → 未認証なら /login にリダイレクト（Clerk が処理）
-  → MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合はバイパス（ローカル開発用）
-
-ログイン
-  → Clerk の SignIn UI（/login）でメール+パスワード認証
-  → Clerk がセッション Cookie を発行
-
-getSession()（src/lib/auth.ts）
-  → MOCK_USER_ID 環境変数が設定されている場合は id で DB ユーザーを直接返す
-  → MOCK_USER_EMAIL 環境変数が設定されている場合は email で DB ユーザーを直接返す
-  → どちらも対象ユーザーが DB に存在しない場合は console.error を出力し null を返す
-  → Clerk auth() で userId（clerkId）を取得
-  → clerkId で DB ユーザーを検索
-  → 未ヒット時：Clerk currentUser() でメールを取得し DB ユーザーと突合
-    → 突合成功：clerkId を DB に書き込み（自動紐付け）
-    → 突合失敗かつ Clerk にユーザーあり：DB に新規作成
-  → isActive === false なら: ページ（redirectOnInactive=true）は /auth-error?reason=inactive にリダイレクト、API は null を返す（401）
-  → 未認証（Clerk セッションなし）なら null を返す（API は 401、画面は /login へ）
-  → Session 型 { user: { id, name, role, isActive } } を返す
-```
+詳細は [`docs/auth.md`](auth.md) を参照。
 
 ## アクセス制御（Phase 7a）
 
@@ -209,50 +187,4 @@ git push origin master
 | ライブラリ | 事象 | 正しい仕様 |
 |-----------|------|-----------|
 | Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | Next.js 16 以降、Middleware は Proxy に改称され `proxy.ts` が公式ファイル名となった。変更不要（[公式ドキュメント](https://nextjs.org/docs/app/getting-started/proxy)） |
-| Next.js 16 + `@clerk/nextjs` v7 | 開発環境の初回ブラウザアクセス時に全ルートが 404 になる（T127） | **既知の不具合。詳細は [T127](#t127-開発環境の初回ブラウザアクセスで-404-になる) を参照。** |
-
 ---
-
-## 既知の不具合
-
-### [T127] 開発環境の初回ブラウザアクセスで 404 になる
-
-**影響範囲：** `npm run dev` 起動後、Clerk dev browser cookie が未設定の状態でブラウザからページにアクセスしたとき
-
-**発生条件（3条件の AND）：**
-1. 開発環境（`NODE_ENV=development`）
-2. Clerk dev browser cookie 未設定（初回アクセス・Cookie クリア後）
-3. ブラウザのナビゲーションリクエスト（`Sec-Fetch-Dest: document`）
-
-**根本原因：**
-- `proxy.ts` は Node.js runtime で動作する（Next.js 16 の新機能）
-- `@clerk/nextjs` の `clerkMiddleware` は Edge Runtime（`middleware.ts`）向けに実装されており、`proxy.ts` では dev browser handshake フローが正しく処理されない
-- dev browser missing 検出 → Clerk FAPI へのハンドシェイクリダイレクト → `proxy.ts` でリダイレクトが正しく処理されず `/clerk_XXXX` へリライト → 404
-- Clerk 公式 Issue にて `proxy.ts`（Node.js runtime）の完全対応は未完了（[clerk/javascript#7705](https://github.com/clerk/javascript/issues/7705) は用語変更のみ）
-
-**本番環境での影響：** なし（Vercel 本番環境は dev browser チェックが存在しない）
-
-**回避策：** `.env.local` に以下のいずれか1つを設定することで Clerk 認証をバイパスできる
-
-> **注意:** `MOCK_USER_ID` と `MOCK_USER_EMAIL` は同時に設定しないこと。両方設定した場合は `MOCK_USER_ID` が優先される。
-
-```env
-# どちらか片方のみ設定
-MOCK_USER_ID=<DBのユーザーID>
-# または
-# MOCK_USER_EMAIL=<DBのメールアドレス>
-```
-
-**E2E テスト（Playwright）での対応：** `MOCK_USER_ID` または `MOCK_USER_EMAIL` を設定した状態でテストを実行すること（`prisma/seed.ts` のシードデータに含まれるユーザーを使用）
-
-**対応方針：** Clerk 側の `proxy.ts` 対応完了後に回避策を削除する
-
----
-
-## 将来の移行パス
-
-| 項目 | 現在（MVP） | 将来 |
-|------|------------|------|
-| DB | Neon 無料枠 | Neon の有料プラン or 他の PostgreSQL に移行可 |
-| 認証 | Clerk | Clerk のダッシュボードで SSO・MFA 等の拡張が可能 |
-| ホスティング | Vercel Hobby | Vercel Pro または VPS/Cloud Run に移行可 |

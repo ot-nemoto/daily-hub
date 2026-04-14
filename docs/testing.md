@@ -5,6 +5,7 @@
 | 対象 | 完了条件 |
 |------|---------|
 | Server Actions（`src/app/**/actions.ts`） | ユニットテストの作成をもって完了 |
+| Route Handlers（`src/app/api/**/route.ts`） | ユニットテストの作成をもって完了 |
 | ユーティリティ関数（`src/lib/`） | ユニットテストの作成をもって完了 |
 | UI コンポーネント | 手動動作確認をもって完了（[docs/e2e-scenarios.md](e2e-scenarios.md) 参照） |
 
@@ -25,6 +26,7 @@ npm run test:coverage             # カバレッジレポート出力
 ### 対象・方針
 
 - `src/app/**/actions.ts`（Server Actions）はユニットテスト必須
+- `src/app/api/**/route.ts`（Route Handlers）はユニットテスト必須
 - `src/lib/` 配下のユーティリティ関数はユニットテスト必須
 - テストファイルは実装ファイルと同じディレクトリに `[name].test.ts` で配置
 - Prisma・Clerk 等の外部依存は `vi.mock` でモック化する
@@ -67,33 +69,30 @@ vi.mock("@/lib/prisma", () => ({
 
 ## E2E テスト（Playwright MCP）
 
-### 制約：T127 Clerk dev browser 問題
+### MOCK モードについて
 
-開発環境では `proxy.ts`（Node.js runtime）と `@clerk/nextjs` の `clerkMiddleware`（Edge Runtime 向け設計）の非互換により、**Clerk dev browser cookie 未設定の初回ブラウザアクセスが 404 になる**（Clerk 側の対応待ち）。
+`MOCK_USER_EMAIL`（または `MOCK_USER_ID`）を設定すると Clerk 認証をバイパスでき、ユーザー切り替えが容易になる。機能テストでは MOCK モードを推奨する。
 
-そのため、E2E テストでは `MOCK_USER_EMAIL` を使って Clerk 認証をバイパスする。
+> **注意:** `MOCK_USER_ID` と `MOCK_USER_EMAIL` は同時に設定しないこと。両方設定した場合は `MOCK_USER_ID` が優先される。
 
 | テストの種類 | MOCK の要否 |
 |------------|------------|
-| 機能テスト・ロールベースのシナリオ | MOCK 使用 |
-| isActive=false の挙動（sunagimo） | MOCK 使用（代替可能） |
-| 実際の Clerk ログイン・ログアウトフロー | T127 解消まで自動テスト対象外 |
-| 未ログイン → /login リダイレクト | T127 解消まで自動テスト対象外 |
+| 機能テスト・ロールベースのシナリオ | MOCK 使用（推奨） |
+| isActive=false の挙動（sunagimo） | MOCK 使用（推奨） |
+| 実際の Clerk ログイン・ログアウトフロー | MOCK なしで実施可能（`@clerk/nextjs` 7.1.0 で dev browser 問題解消） |
+| 未ログイン → /login リダイレクト | MOCK なしで実施可能 |
 
 ### テストユーザー（`prisma/seed.ts` のシードデータ）
 
-| メール | ロール | isActive | 主な用途 |
-|--------|--------|----------|---------|
-| `bonjiri@example.com` | ADMIN | true | 管理画面の操作確認 |
-| `tsukune@example.com` | MEMBER | true | 日報・コメントのメインユーザー |
-| `tebasaki@example.com` | MEMBER | true | ユーザー分離テスト |
-| `nankotsu@example.com` | VIEWER | true | VIEWER 制限の確認 |
-| `sunagimo@example.com` | MEMBER | false | isActive=false のリダイレクト確認 |
-| `torikawa@example.com` | MEMBER | true | 管理画面での操作対象 |
+シードユーザーの一覧は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
 
 ### Playwright MCP への指示例
 
-```
+#### 機能テスト（MOCK モード）
+
+ロールベースのシナリオや isActive=false の挙動など、**機能テスト**には MOCK モードを使用する。
+
+```text
 以下の手順で E2E テストを実施してください。
 
 ## 事前準備
@@ -102,9 +101,24 @@ vi.mock("@/lib/prisma", () => ({
 3. `npm run dev` でサーバーを起動する（ポート: 3000）
 
 ## 制約
-- Clerk dev browser の既知バグ（T127）により、MOCK_USER_EMAIL を必ず設定すること
 - MOCK_USER_EMAIL を設定した状態では Clerk の実認証フロー・未ログイン挙動は確認できない
 - テストユーザーを切り替える場合は .env.local を書き換えてサーバーを再起動すること
+
+## テスト対象
+docs/e2e-scenarios.md の [テストしたいセクション名] を参照してテストを実施してください。
+```
+
+#### 認証フローテスト（MOCK なし）
+
+実際の Clerk ログイン/ログアウトフローや未ログイン → /login リダイレクトを確認する場合は、**`MOCK_USER_EMAIL` を設定せず**サーバーを起動する。
+
+```text
+以下の手順で E2E テストを実施してください。
+
+## 事前準備
+1. `npx tsx prisma/seed.ts` を実行してテストデータを初期化する
+2. `.env.local` の `MOCK_USER_EMAIL` がコメントアウトされていることを確認する
+3. `npm run dev` でサーバーを起動する（ポート: 3000）
 
 ## テスト対象
 docs/e2e-scenarios.md の [テストしたいセクション名] を参照してテストを実施してください。
@@ -122,22 +136,7 @@ docs/e2e-scenarios.md の [テストしたいセクション名] を参照して
 
 ### 投入データ
 
-| ユーザー | ロール | isActive | 日報 | コメント |
-|---------|--------|----------|------|---------|
-| `bonjiri@example.com` | ADMIN | true | なし | あり（2件） |
-| `tsukune@example.com` | MEMBER | true | 7件（今日〜6日前） | あり（3件投稿される） |
-| `tebasaki@example.com` | MEMBER | true | 7件（今日〜6日前） | あり（2件投稿される） |
-| `nankotsu@example.com` | VIEWER | true | なし | あり（1件投稿される） |
-| `sunagimo@example.com` | MEMBER | false | なし | なし |
-| `torikawa@example.com` | MEMBER | true | 1件（今日） | なし |
-
-コメントの内訳：
-
-| 日報 | コメント投稿者 | テスト観点 |
-|------|--------------|-----------|
-| tsukune の今日の日報 | tebasaki, bonjiri, nankotsu | 複数コメント一覧・VIEWER によるコメント確認 |
-| tebasaki の今日の日報 | tsukune, bonjiri | ユーザー分離（tsukune は自コメントのみ削除可） |
-| tsukune の昨日の日報 | なし | コメント空状態の確認 |
+シードデータの詳細（ユーザー一覧・日報・コメント件数）は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
 
 ### 実行
 

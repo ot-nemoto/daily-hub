@@ -16,10 +16,11 @@
 
 | ファイル | 内容 |
 |----------|------|
-| [docs/product.md](docs/product.md) | プロダクト定義・目的・MVPスコープ |
+| [docs/product.md](docs/product.md) | プロダクト定義・目的 |
 | [docs/requirements.md](docs/requirements.md) | 機能要件・非機能要件・画面一覧 |
 | [docs/architecture.md](docs/architecture.md) | 技術スタック・ディレクトリ構成・実装方針 |
-| [docs/api.md](docs/api.md) | APIエンドポイント定義 |
+| [docs/api.md](docs/api.md) | 外部 REST API エンドポイント定義 |
+| [docs/actions.md](docs/actions.md) | Server Actions 定義 |
 | [docs/schema.md](docs/schema.md) | DBスキーマ・Prismaモデル定義 |
 | [docs/ui.md](docs/ui.md) | 画面一覧・遷移・UIコンポーネント仕様 |
 | [docs/auth.md](docs/auth.md) | 認証フロー・保護ルート |
