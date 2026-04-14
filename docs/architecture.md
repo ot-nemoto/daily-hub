@@ -188,11 +188,3 @@ git push origin master
 |-----------|------|-----------|
 | Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | Next.js 16 以降、Middleware は Proxy に改称され `proxy.ts` が公式ファイル名となった。変更不要（[公式ドキュメント](https://nextjs.org/docs/app/getting-started/proxy)） |
 ---
-
-## 将来の移行パス
-
-| 項目 | 現在（MVP） | 将来 |
-|------|------------|------|
-| DB | Neon 無料枠 | Neon の有料プラン or 他の PostgreSQL に移行可 |
-| 認証 | Clerk | Clerk のダッシュボードで SSO・MFA 等の拡張が可能 |
-| ホスティング | Vercel Hobby | Vercel Pro または VPS/Cloud Run に移行可 |
