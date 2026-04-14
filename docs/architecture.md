@@ -187,44 +187,6 @@ git push origin master
 | ライブラリ | 事象 | 正しい仕様 |
 |-----------|------|-----------|
 | Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | Next.js 16 以降、Middleware は Proxy に改称され `proxy.ts` が公式ファイル名となった。変更不要（[公式ドキュメント](https://nextjs.org/docs/app/getting-started/proxy)） |
-| Next.js 16 + `@clerk/nextjs` v7 | 開発環境の初回ブラウザアクセス時に全ルートが 404 になる（T127） | **既知の不具合。詳細は [T127](#t127-開発環境の初回ブラウザアクセスで-404-になる) を参照。** |
-
----
-
-## 既知の不具合
-
-### [T127] 開発環境の初回ブラウザアクセスで 404 になる
-
-**影響範囲：** `npm run dev` 起動後、Clerk dev browser cookie が未設定の状態でブラウザからページにアクセスしたとき
-
-**発生条件（3条件の AND）：**
-1. 開発環境（`NODE_ENV=development`）
-2. Clerk dev browser cookie 未設定（初回アクセス・Cookie クリア後）
-3. ブラウザのナビゲーションリクエスト（`Sec-Fetch-Dest: document`）
-
-**根本原因：**
-- `proxy.ts` は Node.js runtime で動作する（Next.js 16 の新機能）
-- `@clerk/nextjs` の `clerkMiddleware` は Edge Runtime（`middleware.ts`）向けに実装されており、`proxy.ts` では dev browser handshake フローが正しく処理されない
-- dev browser missing 検出 → Clerk FAPI へのハンドシェイクリダイレクト → `proxy.ts` でリダイレクトが正しく処理されず `/clerk_XXXX` へリライト → 404
-- Clerk 公式 Issue にて `proxy.ts`（Node.js runtime）の完全対応は未完了（[clerk/javascript#7705](https://github.com/clerk/javascript/issues/7705) は用語変更のみ）
-
-**本番環境での影響：** なし（Vercel 本番環境は dev browser チェックが存在しない）
-
-**回避策：** `.env.local` に以下のいずれか1つを設定することで Clerk 認証をバイパスできる
-
-> **注意:** `MOCK_USER_ID` と `MOCK_USER_EMAIL` は同時に設定しないこと。両方設定した場合は `MOCK_USER_ID` が優先される。
-
-```env
-# どちらか片方のみ設定
-MOCK_USER_ID=<DBのユーザーID>
-# または
-# MOCK_USER_EMAIL=<DBのメールアドレス>
-```
-
-**E2E テスト（Playwright）での対応：** `MOCK_USER_ID` または `MOCK_USER_EMAIL` を設定した状態でテストを実行すること（`prisma/seed.ts` のシードデータに含まれるユーザーを使用）
-
-**対応方針：** Clerk 側の `proxy.ts` 対応完了後に回避策を削除する
-
 ---
 
 ## 将来の移行パス
