@@ -122,12 +122,17 @@ applyTo: "**"
    - 必須更新: `docs/e2e-scenarios.md`
    - 指摘条件: 上記コード変更があるのに `docs/e2e-scenarios.md` の差分がない
 
-2. **API 仕様変更**
-   - 対象例: `src/app/api/**/route.ts`、Server Actions のインターフェース変更
+2. **外部 REST API 仕様変更**
+   - 対象例: `src/app/api/**/route.ts` の新規追加・エンドポイント変更
    - 必須更新: `docs/api.md`
    - 指摘条件: 上記変更があるのに `docs/api.md` の差分がない
 
-3. **スキーマ変更**
+3. **Server Actions 仕様変更**
+   - 対象例: `src/app/**/actions.ts` の引数・戻り値・認可ロジックの変更
+   - 必須更新: `docs/actions.md`
+   - 指摘条件: 上記変更があるのに `docs/actions.md` の差分がない
+
+4. **スキーマ変更**
    - 対象例: Prisma schema / migration / DB カラム変更
    - 必須更新: `docs/schema.md`
    - 指摘条件: 上記変更があるのに `docs/schema.md` の差分がない
