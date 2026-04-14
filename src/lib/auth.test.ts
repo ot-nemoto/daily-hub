@@ -197,7 +197,7 @@ describe("getSession", () => {
         fullName: null,
         firstName: null,
       } as unknown as User);
-      mockUpdateMany.mockResolvedValue({ count: 1 } as any);
+      mockUpdateMany.mockResolvedValue({ count: 1 });
 
       const result = await getSession();
       expect(result).toEqual({
@@ -223,7 +223,7 @@ describe("getSession", () => {
         fullName: null,
         firstName: null,
       } as unknown as User);
-      mockUpdateMany.mockResolvedValue({ count: 0 } as any); // 別リクエストが先に紐付け済み
+      mockUpdateMany.mockResolvedValue({ count: 0 }); // 別リクエストが先に紐付け済み
 
       const result = await getSession();
       expect(result).toEqual({
@@ -242,7 +242,7 @@ describe("getSession", () => {
         fullName: "初回ユーザー",
         firstName: null,
       } as unknown as User);
-      mockCount.mockResolvedValue(0 as any); // DB にユーザーなし
+      mockCount.mockResolvedValue(0); // DB にユーザーなし
       // @ts-expect-error
       mockCreate.mockResolvedValue({ id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true });
 
@@ -268,7 +268,7 @@ describe("getSession", () => {
         fullName: "新規ユーザー",
         firstName: null,
       } as unknown as User);
-      mockCount.mockResolvedValue(1 as any); // DB にユーザーあり
+      mockCount.mockResolvedValue(1); // DB にユーザーあり
       // @ts-expect-error
       mockCreate.mockResolvedValue({ id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true });
 
