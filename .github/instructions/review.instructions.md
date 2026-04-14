@@ -127,6 +127,12 @@ applyTo: "**"
    - 必須更新: `docs/api.md`
    - 指摘条件: 上記変更があるのに `docs/api.md` の差分がない
 
+3. **外部 REST API の追加・変更**
+   - 対象例: `src/app/api/**/route.ts` の新規追加・エンドポイント変更（APIキー認証を使う外部連携 API）
+   - 必須更新: `src/lib/openapi.ts`（`registry.registerPath()` の追記・更新）
+   - 指摘条件: 外部 REST API の追加・変更があるのに `src/lib/openapi.ts` の差分がない
+   - 補足: `src/lib/openapi.ts` を更新しないと `/api-docs` の Swagger UI にエンドポイントが反映されない
+
 3. **スキーマ変更**
    - 対象例: Prisma schema / migration / DB カラム変更
    - 必須更新: `docs/schema.md`

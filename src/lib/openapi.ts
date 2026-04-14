@@ -9,6 +9,13 @@ extendZodWithOpenApi(z);
 
 export const registry = new OpenAPIRegistry();
 
+// Bearer 認証スキームを登録（Swagger UI の「Authorize」ボタンに反映される）
+registry.registerComponent("securitySchemes", "bearerAuth", {
+  type: "http",
+  scheme: "bearer",
+  description: "個人設定ページで発行した API キーを指定",
+});
+
 // POST /api/reports リクエストスキーマ
 export const CreateReportSchema = registry.register(
   "CreateReportRequest",
@@ -109,14 +116,5 @@ export function generateOpenApiSpec() {
       description: "外部連携用 REST API（APIキー認証）",
     },
     servers: [{ url: "/" }],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          description: "個人設定ページで発行した API キーを指定",
-        },
-      },
-    },
   });
 }
