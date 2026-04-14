@@ -151,6 +151,20 @@ erDiagram
 
 ---
 
+## カスケード動作
+
+Prisma スキーマに `onDelete` を指定していないため、全リレーションのデフォルトは **`Restrict`**（参照先レコードが存在する間は削除不可）となる。
+
+| リレーション | onDelete | 影響 |
+|-------------|----------|------|
+| Report → User | Restrict | User 削除前に Report を削除する必要がある |
+| Comment → User | Restrict | User 削除前に Comment を削除する必要がある |
+| Comment → Report | Restrict | Report 削除前に Comment を削除する必要がある |
+
+**`deleteUser`（ADM-11）実装時の注意：** User を削除する前に、その User が投稿した Comment および Report をアプリケーション側で先に削除すること。
+
+---
+
 ## インデックス設計
 
 | テーブル | インデックス | 用途 |
@@ -159,35 +173,3 @@ erDiagram
 | Report | `(authorId, date)` | ユニーク制約として自動作成。月次ビュー用インデックスを兼ねる |
 | Comment | `reportId` | 日報詳細のコメント取得 |
 
----
-
-## 初期データ（開発用シード）
-
-実行コマンド: `npx tsx prisma/seed.ts`
-
-完全リセットして再投入する場合: `npx prisma migrate reset`
-
-| データ | 件数 | 詳細 |
-|--------|------|------|
-| User | 6 | 下表参照 |
-| Report | 15 | MEMBER 2名 × 今日を基準とした過去 7 日分 + 管理操作対象 1件 |
-| Comment | 5 | ユーザー間の相互コメント（VIEWER によるコメントを含む） |
-
-**シードユーザー一覧**
-
-| email | 名前 | ロール | isActive | 用途 |
-|-------|------|--------|----------|------|
-| bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用） |
-| tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー |
-| tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
-| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用 |
-| sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
-| torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
-
-- シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される
-- ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive はシード再実行でリセットされる
-- `CLERK_SECRET_KEY` が設定されている場合、シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
-- 初期パスワード: `Yakitori2026`
-- シードを再実行するとレポート・コメントは全削除して再投入する（ユーザーは upsert のため削除しない）
-
-Neon では開発用と本番用でブランチを分けることができる（無料枠で利用可能）。

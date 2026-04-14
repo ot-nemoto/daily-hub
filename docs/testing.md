@@ -5,6 +5,7 @@
 | 対象 | 完了条件 |
 |------|---------|
 | Server Actions（`src/app/**/actions.ts`） | ユニットテストの作成をもって完了 |
+| Route Handlers（`src/app/api/**/route.ts`） | ユニットテストの作成をもって完了 |
 | ユーティリティ関数（`src/lib/`） | ユニットテストの作成をもって完了 |
 | UI コンポーネント | 手動動作確認をもって完了（[docs/e2e-scenarios.md](e2e-scenarios.md) 参照） |
 
@@ -25,6 +26,7 @@ npm run test:coverage             # カバレッジレポート出力
 ### 対象・方針
 
 - `src/app/**/actions.ts`（Server Actions）はユニットテスト必須
+- `src/app/api/**/route.ts`（Route Handlers）はユニットテスト必須
 - `src/lib/` 配下のユーティリティ関数はユニットテスト必須
 - テストファイルは実装ファイルと同じディレクトリに `[name].test.ts` で配置
 - Prisma・Clerk 等の外部依存は `vi.mock` でモック化する
@@ -82,14 +84,7 @@ vi.mock("@/lib/prisma", () => ({
 
 ### テストユーザー（`prisma/seed.ts` のシードデータ）
 
-| メール | ロール | isActive | 主な用途 |
-|--------|--------|----------|---------|
-| `bonjiri@example.com` | ADMIN | true | 管理画面の操作確認 |
-| `tsukune@example.com` | MEMBER | true | 日報・コメントのメインユーザー |
-| `tebasaki@example.com` | MEMBER | true | ユーザー分離テスト |
-| `nankotsu@example.com` | VIEWER | true | VIEWER 制限の確認 |
-| `sunagimo@example.com` | MEMBER | false | isActive=false のリダイレクト確認 |
-| `torikawa@example.com` | MEMBER | true | 管理画面での操作対象 |
+シードユーザーの一覧は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
 
 ### Playwright MCP への指示例
 
@@ -97,7 +92,7 @@ vi.mock("@/lib/prisma", () => ({
 
 ロールベースのシナリオや isActive=false の挙動など、**機能テスト**には MOCK モードを使用する。
 
-```
+```text
 以下の手順で E2E テストを実施してください。
 
 ## 事前準備
@@ -117,7 +112,7 @@ docs/e2e-scenarios.md の [テストしたいセクション名] を参照して
 
 実際の Clerk ログイン/ログアウトフローや未ログイン → /login リダイレクトを確認する場合は、**`MOCK_USER_EMAIL` を設定せず**サーバーを起動する。
 
-```
+```text
 以下の手順で E2E テストを実施してください。
 
 ## 事前準備
@@ -141,22 +136,7 @@ docs/e2e-scenarios.md の [テストしたいセクション名] を参照して
 
 ### 投入データ
 
-| ユーザー | ロール | isActive | 日報 | コメント |
-|---------|--------|----------|------|---------|
-| `bonjiri@example.com` | ADMIN | true | なし | あり（2件） |
-| `tsukune@example.com` | MEMBER | true | 7件（今日〜6日前） | あり（3件投稿される） |
-| `tebasaki@example.com` | MEMBER | true | 7件（今日〜6日前） | あり（2件投稿される） |
-| `nankotsu@example.com` | VIEWER | true | なし | あり（1件投稿される） |
-| `sunagimo@example.com` | MEMBER | false | なし | なし |
-| `torikawa@example.com` | MEMBER | true | 1件（今日） | なし |
-
-コメントの内訳：
-
-| 日報 | コメント投稿者 | テスト観点 |
-|------|--------------|-----------|
-| tsukune の今日の日報 | tebasaki, bonjiri, nankotsu | 複数コメント一覧・VIEWER によるコメント確認 |
-| tebasaki の今日の日報 | tsukune, bonjiri | ユーザー分離（tsukune は自コメントのみ削除可） |
-| tsukune の昨日の日報 | なし | コメント空状態の確認 |
+シードデータの詳細（ユーザー一覧・日報・コメント件数）は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
 
 ### 実行
 

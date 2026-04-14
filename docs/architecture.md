@@ -65,29 +65,7 @@ daily-hub/
 
 ## 認証フロー
 
-```
-未認証ユーザー
-  → proxy.ts（clerkMiddleware）でセッション確認
-  → 未認証なら /login にリダイレクト（Clerk が処理）
-  → MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合はバイパス（ローカル開発用）
-
-ログイン
-  → Clerk の SignIn UI（/login）でメール+パスワード認証
-  → Clerk がセッション Cookie を発行
-
-getSession()（src/lib/auth.ts）
-  → MOCK_USER_ID 環境変数が設定されている場合は id で DB ユーザーを直接返す
-  → MOCK_USER_EMAIL 環境変数が設定されている場合は email で DB ユーザーを直接返す
-  → どちらも対象ユーザーが DB に存在しない場合は console.error を出力し null を返す
-  → Clerk auth() で userId（clerkId）を取得
-  → clerkId で DB ユーザーを検索
-  → 未ヒット時：Clerk currentUser() でメールを取得し DB ユーザーと突合
-    → 突合成功：clerkId を DB に書き込み（自動紐付け）
-    → 突合失敗かつ Clerk にユーザーあり：DB に新規作成
-  → isActive === false なら: ページ（redirectOnInactive=true）は /auth-error?reason=inactive にリダイレクト、API は null を返す（401）
-  → 未認証（Clerk セッションなし）なら null を返す（API は 401、画面は /login へ）
-  → Session 型 { user: { id, name, role, isActive } } を返す
-```
+詳細は [`docs/auth.md`](auth.md) を参照。
 
 ## アクセス制御（Phase 7a）
 
@@ -210,11 +188,3 @@ git push origin master
 |-----------|------|-----------|
 | Next.js 16 | `src/proxy.ts` を `middleware.ts` に変更するよう指摘される | Next.js 16 以降、Middleware は Proxy に改称され `proxy.ts` が公式ファイル名となった。変更不要（[公式ドキュメント](https://nextjs.org/docs/app/getting-started/proxy)） |
 ---
-
-## 将来の移行パス
-
-| 項目 | 現在（MVP） | 将来 |
-|------|------------|------|
-| DB | Neon 無料枠 | Neon の有料プラン or 他の PostgreSQL に移行可 |
-| 認証 | Clerk | Clerk のダッシュボードで SSO・MFA 等の拡張が可能 |
-| ホスティング | Vercel Hobby | Vercel Pro または VPS/Cloud Run に移行可 |

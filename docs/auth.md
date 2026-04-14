@@ -110,14 +110,7 @@ const userId = session?.user?.id;
 
 ## 環境変数
 
-| 変数名 | 用途 |
-|--------|------|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk の公開キー |
-| `CLERK_SECRET_KEY` | Clerk のシークレットキー |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | サインイン URL（`/login`） |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | サインイン後のデフォルトリダイレクト先 |
-| `MOCK_USER_ID` | 非本番環境でのモックユーザー ID（Clerk をバイパス。対象未存在時は `console.error` + `null`） |
-| `MOCK_USER_EMAIL` | 非本番環境でのモックユーザーメール（Clerk をバイパス。`MOCK_USER_ID` との同時設定は推奨しない（設定した場合は ID 優先）。対象未存在時は `console.error` + `null`） |
+環境変数の一覧は [`docs/architecture.md` — 環境変数](architecture.md#環境変数) を参照。
 
 ---
 
