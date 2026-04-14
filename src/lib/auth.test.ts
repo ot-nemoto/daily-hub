@@ -22,6 +22,7 @@ vi.mock("./prisma", () => ({
 }));
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import type { EmailAddress, User } from "@clerk/backend";
 import { prisma } from "./prisma";
 import { getSession } from "./auth";
 
@@ -192,10 +193,10 @@ describe("getSession", () => {
         // @ts-expect-error
         .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true }); // updateMany 後の再取得
       mockCurrentUser.mockResolvedValue({
-        primaryEmailAddress: { emailAddress: "tanaka@example.com" } as any,
+        primaryEmailAddress: { emailAddress: "tanaka@example.com" } as unknown as EmailAddress,
         fullName: null,
         firstName: null,
-      } as any);
+      } as unknown as User);
       mockUpdateMany.mockResolvedValue({ count: 1 } as any);
 
       const result = await getSession();
@@ -218,10 +219,10 @@ describe("getSession", () => {
         // @ts-expect-error
         .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true }); // count=0 後の再取得
       mockCurrentUser.mockResolvedValue({
-        primaryEmailAddress: { emailAddress: "tanaka@example.com" } as any,
+        primaryEmailAddress: { emailAddress: "tanaka@example.com" } as unknown as EmailAddress,
         fullName: null,
         firstName: null,
-      } as any);
+      } as unknown as User);
       mockUpdateMany.mockResolvedValue({ count: 0 } as any); // 別リクエストが先に紐付け済み
 
       const result = await getSession();
@@ -237,10 +238,10 @@ describe("getSession", () => {
         .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         .mockResolvedValueOnce(null); // email 検索 → 未ヒット
       mockCurrentUser.mockResolvedValue({
-        primaryEmailAddress: { emailAddress: "new@example.com" } as any,
+        primaryEmailAddress: { emailAddress: "new@example.com" } as unknown as EmailAddress,
         fullName: "初回ユーザー",
         firstName: null,
-      } as any);
+      } as unknown as User);
       mockCount.mockResolvedValue(0 as any); // DB にユーザーなし
       // @ts-expect-error
       mockCreate.mockResolvedValue({ id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true });
@@ -263,10 +264,10 @@ describe("getSession", () => {
         .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         .mockResolvedValueOnce(null); // email 検索 → 未ヒット
       mockCurrentUser.mockResolvedValue({
-        primaryEmailAddress: { emailAddress: "new2@example.com" } as any,
+        primaryEmailAddress: { emailAddress: "new2@example.com" } as unknown as EmailAddress,
         fullName: "新規ユーザー",
         firstName: null,
-      } as any);
+      } as unknown as User);
       mockCount.mockResolvedValue(1 as any); // DB にユーザーあり
       // @ts-expect-error
       mockCreate.mockResolvedValue({ id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true });
@@ -309,10 +310,10 @@ describe("getSession", () => {
         // @ts-expect-error
         .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true, clerkId: "clerk-other" }); // email 検索 → 別IDに紐付き済み
       mockCurrentUser.mockResolvedValue({
-        primaryEmailAddress: { emailAddress: "tanaka@example.com" } as any,
+        primaryEmailAddress: { emailAddress: "tanaka@example.com" } as unknown as EmailAddress,
         fullName: null,
         firstName: null,
-      } as any);
+      } as unknown as User);
 
       await expect(getSession()).rejects.toThrow("NEXT_REDIRECT:/auth-error");
       expect(mockUpdateMany).not.toHaveBeenCalled();
@@ -322,8 +323,7 @@ describe("getSession", () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-new123" });
       mockFindUnique.mockResolvedValueOnce(null);
-      // @ts-expect-error
-      mockCurrentUser.mockResolvedValue({ primaryEmailAddress: null });
+      mockCurrentUser.mockResolvedValue({ primaryEmailAddress: null } as unknown as User);
 
       const result = await getSession();
       expect(result).toBeNull();
