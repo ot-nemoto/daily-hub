@@ -125,7 +125,7 @@ npx tsx prisma/seed.ts
 | email | 名前 | ロール | isActive | 用途 |
 |-------|------|--------|----------|------|
 | bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用） |
-| tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー |
+| tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー。apiKey: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`（REST API 動作確認用） |
 | tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
 | nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用 |
 | sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
@@ -135,7 +135,7 @@ npx tsx prisma/seed.ts
 - シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される
 - ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive はシード再実行でリセットされる
 - シードを再実行するとレポート・コメントは全削除して再投入する（ユーザーは upsert のため削除しない）
-- `CLERK_SECRET_KEY` が設定されている場合、シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
+- `CLERK_SECRET_KEY` は必須。未設定の場合はエラーで終了する。シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
 
 ### Prisma Studio（GUIでDBを確認）
 
