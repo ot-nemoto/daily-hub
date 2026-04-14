@@ -1,22 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 import { ConflictError } from "@/lib/errors";
+import { CreateReportSchema } from "@/lib/openapi";
 import { prisma } from "@/lib/prisma";
 import { createReport } from "@/lib/reports";
-
-const CreateReportSchema = z.object({
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "date は YYYY-MM-DD 形式で入力してください")
-    .refine((value) => {
-      const parsed = new Date(`${value}T00:00:00.000Z`);
-      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-    }, "date は実在する日付を入力してください"),
-  workContent: z.string().min(1, "workContent は必須です").max(5000),
-  tomorrowPlan: z.string().min(1, "tomorrowPlan は必須です").max(5000),
-  notes: z.string().max(5000).default(""),
-});
 
 export async function POST(req: NextRequest) {
   // 1. Authorization ヘッダーから API キーを取得

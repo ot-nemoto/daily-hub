@@ -16,6 +16,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@clerk/backend": "^3.2.9",
     "@clerk/nextjs": "^7.1.0",
     "@prisma/adapter-pg": "^7.7.0",
@@ -25,6 +26,7 @@
     "prisma": "^7.7.0",
     "react": "19.2.5",
     "react-dom": "19.2.5",
+    "swagger-ui-react": "^5.32.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -37,6 +39,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/swagger-ui-react": "^5.18.0",
     "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^17.4.2",
     "jsdom": "^29.0.2",

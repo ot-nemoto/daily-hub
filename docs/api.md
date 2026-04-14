@@ -10,40 +10,18 @@
 
 ## REST API エンドポイント（APIキー認証）
 
-### `POST /api/reports` — 日報作成
+インタラクティブな API ドキュメントは **`/api-docs`**（ログイン必須）で確認できます。
+OpenAPI 仕様（JSON）は **`/api/swagger.json`** から取得できます。
 
-**認証:** `Authorization: Bearer <api-key>` ヘッダー必須（個人設定で発行）
+スキーマ定義は `src/lib/openapi.ts` で管理しています。新しい REST API を追加する際は、Zod スキーマに `.openapi()` を追記して `registry.registerPath()` を呼ぶだけで Swagger UI に反映されます。
 
-**リクエスト**
+### 現在のエンドポイント
 
-```http
-POST /api/reports
-Authorization: Bearer <api-key>
-Content-Type: application/json
+| メソッド | パス | 概要 | 認証 |
+|---------|------|------|------|
+| `POST` | `/api/reports` | 日報作成 | Bearer トークン（APIキー） |
 
-{
-  "date": "YYYY-MM-DD",
-  "workContent": "作業内容（必須・最大5000文字）",
-  "tomorrowPlan": "明日の予定（必須・最大5000文字）",
-  "notes": "所感（省略可・最大5000文字）"
-}
-```
-
-**レスポンス**
-
-| ステータス | 内容 |
-|---|---|
-| 201 | `{ "id": "<report-id>" }` |
-| 401 | APIキーなし・無効・アカウント無効 |
-| 403 | VIEWER ロールによるアクセス |
-| 409 | 同日の日報が既存 |
-| 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
-
-**権限ルール**
-
-- `MEMBER` / `ADMIN` ロールのみ作成可能（`VIEWER` は 403）
-- 自分の日報のみ作成可能（1ユーザー1日1件）
-- `isActive=false` のユーザーは 401
+詳細仕様は `/api-docs` の Swagger UI を参照してください。
 
 ---
 
