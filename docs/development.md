@@ -34,6 +34,7 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
 | サーバー | 主な用途 | 認証 |
 |----------|----------|------|
 | `context7` | ライブラリの最新ドキュメント参照 | 不要 |
+| `playwright` | E2E テスト（ブラウザ操作・画面確認） | 不要 |
 
 ### 必須ツール
 
@@ -198,14 +199,23 @@ npm run test:coverage             # カバレッジレポート出力
 
 E2E テストは Playwright MCP を使用して手動で実施する。詳細な手順・シナリオは [`docs/testing.md`](testing.md) を参照。
 
-事前準備：
+#### 実行手順
 
-```bash
-# テストデータを初期化
-npx tsx prisma/seed.ts
-```
+1. テストデータを初期化する
 
-`.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定してから `npm run dev` を起動する（T127 対応）。
+   ```bash
+   npx tsx prisma/seed.ts
+   ```
+
+2. `.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定する（機能テストの場合）
+
+3. 開発サーバーを起動する
+
+   ```bash
+   npm run dev
+   ```
+
+4. Claude Code で Playwright MCP（`.mcp.json` の `playwright` サーバー）を使い、`docs/testing.md` の指示例をプロンプトとして渡してテストを実施する
 
 ## デプロイ（Vercel）
 
