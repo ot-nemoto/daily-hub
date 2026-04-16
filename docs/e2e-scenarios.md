@@ -132,9 +132,10 @@
 |---|---------|------|---------|-------|
 | 1 | `tsukune@example.com` | `/settings` にアクセスする | 現在の情報表示 | 現在の名前（tsukune）とメールアドレスが表示される |
 | 2 | `tsukune@example.com` | メールアドレスフィールドを確認する | 読み取り専用 | メールアドレスフィールドが変更不可（読み取り専用）になっている |
-| 3 | `tsukune@example.com` | 名前を変更して「保存」をクリックする | 名前変更の反映 | 保存成功フィードバックが表示され、ヘッダーの名前も更新される |
-| 4 | `tsukune@example.com` | 名前を空にして「保存」をクリックする | 必須バリデーション | エラーが表示され保存されない |
-| 5 | `tsukune@example.com` | 101文字の名前を入力して「保存」をクリックする | 文字数バリデーション | エラーが表示され保存されない |
+| 3 | `tsukune@example.com` | 名前を「tsukune-updated」に変更して「保存」をクリックする | 名前変更の反映 | 保存成功フィードバックが表示され、ヘッダーの名前も更新される |
+| 4 | `tsukune@example.com` | 名前を「tsukune」に戻して「保存」をクリックする | 名前の復元 | 保存成功フィードバックが表示され、ヘッダーが「tsukune」に戻る |
+| 5 | `tsukune@example.com` | 名前を空にして「保存」をクリックする | 必須バリデーション | エラーが表示され保存されない |
+| 6 | `tsukune@example.com` | 101文字の名前を入力して「保存」をクリックする | 文字数バリデーション | エラーが表示され保存されない |
 
 ---
 
@@ -155,11 +156,11 @@
 
 ## REST API（外部連携）
 
-以下は curl などの外部クライアントで手動確認する。
+以下は curl などの外部クライアントで手動確認する。API キーは `tsukune@example.com` の `/settings` で確認できる現在有効なキーを使用する。
 
 | # | 手順 | 確認観点 | 期待値 |
 |---|------|---------|-------|
-| 1 | 有効な API キーで `POST /api/reports` を呼ぶ | 正常系 | 201 と `{ id }` が返る |
+| 1 | tsukune の有効な API キーで `POST /api/reports` を呼ぶ | 正常系 | 201 と `{ id }` が返る |
 | 2 | Authorization ヘッダーなしで `POST /api/reports` を呼ぶ | 認証なし | 401 が返る |
 | 3 | 無効な API キーで `POST /api/reports` を呼ぶ | 無効キー | 401 が返る |
 | 4 | VIEWER ロールのユーザーの API キーで `POST /api/reports` を呼ぶ | 権限不足 | 403 が返る |
@@ -184,11 +185,12 @@ curl -X POST http://localhost:3000/api/reports \
 | 3 | `bonjiri@example.com` | `/admin/users` にアクセスする | ユーザー一覧表示 | 名前・メール・ロール・登録日・最終日報投稿日・直近30日提出率が表示される |
 | 4 | `bonjiri@example.com` | bonjiri 自身の行を確認する | 最終日報投稿日 | 「なし」と表示される（bonjiri は日報なし） |
 | 5 | `bonjiri@example.com` | `torikawa@example.com` のロールを VIEWER に変更する | ロール変更 | 変更後のロールが一覧に反映される |
-| 6 | `bonjiri@example.com` | 自分自身（bonjiri）のロールを変更しようとする | 自己ロール降格の防止 | 変更できない（ボタンが無効または操作不可） |
-| 7 | `bonjiri@example.com` | `torikawa@example.com` を無効化する | アカウント無効化 | isActive が false になる |
-| 8 | `torikawa@example.com` | 無効化後にログインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
-| 9 | `bonjiri@example.com` | `torikawa@example.com` を再有効化する | アカウント再有効化 | isActive が true になる |
-| 10 | `bonjiri@example.com` | 自分自身（bonjiri）を無効化しようとする | 自己無効化の防止 | 操作できない（ボタンが無効または操作不可） |
+| 6 | `bonjiri@example.com` | `torikawa@example.com` のロールを MEMBER に戻す | ロール変更の復元 | MEMBER に戻ったことが一覧に反映される |
+| 7 | `bonjiri@example.com` | 自分自身（bonjiri）のロールを変更しようとする | 自己ロール降格の防止 | 変更できない（ボタンが無効または操作不可） |
+| 8 | `bonjiri@example.com` | `torikawa@example.com` を無効化する | アカウント無効化 | isActive が false になる |
+| 9 | `torikawa@example.com` | 無効化後にログインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
+| 10 | `bonjiri@example.com` | `torikawa@example.com` を再有効化する | アカウント再有効化 | isActive が true になる |
+| 11 | `bonjiri@example.com` | 自分自身（bonjiri）を無効化しようとする | 自己無効化の防止 | 操作できない（ボタンが無効または操作不可） |
 
 ---
 
