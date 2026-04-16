@@ -185,36 +185,6 @@ npx prisma generate
 
 詳細なテスト方針・カバレッジ規約は [`docs/testing.md`](testing.md) を参照。
 
-### ユニットテスト（Vitest）
-
-```bash
-npm test                          # 1回実行
-npm run test:watch                # ウォッチモード（開発中）
-npx vitest run --reporter=verbose # テストケース名を全て表示
-npm run test:ui                   # UI モード（ブラウザで結果確認）
-npm run test:coverage             # カバレッジレポート出力
-```
-
-### E2E テスト（Playwright MCP）
-
-E2E テストは Playwright MCP を使用して実施する。詳細な手順・シナリオは [`docs/testing.md`](testing.md) を参照。
-
-#### 実行手順
-
-1. テストデータを初期化する
-
-   ```bash
-   npx tsx prisma/seed.ts
-   ```
-
-2. 開発サーバーを起動する
-
-   ```bash
-   npm run dev
-   ```
-
-3. Claude Code で Playwright MCP（`.mcp.json` の `playwright` サーバー）を使い、`docs/testing.md` の指示例をプロンプトとして渡してテストを実施する
-
 ## デプロイ（Vercel）
 
 1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`）
