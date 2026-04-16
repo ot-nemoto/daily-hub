@@ -156,7 +156,7 @@
 
 ## REST API（外部連携）
 
-以下は curl などの外部クライアントで手動確認する。API キーは `tsukune@example.com` の `/settings` で確認できる現在有効なキーを使用する。
+以下は curl などの外部クライアントで手動確認する。API キーはシード固定値（`a1b2c3d4-e5f6-7890-abcd-ef1234567890`）を使用する。
 
 | # | 手順 | 確認観点 | 期待値 |
 |---|------|---------|-------|
@@ -169,7 +169,7 @@
 
 ```bash
 curl -X POST http://localhost:3000/api/reports \
-  -H "Authorization: Bearer <api-key>" \
+  -H "Authorization: Bearer a1b2c3d4-e5f6-7890-abcd-ef1234567890" \
   -H "Content-Type: application/json" \
   -d '{"date":"YYYY-MM-DD","workContent":"作業内容","tomorrowPlan":"明日の予定","notes":""}'
 ```
