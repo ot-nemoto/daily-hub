@@ -197,7 +197,7 @@ npm run test:coverage             # カバレッジレポート出力
 
 ### E2E テスト（Playwright MCP）
 
-E2E テストは Playwright MCP を使用して手動で実施する。詳細な手順・シナリオは [`docs/testing.md`](testing.md) を参照。
+E2E テストは Playwright MCP を使用して実施する。詳細な手順・シナリオは [`docs/testing.md`](testing.md) を参照。
 
 #### 実行手順
 
@@ -207,15 +207,13 @@ E2E テストは Playwright MCP を使用して手動で実施する。詳細な
    npx tsx prisma/seed.ts
    ```
 
-2. `.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定する（機能テストの場合）
-
-3. 開発サーバーを起動する
+2. 開発サーバーを起動する
 
    ```bash
    npm run dev
    ```
 
-4. Claude Code で Playwright MCP（`.mcp.json` の `playwright` サーバー）を使い、`docs/testing.md` の指示例をプロンプトとして渡してテストを実施する
+3. Claude Code で Playwright MCP（`.mcp.json` の `playwright` サーバー）を使い、`docs/testing.md` の指示例をプロンプトとして渡してテストを実施する
 
 ## デプロイ（Vercel）
 
