@@ -160,10 +160,10 @@
 
 | # | 手順 | 確認観点 | 期待値 |
 |---|------|---------|-------|
-| 1 | tsukune の有効な API キーで `POST /api/reports` を呼ぶ | 正常系 | 201 と `{ id }` が返る |
+| 1 | tsukune の有効な API キー（`a1b2c3d4-e5f6-7890-abcd-ef1234567890`）で `POST /api/reports` を呼ぶ | 正常系 | 201 と `{ id }` が返る |
 | 2 | Authorization ヘッダーなしで `POST /api/reports` を呼ぶ | 認証なし | 401 が返る |
 | 3 | 無効な API キーで `POST /api/reports` を呼ぶ | 無効キー | 401 が返る |
-| 4 | VIEWER ロールのユーザーの API キーで `POST /api/reports` を呼ぶ | 権限不足 | 403 が返る |
+| 4 | nankotsu（VIEWER）の API キー（`v1ew3r04-e5f6-7890-abcd-viewer567890`）で `POST /api/reports` を呼ぶ | 権限不足 | 403 が返る |
 | 5 | 同日に既存の日報がある状態で `POST /api/reports` を呼ぶ | 重複チェック | 409 が返る |
 | 6 | `date` が `YYYY-MM-DD` 形式でない値で `POST /api/reports` を呼ぶ | バリデーション | 422 が返る |
 
