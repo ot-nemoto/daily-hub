@@ -76,7 +76,7 @@ const TEBASAKI_REPORTS = [
 // apiKey を固定値で設定（REST API 403 確認用）
 const NANKOTSU_EMAIL  = "nankotsu@example.com";
 const NANKOTSU_NAME   = "nankotsu";
-const NANKOTSU_APIKEY = "v1ew3r04-e5f6-7890-abcd-viewer567890";
+const NANKOTSU_APIKEY = "b1e3a704-e5f6-7890-abcd-ef1234567890";
 
 // ---- sunagimo: ログイン後 /auth-error?reason=inactive リダイレクトの確認用 ----
 const SUNAGIMO_EMAIL = "sunagimo@example.com";
