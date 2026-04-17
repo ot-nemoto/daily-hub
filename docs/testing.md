@@ -7,7 +7,7 @@
 | Server Actions（`src/app/**/actions.ts`） | ユニットテストの作成をもって完了 |
 | Route Handlers（`src/app/api/**/route.ts`） | ユニットテストの作成をもって完了 |
 | ユーティリティ関数（`src/lib/`） | ユニットテストの作成をもって完了 |
-| UI コンポーネント | 手動動作確認をもって完了（[docs/e2e-scenarios.md](e2e-scenarios.md) 参照） |
+| UI コンポーネント | E2E テストの実施をもって完了（[docs/e2e-scenarios.md](e2e-scenarios.md) 参照） |
 
 ---
 
@@ -61,93 +61,21 @@ vi.mock("@/lib/prisma", () => ({
 
 ---
 
-## 手動テスト
-
-機能実装・修正後は [docs/e2e-scenarios.md](e2e-scenarios.md) の対応セクションを参照して動作確認を行う。
-
----
-
 ## E2E テスト（Playwright MCP）
 
-### MOCK モードについて
+### テストユーザー
 
-`MOCK_USER_EMAIL`（または `MOCK_USER_ID`）を設定すると Clerk 認証をバイパスでき、ユーザー切り替えが容易になる。機能テストでは MOCK モードを推奨する。
+**E2E テストはシード実行済みであることを前提とする。** シードの実行方法は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
 
-> **注意:** `MOCK_USER_ID` と `MOCK_USER_EMAIL` は同時に設定しないこと。両方設定した場合は `MOCK_USER_ID` が優先される。
+| ユーザー | メールアドレス | パスワード | 用途 |
+|---------|-------------|---------|------|
+| bonjiri | `bonjiri@example.com` | `Yakitori2026` | 管理操作テスト（ADMIN） |
+| tsukune | `tsukune@example.com` | `Yakitori2026` | 機能テスト全般・APIキーテスト（MEMBER） |
+| tebasaki | `tebasaki@example.com` | `Yakitori2026` | ユーザー分離確認（MEMBER） |
+| nankotsu | `nankotsu@example.com` | `Yakitori2026` | VIEWER ロール動作確認・REST API 403 確認（apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`） |
+| sunagimo | `sunagimo@example.com` | `Yakitori2026` | 無効化アカウントのリダイレクト確認（isActive=false） |
+| torikawa | `torikawa@example.com` | `Yakitori2026` | ロール変更・無効化テストの対象ユーザー（MEMBER） |
 
-| テストの種類 | MOCK の要否 |
-|------------|------------|
-| 機能テスト・ロールベースのシナリオ | MOCK 使用（推奨） |
-| isActive=false の挙動（sunagimo） | MOCK 使用（推奨） |
-| 実際の Clerk ログイン・ログアウトフロー | MOCK なしで実施可能（`@clerk/nextjs` 7.1.0 で dev browser 問題解消） |
-| 未ログイン → /login リダイレクト | MOCK なしで実施可能 |
+### 実施方法
 
-### テストユーザー（`prisma/seed.ts` のシードデータ）
-
-シードユーザーの一覧は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
-
-### Playwright MCP への指示例
-
-#### 機能テスト（MOCK モード）
-
-ロールベースのシナリオや isActive=false の挙動など、**機能テスト**には MOCK モードを使用する。
-
-```text
-以下の手順で E2E テストを実施してください。
-
-## 事前準備
-1. `npx tsx prisma/seed.ts` を実行してテストデータを初期化する
-2. `.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定する
-3. `npm run dev` でサーバーを起動する（ポート: 3000）
-
-## 制約
-- MOCK_USER_EMAIL を設定した状態では Clerk の実認証フロー・未ログイン挙動は確認できない
-- テストユーザーを切り替える場合は .env.local を書き換えてサーバーを再起動すること
-
-## テスト対象
-docs/e2e-scenarios.md の [テストしたいセクション名] を参照してテストを実施してください。
-```
-
-#### 認証フローテスト（MOCK なし）
-
-実際の Clerk ログイン/ログアウトフローや未ログイン → /login リダイレクトを確認する場合は、**`MOCK_USER_EMAIL` を設定せず**サーバーを起動する。
-
-```text
-以下の手順で E2E テストを実施してください。
-
-## 事前準備
-1. `npx tsx prisma/seed.ts` を実行してテストデータを初期化する
-2. `.env.local` の `MOCK_USER_EMAIL` がコメントアウトされていることを確認する
-3. `npm run dev` でサーバーを起動する（ポート: 3000）
-
-## テスト対象
-docs/e2e-scenarios.md の [テストしたいセクション名] を参照してテストを実施してください。
-```
-
----
-
-## テストデータ投入（Seed）
-
-### 概要
-
-`prisma/seed.ts` を使って手動テスト用のデータを投入できる。
-実行のたびに全レポート・コメントを削除してからデータを投入するため、テスト前に実行することでクリーンな状態を保証できる。
-ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive もシード再実行でリセットされる。
-
-### 投入データ
-
-シードデータの詳細（ユーザー一覧・日報・コメント件数）は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
-
-### 実行
-
-手動テスト前に必ず実行してデータを初期化すること。
-
-```bash
-npx tsx prisma/seed.ts
-```
-
-### 注意事項
-
-- Clerk にユーザーが存在しない場合は自動作成される（パスワード: `Yakitori2026`）
-- 既存のレポート・コメントは全削除されるため、手動で追加したデータは失われる
-- `CLERK_SECRET_KEY` が `.env.local` に設定されていること
+テスト対象の URL と [`docs/e2e-scenarios.md`](e2e-scenarios.md) のシナリオをモデルに渡して実施する。

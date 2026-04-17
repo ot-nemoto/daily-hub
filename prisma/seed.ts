@@ -73,8 +73,10 @@ const TEBASAKI_REPORTS = [
 ];
 
 // ---- nankotsu: 日報作成不可・コメントのみ可（VIEWER） ----
-const NANKOTSU_EMAIL = "nankotsu@example.com";
-const NANKOTSU_NAME  = "nankotsu";
+// apiKey を固定値で設定（REST API 403 確認用）
+const NANKOTSU_EMAIL  = "nankotsu@example.com";
+const NANKOTSU_NAME   = "nankotsu";
+const NANKOTSU_APIKEY = "b1e3a704-e5f6-7890-abcd-ef1234567890";
 
 // ---- sunagimo: ログイン後 /auth-error?reason=inactive リダイレクトの確認用 ----
 const SUNAGIMO_EMAIL = "sunagimo@example.com";
@@ -123,7 +125,7 @@ async function main() {
     upsertUser({ email: BONJIRI_EMAIL,  name: BONJIRI_NAME,  role: "ADMIN",  isActive: true  }),
     upsertUser({ email: TSUKUNE_EMAIL,  name: TSUKUNE_NAME,  role: "MEMBER", isActive: true,  apiKey: TSUKUNE_APIKEY }),
     upsertUser({ email: TEBASAKI_EMAIL, name: TEBASAKI_NAME, role: "MEMBER", isActive: true  }),
-    upsertUser({ email: NANKOTSU_EMAIL, name: NANKOTSU_NAME, role: "VIEWER", isActive: true  }),
+    upsertUser({ email: NANKOTSU_EMAIL, name: NANKOTSU_NAME, role: "VIEWER", isActive: true,  apiKey: NANKOTSU_APIKEY }),
     upsertUser({ email: SUNAGIMO_EMAIL, name: SUNAGIMO_NAME, role: "MEMBER", isActive: false }),
     upsertUser({ email: TORIKAWA_EMAIL, name: TORIKAWA_NAME, role: "MEMBER", isActive: true  }),
   ]);
@@ -173,7 +175,7 @@ async function main() {
   console.log(`  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者`);
   console.log(`  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり・apiKey: ${TSUKUNE_APIKEY}`);
   console.log(`  ${TEBASAKI_EMAIL} (MEMBER, active)   — 日報7件・コメントあり`);
-  console.log(`  ${NANKOTSU_EMAIL} (VIEWER, active)   — コメントあり`);
+  console.log(`  ${NANKOTSU_EMAIL} (VIEWER, active)   — コメントあり・apiKey: ${NANKOTSU_APIKEY}`);
   console.log(`  ${SUNAGIMO_EMAIL} (MEMBER, inactive) — 認証エラーリダイレクト確認用`);
   console.log(`  ${TORIKAWA_EMAIL} (MEMBER, active)   — 管理操作テスト対象・日報1件`);
   console.log(`\nPassword: ${SEED_PASSWORD}`);

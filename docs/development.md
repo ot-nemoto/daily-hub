@@ -128,7 +128,7 @@ npx tsx prisma/seed.ts
 | bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用） |
 | tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー。apiKey: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`（REST API 動作確認用） |
 | tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
-| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用 |
+| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用。apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`（REST API 403 確認用） |
 | sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
 | torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
 
@@ -184,38 +184,6 @@ npx prisma generate
 ## テスト
 
 詳細なテスト方針・カバレッジ規約は [`docs/testing.md`](testing.md) を参照。
-
-### ユニットテスト（Vitest）
-
-```bash
-npm test                          # 1回実行
-npm run test:watch                # ウォッチモード（開発中）
-npx vitest run --reporter=verbose # テストケース名を全て表示
-npm run test:ui                   # UI モード（ブラウザで結果確認）
-npm run test:coverage             # カバレッジレポート出力
-```
-
-### E2E テスト（Playwright MCP）
-
-E2E テストは Playwright MCP を使用して手動で実施する。詳細な手順・シナリオは [`docs/testing.md`](testing.md) を参照。
-
-#### 実行手順
-
-1. テストデータを初期化する
-
-   ```bash
-   npx tsx prisma/seed.ts
-   ```
-
-2. `.env.local` の `MOCK_USER_EMAIL` にテストユーザーのメールアドレスを設定する（機能テストの場合）
-
-3. 開発サーバーを起動する
-
-   ```bash
-   npm run dev
-   ```
-
-4. Claude Code で Playwright MCP（`.mcp.json` の `playwright` サーバー）を使い、`docs/testing.md` の指示例をプロンプトとして渡してテストを実施する
 
 ## デプロイ（Vercel）
 
