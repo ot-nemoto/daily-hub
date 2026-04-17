@@ -72,7 +72,7 @@ vi.mock("@/lib/prisma", () => ({
 | bonjiri | `bonjiri@example.com` | `Yakitori2026` | 管理操作テスト（ADMIN） |
 | tsukune | `tsukune@example.com` | `Yakitori2026` | 機能テスト全般・APIキーテスト（MEMBER） |
 | tebasaki | `tebasaki@example.com` | `Yakitori2026` | ユーザー分離確認（MEMBER） |
-| nankotsu | `nankotsu@example.com` | `Yakitori2026` | VIEWER ロール動作確認 |
+| nankotsu | `nankotsu@example.com` | `Yakitori2026` | VIEWER ロール動作確認・REST API 403 確認（apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`） |
 | sunagimo | `sunagimo@example.com` | `Yakitori2026` | 無効化アカウントのリダイレクト確認（isActive=false） |
 | torikawa | `torikawa@example.com` | `Yakitori2026` | ロール変更・無効化テストの対象ユーザー（MEMBER） |
 

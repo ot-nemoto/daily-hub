@@ -128,7 +128,7 @@ npx tsx prisma/seed.ts
 | bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用） |
 | tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー。apiKey: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`（REST API 動作確認用） |
 | tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
-| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用 |
+| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用。apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`（REST API 403 確認用） |
 | sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
 | torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
 
