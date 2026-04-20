@@ -102,7 +102,7 @@ jobs:
             gh pr create \
               --base master \
               --head develop \
-              --title "chore: develop → master $(date +'%Y-%m-%d')" \
+              --title "chore: develop → master $(TZ=Asia/Tokyo date +'%Y-%m-%d')" \
               --body-file /tmp/pr_body.md \
               --label "$LABEL"
             echo "✅ PR を新規作成しました（ラベル: $LABEL）"
