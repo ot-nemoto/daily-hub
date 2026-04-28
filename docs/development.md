@@ -14,7 +14,7 @@
 npm install
 ```
 
-`.env.local` をプロジェクトルートに作成する（`.env` ではなく `.env.local` を使う）。環境変数の詳細は [`docs/architecture.md` — 環境変数](architecture.md#環境変数) を参照。
+`.env` をプロジェクトルートに作成する。環境変数の詳細は [`docs/architecture.md` — 環境変数](architecture.md#環境変数) を参照。
 
 ```env
 DATABASE_URL="postgresql://<user>:<password>@<host>-pooler.<region>.aws.neon.tech/<db>?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
