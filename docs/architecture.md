@@ -137,7 +137,7 @@ External Client
 ## 環境変数
 
 ```env
-# .env.local（ローカル開発・本番共通）
+# .env（ローカル開発・本番共通）
 DATABASE_URL="postgresql://..."   # Neon の接続プール URL（?pgbouncer=true&connection_limit=1 付き）
 DIRECT_URL="postgresql://..."     # Neon の直接接続 URL（prisma migrate 用）
 
