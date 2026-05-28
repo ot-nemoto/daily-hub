@@ -1,6 +1,6 @@
 {
   "name": "daily-hub",
-  "version": "0.14.5",
+  "version": "0.14.6",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -41,8 +41,8 @@
     "dotenv": "^17.4.2",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
-    "tsx": "^4.22.1",
+    "tsx": "^4.22.3",
     "typescript": "^6",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   }
 }
