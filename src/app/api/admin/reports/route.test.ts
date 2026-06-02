@@ -34,7 +34,7 @@ function makeRequest(body: unknown, apiKey?: string) {
     "content-type": "application/json",
   };
   if (apiKey !== undefined) {
-    headers["authorization"] = `Bearer ${apiKey}`;
+    headers.authorization = `Bearer ${apiKey}`;
   }
   return new NextRequest("http://localhost/api/admin/reports", {
     method: "POST",

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     where: { apiKey },
     select: { id: true, role: true, isActive: true },
   });
-  if (!user || !user.isActive) {
+  if (!user?.isActive) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
