@@ -10,7 +10,8 @@ Server Actions の定義は [docs/actions.md](actions.md) を参照。
 
 | メソッド | パス | 概要 | 認証 |
 |---------|------|------|------|
-| `POST` | `/api/reports` | 日報作成 | APIキー |
+| `POST` | `/api/reports` | 日報作成 | APIキー（MEMBER / ADMIN） |
+| `POST` | `/api/admin/reports` | 日報バッチ登録（ADMIN専用） | APIキー（ADMIN のみ） |
 
 ---
 
@@ -48,6 +49,48 @@ Content-Type: application/json
 - `MEMBER` / `ADMIN` ロールのみ作成可能（`VIEWER` は 403）
 - 自分の日報のみ作成可能（1ユーザー1日1件）
 - `isActive=false` のユーザーは 401
+
+---
+
+---
+
+## `POST /api/admin/reports` — 日報バッチ登録（ADMIN専用）
+
+**認証:** `Authorization: Bearer <api-key>` ヘッダー必須（ADMIN ロールのユーザーのみ）
+
+**リクエスト**
+
+```http
+POST /api/admin/reports
+Authorization: Bearer <api-key>
+Content-Type: application/json
+
+[
+  {
+    "userName": "山田太郎",
+    "date": "YYYY-MM-DD",
+    "workContent": "作業内容（必須・最大5000文字）",
+    "tomorrowPlan": "明日の予定（必須・最大5000文字）",
+    "notes": "所感（省略可・最大5000文字）"
+  }
+]
+```
+
+**レスポンス**
+
+| ステータス | 内容 |
+|---|---|
+| 200 | `{ "results": [{ "date": "YYYY-MM-DD", "id": "<report-id>", "status": "created" \| "updated" }] }` |
+| 401 | APIキーなし・無効・アカウント無効 |
+| 403 | ADMIN 以外によるアクセス |
+| 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
+
+**権限ルール**
+
+- `ADMIN` ロールのみ利用可能
+- `userName` で対象ユーザーを指定（`User.name` と一致する最初の1件を使用）
+- 対象ユーザーが存在しない場合は自動作成（email: ランダム文字列 + `@example.com`、role: `VIEWER`）
+- 既存日報がある場合は上書き（upsert）
 
 ---
 
