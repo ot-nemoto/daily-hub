@@ -1,4 +1,4 @@
-import { type Role } from "@/generated/prisma/client";
+import type { Role } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "./errors";
