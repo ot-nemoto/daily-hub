@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     // 存在しない場合は自動作成（email: ランダム文字列@example.com、role: VIEWER）
     if (!targetUser) {
-      const randomEmail = `${generateRandomString()}@example.com`;
+      const randomEmail = `${crypto.randomUUID()}@example.com`;
       targetUser = await prisma.user.create({
         data: { name: userName, email: randomEmail, role: "VIEWER" },
         select: { id: true },
@@ -105,8 +105,3 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ results }, { status: 200 });
 }
 
-function generateRandomString(): string {
-  return Array.from({ length: 16 }, () =>
-    Math.floor(Math.random() * 36).toString(36),
-  ).join("");
-}
