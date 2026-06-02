@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { type Role } from "@/generated/prisma/client";
+import type { Role } from "@/generated/prisma/client";
 import { getSession } from "@/lib/auth";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { deleteUser as libDeleteUser, updateUserAdmin as libUpdateUserAdmin } from "@/lib/users";

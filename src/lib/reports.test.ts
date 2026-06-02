@@ -4,15 +4,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
-import { createReport, updateReport } from "./reports";
+import { createReport, resolveOrCreateUserByName, updateReport, upsertReportForUserName } from "./reports";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    user: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
     report: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -110,5 +115,73 @@ describe("updateReport", () => {
 
     await expect(updateReport(input)).rejects.toThrow(ForbiddenError);
     expect(prisma.report.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveOrCreateUserByName", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("既存ユーザーが見つかった場合はそのまま返す", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user-1" } as never);
+
+    const result = await resolveOrCreateUserByName("山田太郎");
+
+    expect(result).toEqual({ id: "user-1" });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it("存在しない場合は VIEWER ロールで自動作成する", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.create).mockResolvedValue({ id: "new-user-1" } as never);
+
+    const result = await resolveOrCreateUserByName("山田太郎");
+
+    expect(result).toEqual({ id: "new-user-1" });
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ name: "山田太郎", role: "VIEWER" }),
+      }),
+    );
+  });
+
+  it("自動作成されたユーザーの email は @example.com ドメインである", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.create).mockResolvedValue({ id: "new-user-1" } as never);
+
+    await resolveOrCreateUserByName("山田太郎");
+    const createCall = vi.mocked(prisma.user.create).mock.calls[0][0];
+    expect(createCall.data.email).toMatch(/@example\.com$/);
+  });
+});
+
+describe("upsertReportForUserName", () => {
+  const baseInput = {
+    userName: "山田太郎",
+    date: new Date("2026-06-01T00:00:00.000Z"),
+    workContent: "作業内容",
+    tomorrowPlan: "明日の予定",
+    notes: "所感",
+  };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("新規登録の場合 status: created を返す", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user-1" } as never);
+    vi.mocked(prisma.report.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.report.upsert).mockResolvedValue({ id: "report-1" } as never);
+
+    const result = await upsertReportForUserName(baseInput);
+
+    expect(result).toEqual({ id: "report-1", status: "created" });
+  });
+
+  it("既存日報がある場合 status: updated を返す", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user-1" } as never);
+    vi.mocked(prisma.report.findFirst).mockResolvedValue({ id: "report-1" } as never);
+    vi.mocked(prisma.report.upsert).mockResolvedValue({ id: "report-1" } as never);
+
+    const result = await upsertReportForUserName(baseInput);
+
+    expect(result).toEqual({ id: "report-1", status: "updated" });
   });
 });

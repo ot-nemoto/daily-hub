@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { ConflictError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { createReport } from "@/lib/reports";
+import { upsertReportForUserName } from "@/lib/reports";
 
-const CreateReportSchema = z.object({
+const ReportItemSchema = z.object({
+  userName: z.string().min(1, "userName は必須です"),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "date は YYYY-MM-DD 形式で入力してください")
@@ -17,6 +17,10 @@ const CreateReportSchema = z.object({
   tomorrowPlan: z.string().min(1, "tomorrowPlan は必須です").max(5000),
   notes: z.string().max(5000).default(""),
 });
+
+const BulkReportSchema = z
+  .array(ReportItemSchema)
+  .min(1, "リクエストは1件以上必要です");
 
 export async function POST(req: NextRequest) {
   // 1. Authorization ヘッダーから API キーを取得
@@ -38,17 +42,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 3. VIEWER ロールは作成不可
-  if (user.role === "VIEWER") {
+  // 3. ADMIN のみ利用可能
+  if (user.role !== "ADMIN") {
     return NextResponse.json(
-      { error: "日報を作成する権限がありません" },
+      { error: "このエンドポイントは ADMIN のみ使用できます" },
       { status: 403 },
     );
   }
 
   // 4. リクエストボディのバリデーション
   const body = await req.json().catch(() => null);
-  const parsed = CreateReportSchema.safeParse(body);
+  const parsed = BulkReportSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0].message },
@@ -56,24 +60,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 5. 日報作成
-  const { date, workContent, tomorrowPlan, notes } = parsed.data;
-  try {
-    const result = await createReport({
-      date: new Date(`${date}T00:00:00.000Z`),
-      workContent,
-      tomorrowPlan,
-      notes,
-      authorId: user.id,
-    });
-    return NextResponse.json({ id: result.id }, { status: 201 });
-  } catch (e) {
-    if (e instanceof ConflictError) {
-      return NextResponse.json(
-        { error: "この日付の日報はすでに作成済みです" },
-        { status: 409 },
-      );
-    }
-    throw e;
-  }
+  // 5. 各レポートを処理
+  const results = await Promise.all(
+    parsed.data.map(async ({ userName, date, workContent, tomorrowPlan, notes }) => {
+      const { id, status } = await upsertReportForUserName({
+        userName,
+        date: new Date(`${date}T00:00:00.000Z`),
+        workContent,
+        tomorrowPlan,
+        notes,
+      });
+      return { date, id, status };
+    }),
+  );
+
+  return NextResponse.json({ results }, { status: 200 });
 }
