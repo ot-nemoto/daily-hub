@@ -52,8 +52,6 @@ Content-Type: application/json
 
 ---
 
----
-
 ## `POST /api/admin/reports` — 日報バッチ登録（ADMIN専用）
 
 **認証:** `Authorization: Bearer <api-key>` ヘッダー必須（ADMIN ロールのユーザーのみ）
