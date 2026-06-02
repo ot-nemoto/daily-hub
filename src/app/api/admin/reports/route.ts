@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { upsertReportForUserName } from "@/lib/reports";
 
 const ReportItemSchema = z.object({
   userName: z.string().min(1, "userName は必須です"),
@@ -60,48 +61,18 @@ export async function POST(req: NextRequest) {
   }
 
   // 5. 各レポートを処理
-  const results: { date: string; id: string; status: "created" | "updated" }[] = [];
-
-  for (const item of parsed.data) {
-    const { userName, date, workContent, tomorrowPlan, notes } = item;
-    const dateObj = new Date(`${date}T00:00:00.000Z`);
-
-    // userName でユーザーを解決（最初の1件）
-    let targetUser = await prisma.user.findFirst({
-      where: { name: userName },
-      select: { id: true },
-    });
-
-    // 存在しない場合は自動作成（email: ランダム文字列@example.com、role: VIEWER）
-    if (!targetUser) {
-      const randomEmail = `${crypto.randomUUID()}@example.com`;
-      targetUser = await prisma.user.create({
-        data: { name: userName, email: randomEmail, role: "VIEWER" },
-        select: { id: true },
+  const results = await Promise.all(
+    parsed.data.map(async ({ userName, date, workContent, tomorrowPlan, notes }) => {
+      const { id, status } = await upsertReportForUserName({
+        userName,
+        date: new Date(`${date}T00:00:00.000Z`),
+        workContent,
+        tomorrowPlan,
+        notes,
       });
-    }
-
-    // 既存日報の有無を確認（created / updated の判定用）
-    const existing = await prisma.report.findFirst({
-      where: { authorId: targetUser.id, date: dateObj },
-      select: { id: true },
-    });
-
-    // upsert
-    const report = await prisma.report.upsert({
-      where: { authorId_date: { authorId: targetUser.id, date: dateObj } },
-      create: { date: dateObj, workContent, tomorrowPlan, notes, authorId: targetUser.id },
-      update: { workContent, tomorrowPlan, notes },
-      select: { id: true },
-    });
-
-    results.push({
-      date,
-      id: report.id,
-      status: existing ? "updated" : "created",
-    });
-  }
+      return { date, id, status };
+    }),
+  );
 
   return NextResponse.json({ results }, { status: 200 });
 }
-

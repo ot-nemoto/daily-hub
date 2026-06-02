@@ -2,6 +2,46 @@ import { prisma } from "@/lib/prisma";
 
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 
+export async function resolveOrCreateUserByName(userName: string): Promise<{ id: string }> {
+  const existing = await prisma.user.findFirst({
+    where: { name: userName },
+    select: { id: true },
+  });
+  if (existing) return existing;
+
+  const randomEmail = `${crypto.randomUUID()}@example.com`;
+  return prisma.user.create({
+    data: { name: userName, email: randomEmail, role: "VIEWER" },
+    select: { id: true },
+  });
+}
+
+export async function upsertReportForUserName(input: {
+  userName: string;
+  date: Date;
+  workContent: string;
+  tomorrowPlan: string;
+  notes: string;
+}): Promise<{ id: string; status: "created" | "updated" }> {
+  const { userName, date, workContent, tomorrowPlan, notes } = input;
+
+  const targetUser = await resolveOrCreateUserByName(userName);
+
+  const existing = await prisma.report.findFirst({
+    where: { authorId: targetUser.id, date },
+    select: { id: true },
+  });
+
+  const report = await prisma.report.upsert({
+    where: { authorId_date: { authorId: targetUser.id, date } },
+    create: { date, workContent, tomorrowPlan, notes, authorId: targetUser.id },
+    update: { workContent, tomorrowPlan, notes },
+    select: { id: true },
+  });
+
+  return { id: report.id, status: existing ? "updated" : "created" };
+}
+
 export async function createReport(input: {
   date: Date;
   workContent: string;

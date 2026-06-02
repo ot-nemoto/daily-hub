@@ -6,17 +6,16 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),
-      findFirst: vi.fn(),
-      create: vi.fn(),
-    },
-    report: {
-      findFirst: vi.fn(),
-      upsert: vi.fn(),
     },
   },
 }));
 
+vi.mock("@/lib/reports", () => ({
+  upsertReportForUserName: vi.fn(),
+}));
+
 import { prisma } from "@/lib/prisma";
+import { upsertReportForUserName } from "@/lib/reports";
 import { POST } from "./route";
 
 const VALID_API_KEY = "test-admin-key";
@@ -150,10 +149,8 @@ describe("POST /api/admin/reports", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(ADMIN_USER as never);
     });
 
-    it("既存ユーザーへの新規登録で created を返す", async () => {
-      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ id: "user-1" } as never);
-      vi.mocked(prisma.report.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.report.upsert).mockResolvedValue({ id: "report-1" } as never);
+    it("新規登録で created を返す", async () => {
+      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "created" });
 
       const res = await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
       expect(res.status).toBe(200);
@@ -164,9 +161,7 @@ describe("POST /api/admin/reports", () => {
     });
 
     it("既存日報への upsert で updated を返す", async () => {
-      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ id: "user-1" } as never);
-      vi.mocked(prisma.report.findFirst).mockResolvedValue({ id: "report-1" } as never);
-      vi.mocked(prisma.report.upsert).mockResolvedValue({ id: "report-1" } as never);
+      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "updated" });
 
       const res = await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
       expect(res.status).toBe(200);
@@ -174,45 +169,23 @@ describe("POST /api/admin/reports", () => {
       expect(json.results[0].status).toBe("updated");
     });
 
-    it("存在しない userName のユーザーを自動作成して登録する", async () => {
-      vi.mocked(prisma.user.findFirst)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null);
-      vi.mocked(prisma.user.create).mockResolvedValue({ id: "new-user-1" } as never);
-      vi.mocked(prisma.report.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.report.upsert).mockResolvedValue({ id: "report-2" } as never);
-
-      const res = await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
-      expect(res.status).toBe(200);
-      expect(prisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            name: "山田太郎",
-            role: "VIEWER",
-          }),
-        }),
-      );
-    });
-
-    it("自動作成されたユーザーの email は @example.com ドメインである", async () => {
-      vi.mocked(prisma.user.findFirst)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null);
-      vi.mocked(prisma.user.create).mockResolvedValue({ id: "new-user-1" } as never);
-      vi.mocked(prisma.report.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.report.upsert).mockResolvedValue({ id: "report-2" } as never);
+    it("upsertReportForUserName を正しい引数で呼び出す", async () => {
+      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "created" });
 
       await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
-      const createCall = vi.mocked(prisma.user.create).mock.calls[0][0];
-      expect(createCall.data.email).toMatch(/@example\.com$/);
+      expect(upsertReportForUserName).toHaveBeenCalledWith({
+        userName: "山田太郎",
+        date: new Date("2026-06-01T00:00:00.000Z"),
+        workContent: "作業内容",
+        tomorrowPlan: "明日の予定",
+        notes: "所感",
+      });
     });
 
     it("複数件を一括登録してすべての results を返す", async () => {
-      vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user-1" } as never);
-      vi.mocked(prisma.report.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.report.upsert)
-        .mockResolvedValueOnce({ id: "report-1" } as never)
-        .mockResolvedValueOnce({ id: "report-2" } as never);
+      vi.mocked(upsertReportForUserName)
+        .mockResolvedValueOnce({ id: "report-1", status: "created" })
+        .mockResolvedValueOnce({ id: "report-2", status: "created" });
 
       const items = [
         { ...VALID_ITEM, date: "2026-06-01" },
@@ -225,17 +198,13 @@ describe("POST /api/admin/reports", () => {
     });
 
     it("notes が省略された場合でも 200 を返す", async () => {
-      vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user-1" } as never);
-      vi.mocked(prisma.report.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.report.upsert).mockResolvedValue({ id: "report-1" } as never);
+      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "created" });
 
       const { notes: _, ...itemWithoutNotes } = VALID_ITEM;
       const res = await POST(makeRequest([itemWithoutNotes], VALID_API_KEY));
       expect(res.status).toBe(200);
-      expect(prisma.report.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          create: expect.objectContaining({ notes: "" }),
-        }),
+      expect(upsertReportForUserName).toHaveBeenCalledWith(
+        expect.objectContaining({ notes: "" }),
       );
     });
   });
