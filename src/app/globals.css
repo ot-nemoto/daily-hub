@@ -8,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-mplus1code: var(--font-mplus1code), monospace;
+  --font-mplus1code: var(--font-mplus1code-base), monospace;
 }
 
 @media (prefers-color-scheme: dark) {
