@@ -16,6 +16,30 @@ export async function resolveOrCreateUserByName(userName: string): Promise<{ id:
   });
 }
 
+export async function upsertReportByAuthorId(input: {
+  authorId: string;
+  date: Date;
+  workContent: string;
+  tomorrowPlan: string;
+  notes: string;
+}): Promise<{ id: string; status: "created" | "updated" }> {
+  const { authorId, date, workContent, tomorrowPlan, notes } = input;
+
+  const existing = await prisma.report.findFirst({
+    where: { authorId, date },
+    select: { id: true },
+  });
+
+  const report = await prisma.report.upsert({
+    where: { authorId_date: { authorId, date } },
+    create: { date, workContent, tomorrowPlan, notes, authorId },
+    update: { workContent, tomorrowPlan, notes },
+    select: { id: true },
+  });
+
+  return { id: report.id, status: existing ? "updated" : "created" };
+}
+
 export async function upsertReportForUserName(input: {
   userName: string;
   date: Date;
@@ -24,22 +48,8 @@ export async function upsertReportForUserName(input: {
   notes: string;
 }): Promise<{ id: string; status: "created" | "updated" }> {
   const { userName, date, workContent, tomorrowPlan, notes } = input;
-
   const targetUser = await resolveOrCreateUserByName(userName);
-
-  const existing = await prisma.report.findFirst({
-    where: { authorId: targetUser.id, date },
-    select: { id: true },
-  });
-
-  const report = await prisma.report.upsert({
-    where: { authorId_date: { authorId: targetUser.id, date } },
-    create: { date, workContent, tomorrowPlan, notes, authorId: targetUser.id },
-    update: { workContent, tomorrowPlan, notes },
-    select: { id: true },
-  });
-
-  return { id: report.id, status: existing ? "updated" : "created" };
+  return upsertReportByAuthorId({ authorId: targetUser.id, date, workContent, tomorrowPlan, notes });
 }
 
 export async function createReport(input: {

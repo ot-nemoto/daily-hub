@@ -11,11 +11,12 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("@/lib/reports", () => ({
-  upsertReportForUserName: vi.fn(),
+  resolveOrCreateUserByName: vi.fn(),
+  upsertReportByAuthorId: vi.fn(),
 }));
 
 import { prisma } from "@/lib/prisma";
-import { upsertReportForUserName } from "@/lib/reports";
+import { resolveOrCreateUserByName, upsertReportByAuthorId } from "@/lib/reports";
 import { POST } from "./route";
 
 const VALID_API_KEY = "test-admin-key";
@@ -147,10 +148,11 @@ describe("POST /api/admin/reports", () => {
   describe("正常系", () => {
     beforeEach(() => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(ADMIN_USER as never);
+      vi.mocked(resolveOrCreateUserByName).mockResolvedValue({ id: "user-1" });
     });
 
     it("新規登録で created を返す", async () => {
-      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "created" });
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
 
       const res = await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
       expect(res.status).toBe(200);
@@ -161,7 +163,7 @@ describe("POST /api/admin/reports", () => {
     });
 
     it("既存日報への upsert で updated を返す", async () => {
-      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "updated" });
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "updated" });
 
       const res = await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
       expect(res.status).toBe(200);
@@ -169,12 +171,12 @@ describe("POST /api/admin/reports", () => {
       expect(json.results[0].status).toBe("updated");
     });
 
-    it("upsertReportForUserName を正しい引数で呼び出す", async () => {
-      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "created" });
+    it("upsertReportByAuthorId を正しい引数で呼び出す", async () => {
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
 
       await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
-      expect(upsertReportForUserName).toHaveBeenCalledWith({
-        userName: "山田太郎",
+      expect(upsertReportByAuthorId).toHaveBeenCalledWith({
+        authorId: "user-1",
         date: new Date("2026-06-01T00:00:00.000Z"),
         workContent: "作業内容",
         tomorrowPlan: "明日の予定",
@@ -183,7 +185,7 @@ describe("POST /api/admin/reports", () => {
     });
 
     it("複数件を一括登録してすべての results を返す", async () => {
-      vi.mocked(upsertReportForUserName)
+      vi.mocked(upsertReportByAuthorId)
         .mockResolvedValueOnce({ id: "report-1", status: "created" })
         .mockResolvedValueOnce({ id: "report-2", status: "created" });
 
@@ -198,12 +200,12 @@ describe("POST /api/admin/reports", () => {
     });
 
     it("notes が省略された場合でも 200 を返す", async () => {
-      vi.mocked(upsertReportForUserName).mockResolvedValue({ id: "report-1", status: "created" });
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
 
       const { notes: _, ...itemWithoutNotes } = VALID_ITEM;
       const res = await POST(makeRequest([itemWithoutNotes], VALID_API_KEY));
       expect(res.status).toBe(200);
-      expect(upsertReportForUserName).toHaveBeenCalledWith(
+      expect(upsertReportByAuthorId).toHaveBeenCalledWith(
         expect.objectContaining({ notes: "" }),
       );
     });
