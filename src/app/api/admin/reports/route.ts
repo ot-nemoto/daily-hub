@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { upsertReportForUserName } from "@/lib/reports";
+import { resolveOrCreateUserByName, upsertReportByAuthorId } from "@/lib/reports";
 
 const ReportItemSchema = z.object({
   userName: z.string().min(1, "userName は必須です"),
@@ -60,11 +60,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 5. 各レポートを処理
+  // 5. ユニークな userName を事前に順次解決（並列 create による重複ユーザー作成を防ぐ）
+  const uniqueUserNames = [...new Set(parsed.data.map((d) => d.userName))];
+  const userMap = new Map<string, string>();
+  for (const userName of uniqueUserNames) {
+    const resolved = await resolveOrCreateUserByName(userName);
+    userMap.set(userName, resolved.id);
+  }
+
+  // 6. 各レポートを処理
   const results = await Promise.all(
     parsed.data.map(async ({ userName, date, workContent, tomorrowPlan, notes }) => {
-      const { id, status } = await upsertReportForUserName({
-        userName,
+      const authorId = userMap.get(userName)!;
+      const { id, status } = await upsertReportByAuthorId({
+        authorId,
         date: new Date(`${date}T00:00:00.000Z`),
         workContent,
         tomorrowPlan,
