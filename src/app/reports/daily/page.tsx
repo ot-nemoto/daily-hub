@@ -80,17 +80,11 @@ export default async function DailyViewPage({
                       </Link>
                     </div>
                   </div>
-                  <dl className="space-y-3">
+                  <dl>
                     <div>
-                      <dt className="text-xs font-medium text-zinc-500">本日の作業内容</dt>
-                      <dd className="mt-0.5 line-clamp-3 text-sm text-zinc-900">
-                        {report.workContent}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-medium text-zinc-500">明日の予定</dt>
-                      <dd className="mt-0.5 line-clamp-2 text-sm text-zinc-900">
-                        {report.tomorrowPlan}
+                      <dt className="text-xs font-medium text-zinc-500">感想/課題/問題点</dt>
+                      <dd className="mt-0.5 whitespace-pre-wrap text-sm text-zinc-900">
+                        {report.notes}
                       </dd>
                     </div>
                   </dl>
