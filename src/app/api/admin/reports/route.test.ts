@@ -199,6 +199,20 @@ describe("POST /api/admin/reports", () => {
       expect(json.results).toHaveLength(2);
     });
 
+    it("同一 userName を含む複数件で resolveOrCreateUserByName が1回だけ呼ばれる", async () => {
+      vi.mocked(upsertReportByAuthorId)
+        .mockResolvedValueOnce({ id: "report-1", status: "created" })
+        .mockResolvedValueOnce({ id: "report-2", status: "created" });
+
+      const items = [
+        { ...VALID_ITEM, date: "2026-06-01" },
+        { ...VALID_ITEM, date: "2026-06-02" },
+      ];
+      await POST(makeRequest(items, VALID_API_KEY));
+      expect(resolveOrCreateUserByName).toHaveBeenCalledTimes(1);
+      expect(resolveOrCreateUserByName).toHaveBeenCalledWith("山田太郎");
+    });
+
     it("notes が省略された場合でも 200 を返す", async () => {
       vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
 
