@@ -96,7 +96,7 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
         </select>
       </div>
       {isPending && (
-        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+        <div role="status" aria-live="polite" className="flex items-center gap-1.5 text-xs text-zinc-400">
           <svg
             className="h-4 w-4 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
