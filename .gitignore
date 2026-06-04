@@ -54,3 +54,7 @@ test-results/
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Wiki scripts (local use only)
+parse_wiki.pl
+wiki_page.html

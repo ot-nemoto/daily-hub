@@ -94,7 +94,7 @@ export function ReportEditForm({ id, defaultValues }: Props) {
       </div>
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-zinc-700">
-          所感・連絡事項{" "}
+          感想/課題/問題点{" "}
           <span className="font-normal text-zinc-400">（任意）</span>
         </label>
         <textarea
