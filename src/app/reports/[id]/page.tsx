@@ -52,20 +52,20 @@ export default async function ReportDetailPage({
 
           <dl className="space-y-6">
             <div>
-              <dt className="text-sm font-medium text-zinc-500">本日の作業</dt>
+              <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">本日の作業</dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">
                 {report.workContent}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-zinc-500">明日の予定</dt>
+              <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">明日の予定</dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">
                 {report.tomorrowPlan}
               </dd>
             </div>
             {report.notes && (
               <div>
-                <dt className="text-sm font-medium text-zinc-500">感想/課題/問題点</dt>
+                <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">感想/課題/問題点</dt>
                 <dd className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">
                   {report.notes}
                 </dd>
