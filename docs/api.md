@@ -10,16 +10,70 @@ Server Actions の定義は [docs/actions.md](actions.md) を参照。
 
 | メソッド | パス | 概要 | 認証 |
 |---------|------|------|------|
-| `POST` | `/api/reports` | 日報作成 | APIキー（MEMBER / ADMIN） |
+| `GET` | `/api/reports` | 日報一覧取得 | APIキー（全ロール） |
+| `POST` | `/api/reports` | 日報作成・一括登録 | APIキー（MEMBER / ADMIN） |
 | `POST` | `/api/admin/reports` | 日報バッチ登録（ADMIN専用） | APIキー（ADMIN のみ） |
 
 ---
 
-## `POST /api/reports` — 日報作成
+## `GET /api/reports` — 日報一覧取得
+
+**認証:** `Authorization: Bearer <api-key>` ヘッダー必須
+
+**クエリパラメータ**
+
+| パラメータ | 型 | 必須 | 説明 |
+|---|---|---|---|
+| `date` | `YYYY-MM-DD` | - | 特定日で絞り込む（`from`/`to` と排他。同時指定時は `date` 優先） |
+| `from` | `YYYY-MM-DD` | - | 期間開始日（`to` とセットで指定） |
+| `to` | `YYYY-MM-DD` | - | 期間終了日（`from` とセットで指定） |
+| `authorId` | string | - | 特定ユーザーに絞り込む |
+
+**レスポンス**
+
+```http
+GET /api/reports?date=2026-06-01&authorId=xxx
+Authorization: Bearer <api-key>
+```
+
+```json
+{
+  "reports": [
+    {
+      "id": "<report-id>",
+      "date": "YYYY-MM-DD",
+      "authorId": "<user-id>",
+      "authorName": "山田太郎",
+      "workContent": "...",
+      "tomorrowPlan": "...",
+      "notes": "..."
+    }
+  ]
+}
+```
+
+ソート順: `date` 降順、同日内は `authorName` 昇順
+
+| ステータス | 内容 |
+|---|---|
+| 200 | `{ "reports": [...] }`（該当なしは空配列） |
+| 401 | APIキーなし・無効・アカウント無効 |
+| 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
+
+**権限ルール**
+
+- `ADMIN` / `MEMBER` / `VIEWER` すべて参照可能
+- `isActive=false` のユーザーは 401
+
+---
+
+## `POST /api/reports` — 日報作成・一括登録
 
 **認証:** `Authorization: Bearer <api-key>` ヘッダー必須（個人設定で発行）
 
-**リクエスト**
+単体オブジェクトと配列の両方を受け付ける。既存日報がある場合は上書き（upsert）。
+
+**リクエスト（単体）**
 
 ```http
 POST /api/reports
@@ -34,20 +88,35 @@ Content-Type: application/json
 }
 ```
 
+**リクエスト（複数日一括）**
+
+```http
+POST /api/reports
+Authorization: Bearer <api-key>
+Content-Type: application/json
+
+[
+  { "date": "YYYY-MM-DD", "workContent": "...", "tomorrowPlan": "...", "notes": "..." },
+  { "date": "YYYY-MM-DD", "workContent": "...", "tomorrowPlan": "...", "notes": "..." }
+]
+```
+
 **レスポンス**
+
+単体・配列どちらも `{ "results": [...] }` 形式で返す。HTTP ステータスで create/update を区別する。
 
 | ステータス | 内容 |
 |---|---|
-| 201 | `{ "id": "<report-id>" }` |
+| 201 | 全件新規作成 `{ "results": [{ "date": "YYYY-MM-DD", "id": "<report-id>", "status": "created" }] }` |
+| 200 | 1件以上が更新 `{ "results": [{ "date": "YYYY-MM-DD", "id": "<report-id>", "status": "created" \| "updated" }] }` |
 | 401 | APIキーなし・無効・アカウント無効 |
 | 403 | VIEWER ロールによるアクセス |
-| 409 | 同日の日報が既存 |
 | 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
 
 **権限ルール**
 
 - `MEMBER` / `ADMIN` ロールのみ作成可能（`VIEWER` は 403）
-- 自分の日報のみ作成可能（1ユーザー1日1件）
+- 自分の日報のみ登録対象（他ユーザー指定不可）
 - `isActive=false` のユーザーは 401
 
 ---
