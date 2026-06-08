@@ -11,7 +11,7 @@ Server Actions の定義は [docs/actions.md](actions.md) を参照。
 | メソッド | パス | 概要 | 認証 |
 |---------|------|------|------|
 | `GET` | `/api/reports` | 日報一覧取得 | APIキー（全ロール） |
-| `POST` | `/api/reports` | 日報作成 | APIキー（MEMBER / ADMIN） |
+| `POST` | `/api/reports` | 日報作成・一括登録 | APIキー（MEMBER / ADMIN） |
 | `POST` | `/api/admin/reports` | 日報バッチ登録（ADMIN専用） | APIキー（ADMIN のみ） |
 
 ---
