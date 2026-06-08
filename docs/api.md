@@ -73,6 +73,8 @@ Authorization: Bearer <api-key>
 
 単体オブジェクトと配列の両方を受け付ける。
 
+単体オブジェクトと配列の両方を受け付ける。既存日報がある場合は上書き（upsert）。
+
 **リクエスト（単体）**
 
 ```http
@@ -103,21 +105,20 @@ Content-Type: application/json
 
 **レスポンス**
 
+単体・配列どちらも `{ "results": [...] }` 形式で返す。HTTP ステータスで create/update を区別する。
+
 | ステータス | 内容 |
 |---|---|
-| 201 | `{ "id": "<report-id>" }` ※単体の場合 |
-| 200 | `{ "results": [{ "date": "YYYY-MM-DD", "id": "<report-id>", "status": "created" \| "updated" }] }` ※配列の場合 |
+| 201 | 全件新規作成 `{ "results": [{ "date": "YYYY-MM-DD", "id": "<report-id>", "status": "created" }] }` |
+| 200 | 1件以上が更新 `{ "results": [{ "date": "YYYY-MM-DD", "id": "<report-id>", "status": "created" \| "updated" }] }` |
 | 401 | APIキーなし・無効・アカウント無効 |
 | 403 | VIEWER ロールによるアクセス |
-| 409 | 同日の日報が既存（単体のみ） |
 | 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
 
 **権限ルール**
 
 - `MEMBER` / `ADMIN` ロールのみ作成可能（`VIEWER` は 403）
 - 自分の日報のみ登録対象（他ユーザー指定不可）
-- 配列の場合: 既存日報があれば上書き（upsert）
-- 単体の場合: 同日の日報が既存の場合は 409
 - `isActive=false` のユーザーは 401
 
 ---

@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { ConflictError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { createReport, upsertReportByAuthorId } from "@/lib/reports";
+import { upsertReportByAuthorId } from "@/lib/reports";
 
 const DateString = z
   .string()
@@ -13,7 +12,7 @@ const DateString = z
     return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
   }, "date は実在する日付を入力してください");
 
-const CreateReportSchema = z.object({
+const ReportItemSchema = z.object({
   date: DateString,
   workContent: z.string().min(1, "workContent は必須です").max(5000),
   tomorrowPlan: z.string().min(1, "tomorrowPlan は必須です").max(5000),
@@ -114,40 +113,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 3. リクエストボディのバリデーション
+  // 3. リクエストボディのバリデーション（単体・配列どちらも配列に正規化）
   const body = await req.json().catch(() => null);
+  const normalized = Array.isArray(body) ? body : [body];
 
-  // 配列の場合は一括登録（自分の日報のみ、upsert）
-  if (Array.isArray(body)) {
-    const parsed = z
-      .array(CreateReportSchema)
-      .min(1, "1件以上の日報を指定してください")
-      .safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 422 },
-      );
-    }
-
-    const results = await Promise.all(
-      parsed.data.map(async ({ date, workContent, tomorrowPlan, notes }) => {
-        const { id, status } = await upsertReportByAuthorId({
-          authorId: user.id,
-          date: new Date(`${date}T00:00:00.000Z`),
-          workContent,
-          tomorrowPlan,
-          notes,
-        });
-        return { date, id, status };
-      }),
-    );
-
-    return NextResponse.json({ results }, { status: 200 });
-  }
-
-  // 単体の場合は従来通り（後方互換）
-  const parsed = CreateReportSchema.safeParse(body);
+  const parsed = z
+    .array(ReportItemSchema)
+    .min(1, "1件以上の日報を指定してください")
+    .safeParse(normalized);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0].message },
@@ -155,24 +128,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 4. 日報作成
-  const { date, workContent, tomorrowPlan, notes } = parsed.data;
-  try {
-    const result = await createReport({
-      date: new Date(`${date}T00:00:00.000Z`),
-      workContent,
-      tomorrowPlan,
-      notes,
-      authorId: user.id,
-    });
-    return NextResponse.json({ id: result.id }, { status: 201 });
-  } catch (e) {
-    if (e instanceof ConflictError) {
-      return NextResponse.json(
-        { error: "この日付の日報はすでに作成済みです" },
-        { status: 409 },
-      );
-    }
-    throw e;
-  }
+  // 4. 日報を upsert（全件 created → 201、1件でも updated → 200）
+  const results = await Promise.all(
+    parsed.data.map(async ({ date, workContent, tomorrowPlan, notes }) => {
+      const { id, status } = await upsertReportByAuthorId({
+        authorId: user.id,
+        date: new Date(`${date}T00:00:00.000Z`),
+        workContent,
+        tomorrowPlan,
+        notes,
+      });
+      return { date, id, status };
+    }),
+  );
+
+  const httpStatus = results.every((r) => r.status === "created") ? 201 : 200;
+  return NextResponse.json({ results }, { status: httpStatus });
 }

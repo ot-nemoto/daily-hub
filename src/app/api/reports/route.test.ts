@@ -2,8 +2,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ConflictError } from "@/lib/errors";
-
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
@@ -16,12 +14,11 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("@/lib/reports", () => ({
-  createReport: vi.fn(),
   upsertReportByAuthorId: vi.fn(),
 }));
 
 import { prisma } from "@/lib/prisma";
-import { createReport, upsertReportByAuthorId } from "@/lib/reports";
+import { upsertReportByAuthorId } from "@/lib/reports";
 import { GET, POST } from "./route";
 
 const VALID_API_KEY = "test-api-key";
@@ -307,129 +304,104 @@ describe("POST /api/reports", () => {
       expect(res.status).toBe(422);
     });
 
-    it("notes が省略された場合でも 201 を返す（デフォルト空文字）", async () => {
-      vi.mocked(createReport).mockResolvedValue({ id: "report-1" });
+    it("notes が省略された場合でも登録できる（デフォルト空文字）", async () => {
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
       const { notes: _, ...bodyWithoutNotes } = VALID_BODY;
       const res = await POST(makeRequest(bodyWithoutNotes, VALID_API_KEY));
       expect(res.status).toBe(201);
-      expect(createReport).toHaveBeenCalledWith(expect.objectContaining({ notes: "" }));
+      expect(upsertReportByAuthorId).toHaveBeenCalledWith(
+        expect.objectContaining({ notes: "" }),
+      );
+    });
+
+    it("空配列で 422 を返す", async () => {
+      const res = await POST(makeRequest([], VALID_API_KEY));
+      expect(res.status).toBe(422);
     });
   });
 
-  describe("正常系", () => {
+  describe("正常系（単体）", () => {
     beforeEach(() => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
     });
 
-    it("正常系: 日報を作成して 201 と id を返す", async () => {
-      vi.mocked(createReport).mockResolvedValue({ id: "report-1" });
+    it("新規作成で 201 と results を返す", async () => {
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
       const res = await POST(makeRequest(VALID_BODY, VALID_API_KEY));
       expect(res.status).toBe(201);
       const json = await res.json();
-      expect(json).toEqual({ id: "report-1" });
-      expect(createReport).toHaveBeenCalledWith({
+      expect(json.results).toEqual([{ date: "2026-04-12", id: "report-1", status: "created" }]);
+    });
+
+    it("既存日報への upsert で 200 と results を返す", async () => {
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "updated" });
+      const res = await POST(makeRequest(VALID_BODY, VALID_API_KEY));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.results[0].status).toBe("updated");
+    });
+
+    it("upsertReportByAuthorId を正しい引数で呼び出す", async () => {
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
+      await POST(makeRequest(VALID_BODY, VALID_API_KEY));
+      expect(upsertReportByAuthorId).toHaveBeenCalledWith({
+        authorId: "user-1",
         date: new Date("2026-04-12T00:00:00.000Z"),
         workContent: "作業内容",
         tomorrowPlan: "明日の予定",
         notes: "所感",
-        authorId: "user-1",
       });
     });
 
-    it("ADMIN ロールでも日報を作成できる", async () => {
+    it("ADMIN ロールでも登録できる", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         ...VALID_USER,
         role: "ADMIN",
       } as never);
-      vi.mocked(createReport).mockResolvedValue({ id: "report-2" });
+      vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
       const res = await POST(makeRequest(VALID_BODY, VALID_API_KEY));
       expect(res.status).toBe(201);
     });
   });
 
-  describe("エラー系", () => {
+  describe("正常系（配列）", () => {
     beforeEach(() => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
     });
 
-    it("同日の日報が既存の場合 409 を返す", async () => {
-      vi.mocked(createReport).mockRejectedValue(new ConflictError());
-      const res = await POST(makeRequest(VALID_BODY, VALID_API_KEY));
-      expect(res.status).toBe(409);
+    it("全件 created で 201 を返す", async () => {
+      vi.mocked(upsertReportByAuthorId)
+        .mockResolvedValueOnce({ id: "report-1", status: "created" })
+        .mockResolvedValueOnce({ id: "report-2", status: "created" });
+
+      const items = [
+        { ...VALID_BODY, date: "2026-04-12" },
+        { ...VALID_BODY, date: "2026-04-13" },
+      ];
+      const res = await POST(makeRequest(items, VALID_API_KEY));
+      expect(res.status).toBe(201);
       const json = await res.json();
-      expect(json.error).toBe("この日付の日報はすでに作成済みです");
+      expect(json.results).toHaveLength(2);
     });
-  });
-});
 
-// ----------------------------------------------------------------
-// POST /api/reports（一括登録）
-// ----------------------------------------------------------------
-describe("POST /api/reports（一括登録）", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
-  });
+    it("1件でも updated があれば 200 を返す", async () => {
+      vi.mocked(upsertReportByAuthorId)
+        .mockResolvedValueOnce({ id: "report-1", status: "created" })
+        .mockResolvedValueOnce({ id: "report-2", status: "updated" });
 
-  it("空配列で 422 を返す", async () => {
-    const res = await POST(makeRequest([], VALID_API_KEY));
-    expect(res.status).toBe(422);
-  });
-
-  it("配列 1件で 200 と results を返す", async () => {
-    vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
-    const res = await POST(makeRequest([VALID_BODY], VALID_API_KEY));
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(json.results).toEqual([{ date: "2026-04-12", id: "report-1", status: "created" }]);
-  });
-
-  it("配列 複数件で 200 と全 results を返す", async () => {
-    vi.mocked(upsertReportByAuthorId)
-      .mockResolvedValueOnce({ id: "report-1", status: "created" })
-      .mockResolvedValueOnce({ id: "report-2", status: "created" });
-
-    const items = [
-      { ...VALID_BODY, date: "2026-04-12" },
-      { ...VALID_BODY, date: "2026-04-13" },
-    ];
-    const res = await POST(makeRequest(items, VALID_API_KEY));
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(json.results).toHaveLength(2);
-  });
-
-  it("既存日報がある日付で updated を返す", async () => {
-    vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "updated" });
-    const res = await POST(makeRequest([VALID_BODY], VALID_API_KEY));
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(json.results[0].status).toBe("updated");
-  });
-
-  it("upsertReportByAuthorId を正しい引数で呼び出す", async () => {
-    vi.mocked(upsertReportByAuthorId).mockResolvedValue({ id: "report-1", status: "created" });
-    await POST(makeRequest([VALID_BODY], VALID_API_KEY));
-    expect(upsertReportByAuthorId).toHaveBeenCalledWith({
-      authorId: "user-1",
-      date: new Date("2026-04-12T00:00:00.000Z"),
-      workContent: "作業内容",
-      tomorrowPlan: "明日の予定",
-      notes: "所感",
+      const items = [
+        { ...VALID_BODY, date: "2026-04-12" },
+        { ...VALID_BODY, date: "2026-04-13" },
+      ];
+      const res = await POST(makeRequest(items, VALID_API_KEY));
+      expect(res.status).toBe(200);
     });
-  });
 
-  it("VIEWER ロールで 403 を返す", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      ...VALID_USER,
-      role: "VIEWER",
-    } as never);
-    const res = await POST(makeRequest([VALID_BODY], VALID_API_KEY));
-    expect(res.status).toBe(403);
-  });
-
-  it("配列内の date が不正形式の場合 422 を返す", async () => {
-    const res = await POST(makeRequest([{ ...VALID_BODY, date: "20260412" }], VALID_API_KEY));
-    expect(res.status).toBe(422);
+    it("配列内の date が不正形式の場合 422 を返す", async () => {
+      const res = await POST(
+        makeRequest([{ ...VALID_BODY, date: "20260412" }], VALID_API_KEY),
+      );
+      expect(res.status).toBe(422);
+    });
   });
 });
