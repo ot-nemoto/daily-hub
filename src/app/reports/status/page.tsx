@@ -1,8 +1,18 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { StatusFilter } from "./StatusFilter";
+import { type Period, StatusFilter } from "./StatusFilter";
 
-const DEFAULT_DAYS = 45;
+const PERIOD_DAYS: Record<Period, number> = {
+  "1w": 7,
+  "2w": 14,
+  "1m": 30,
+  "1.5m": 45,
+  "2m": 60,
+  "3m": 90,
+};
+
+const DEFAULT_PERIOD: Period = "2w";
+const VALID_PERIODS = new Set<string>(Object.keys(PERIOD_DAYS));
 
 function todayUTC(): Date {
   const d = new Date();
@@ -34,18 +44,18 @@ function formatDateLabel(d: Date): string {
   return `${m}/${day}(${dow})`;
 }
 
-// from〜to の日付リストを新しい順で生成する
+// from〜to の日付リストを古い順（左）→新しい順（右）で生成する
 function buildDateList(from: Date, to: Date): Date[] {
   const dates: Date[] = [];
-  const current = new Date(to);
-  while (current >= from) {
+  const current = new Date(from);
+  while (current <= to) {
     dates.push(new Date(current));
-    current.setUTCDate(current.getUTCDate() - 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
   return dates;
 }
 
-type SearchParams = { from?: string; to?: string };
+type SearchParams = { base?: string; period?: string };
 
 export default async function StatusPage({
   searchParams,
@@ -56,16 +66,16 @@ export default async function StatusPage({
 
   const params = await searchParams;
   const today = todayUTC();
-  const defaultFrom = addDays(today, -(DEFAULT_DAYS - 1));
 
-  const fromDate = parseDate(params.from) ?? defaultFrom;
-  const toDate = parseDate(params.to) ?? today;
+  const baseDate = parseDate(params.base) ?? today;
+  const period: Period = VALID_PERIODS.has(params.period ?? "")
+    ? (params.period as Period)
+    : DEFAULT_PERIOD;
 
-  // from > to の場合はデフォルトに戻す
-  const resolvedFrom = fromDate <= toDate ? fromDate : defaultFrom;
-  const resolvedTo = fromDate <= toDate ? toDate : today;
+  const days = PERIOD_DAYS[period];
+  const fromDate = addDays(baseDate, -(days - 1));
 
-  const dates = buildDateList(resolvedFrom, resolvedTo);
+  const dates = buildDateList(fromDate, baseDate);
 
   const [users, reports] = await Promise.all([
     prisma.user.findMany({
@@ -74,7 +84,7 @@ export default async function StatusPage({
       orderBy: { name: "asc" },
     }),
     prisma.report.findMany({
-      where: { date: { gte: resolvedFrom, lte: resolvedTo } },
+      where: { date: { gte: fromDate, lte: baseDate } },
       select: { authorId: true, date: true },
     }),
   ]);
@@ -88,10 +98,7 @@ export default async function StatusPage({
     <main className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="mb-4 text-lg font-bold text-zinc-900">提出状況</h1>
 
-      <StatusFilter
-        from={formatDate(resolvedFrom)}
-        to={formatDate(resolvedTo)}
-      />
+      <StatusFilter base={formatDate(baseDate)} period={period} />
 
       {users.length === 0 ? (
         <p className="text-sm text-zinc-500">有効なユーザーがいません。</p>
