@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { ConflictError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { createReport } from "@/lib/reports";
+import { createReport, upsertReportByAuthorId } from "@/lib/reports";
 
 const DateString = z
   .string()
@@ -116,6 +116,37 @@ export async function POST(req: NextRequest) {
 
   // 3. リクエストボディのバリデーション
   const body = await req.json().catch(() => null);
+
+  // 配列の場合は一括登録（自分の日報のみ、upsert）
+  if (Array.isArray(body)) {
+    const parsed = z
+      .array(CreateReportSchema)
+      .min(1, "1件以上の日報を指定してください")
+      .safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0].message },
+        { status: 422 },
+      );
+    }
+
+    const results = await Promise.all(
+      parsed.data.map(async ({ date, workContent, tomorrowPlan, notes }) => {
+        const { id, status } = await upsertReportByAuthorId({
+          authorId: user.id,
+          date: new Date(`${date}T00:00:00.000Z`),
+          workContent,
+          tomorrowPlan,
+          notes,
+        });
+        return { date, id, status };
+      }),
+    );
+
+    return NextResponse.json({ results }, { status: 200 });
+  }
+
+  // 単体の場合は従来通り（後方互換）
   const parsed = CreateReportSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

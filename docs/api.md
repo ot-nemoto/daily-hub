@@ -67,11 +67,13 @@ Authorization: Bearer <api-key>
 
 ---
 
-## `POST /api/reports` — 日報作成
+## `POST /api/reports` — 日報作成・一括登録
 
 **認証:** `Authorization: Bearer <api-key>` ヘッダー必須（個人設定で発行）
 
-**リクエスト**
+単体オブジェクトと配列の両方を受け付ける。
+
+**リクエスト（単体）**
 
 ```http
 POST /api/reports
@@ -86,20 +88,36 @@ Content-Type: application/json
 }
 ```
 
+**リクエスト（複数日一括）**
+
+```http
+POST /api/reports
+Authorization: Bearer <api-key>
+Content-Type: application/json
+
+[
+  { "date": "YYYY-MM-DD", "workContent": "...", "tomorrowPlan": "...", "notes": "..." },
+  { "date": "YYYY-MM-DD", "workContent": "...", "tomorrowPlan": "...", "notes": "..." }
+]
+```
+
 **レスポンス**
 
 | ステータス | 内容 |
 |---|---|
-| 201 | `{ "id": "<report-id>" }` |
+| 201 | `{ "id": "<report-id>" }` ※単体の場合 |
+| 200 | `{ "results": [{ "date": "YYYY-MM-DD", "id": "<report-id>", "status": "created" \| "updated" }] }` ※配列の場合 |
 | 401 | APIキーなし・無効・アカウント無効 |
 | 403 | VIEWER ロールによるアクセス |
-| 409 | 同日の日報が既存 |
+| 409 | 同日の日報が既存（単体のみ） |
 | 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
 
 **権限ルール**
 
 - `MEMBER` / `ADMIN` ロールのみ作成可能（`VIEWER` は 403）
-- 自分の日報のみ作成可能（1ユーザー1日1件）
+- 自分の日報のみ登録対象（他ユーザー指定不可）
+- 配列の場合: 既存日報があれば上書き（upsert）
+- 単体の場合: 同日の日報が既存の場合は 409
 - `isActive=false` のユーザーは 401
 
 ---
