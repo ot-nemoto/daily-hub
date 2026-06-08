@@ -30,6 +30,12 @@ export function NavLinks({ role }: Props) {
       >
         月次ビュー
       </Link>
+      <Link
+        href="/reports/status"
+        className={navLinkClass(pathname.startsWith("/reports/status"))}
+      >
+        提出状況
+      </Link>
       {(role === "ADMIN" || role === "MEMBER") && (
         <Link
           href="/reports/new"
