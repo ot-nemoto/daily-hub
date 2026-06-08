@@ -34,7 +34,7 @@ export function StatusFilter({ base, period }: Props) {
       {/* 基準日 */}
       <div className="flex items-center gap-2">
         <label htmlFor="base-date" className="text-sm text-zinc-600">
-          基準日
+          日付
         </label>
         <input
           id="base-date"
