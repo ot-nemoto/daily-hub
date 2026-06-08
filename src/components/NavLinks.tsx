@@ -9,8 +9,8 @@ type Props = {
 
 function navLinkClass(isActive: boolean) {
   return isActive
-    ? "whitespace-nowrap text-sm font-medium text-zinc-900"
-    : "whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900";
+    ? "whitespace-nowrap rounded-md bg-zinc-100 px-2.5 py-1 text-sm font-medium text-zinc-900"
+    : "whitespace-nowrap rounded-md px-2.5 py-1 text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900";
 }
 
 export function NavLinks({ role }: Props) {

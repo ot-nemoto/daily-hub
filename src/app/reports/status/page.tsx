@@ -1,15 +1,26 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { StatusFilter } from "./StatusFilter";
 
-// 直近 N 日（今日含む）の日付リストを新しい順で生成する
-function buildDateList(days: number): Date[] {
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  return Array.from({ length: days }, (_, i) => {
-    const d = new Date(today);
-    d.setUTCDate(d.getUTCDate() - i);
-    return d;
-  });
+const DEFAULT_DAYS = 45;
+
+function todayUTC(): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
+function addDays(base: Date, delta: number): Date {
+  const d = new Date(base);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d;
+}
+
+function parseDate(value: string | undefined): Date | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const d = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
 }
 
 function formatDate(d: Date): string {
@@ -23,14 +34,38 @@ function formatDateLabel(d: Date): string {
   return `${m}/${day}(${dow})`;
 }
 
-const DAYS = 45;
+// from〜to の日付リストを新しい順で生成する
+function buildDateList(from: Date, to: Date): Date[] {
+  const dates: Date[] = [];
+  const current = new Date(to);
+  while (current >= from) {
+    dates.push(new Date(current));
+    current.setUTCDate(current.getUTCDate() - 1);
+  }
+  return dates;
+}
 
-export default async function StatusPage() {
+type SearchParams = { from?: string; to?: string };
+
+export default async function StatusPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   await getSession({ redirectOnInactive: true });
 
-  const dates = buildDateList(DAYS);
-  const from = dates[dates.length - 1];
-  const to = dates[0];
+  const params = await searchParams;
+  const today = todayUTC();
+  const defaultFrom = addDays(today, -(DEFAULT_DAYS - 1));
+
+  const fromDate = parseDate(params.from) ?? defaultFrom;
+  const toDate = parseDate(params.to) ?? today;
+
+  // from > to の場合はデフォルトに戻す
+  const resolvedFrom = fromDate <= toDate ? fromDate : defaultFrom;
+  const resolvedTo = fromDate <= toDate ? toDate : today;
+
+  const dates = buildDateList(resolvedFrom, resolvedTo);
 
   const [users, reports] = await Promise.all([
     prisma.user.findMany({
@@ -39,7 +74,7 @@ export default async function StatusPage() {
       orderBy: { name: "asc" },
     }),
     prisma.report.findMany({
-      where: { date: { gte: from, lte: to } },
+      where: { date: { gte: resolvedFrom, lte: resolvedTo } },
       select: { authorId: true, date: true },
     }),
   ]);
@@ -51,7 +86,12 @@ export default async function StatusPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="mb-6 text-lg font-bold text-zinc-900">提出状況</h1>
+      <h1 className="mb-4 text-lg font-bold text-zinc-900">提出状況</h1>
+
+      <StatusFilter
+        from={formatDate(resolvedFrom)}
+        to={formatDate(resolvedTo)}
+      />
 
       {users.length === 0 ? (
         <p className="text-sm text-zinc-500">有効なユーザーがいません。</p>
@@ -60,7 +100,6 @@ export default async function StatusPage() {
           <table className="border-collapse text-xs">
             <thead>
               <tr className="border-b border-zinc-200">
-                {/* ユーザー名列ヘッダー */}
                 <th className="sticky left-0 z-10 min-w-[8rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
                   ユーザー
                 </th>
@@ -107,8 +146,6 @@ export default async function StatusPage() {
                           <span className="inline-block rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">
                             ✓
                           </span>
-                        ) : isWeekend ? (
-                          <span className="text-zinc-300">—</span>
                         ) : (
                           <span className="text-zinc-300">—</span>
                         )}
