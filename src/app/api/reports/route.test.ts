@@ -9,6 +9,9 @@ vi.mock("@/lib/prisma", () => ({
     user: {
       findUnique: vi.fn(),
     },
+    report: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -18,7 +21,7 @@ vi.mock("@/lib/reports", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { createReport } from "@/lib/reports";
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 const VALID_API_KEY = "test-api-key";
 const VALID_USER = { id: "user-1", role: "MEMBER", isActive: true };
@@ -43,6 +46,189 @@ function makeRequest(body: unknown, apiKey?: string) {
   });
 }
 
+function makeGetRequest(params: Record<string, string> = {}, apiKey?: string) {
+  const url = new URL("http://localhost/api/reports");
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value);
+  }
+  const headers: Record<string, string> = {};
+  if (apiKey !== undefined) {
+    headers.authorization = `Bearer ${apiKey}`;
+  }
+  return new NextRequest(url.toString(), { method: "GET", headers });
+}
+
+// ----------------------------------------------------------------
+// GET /api/reports
+// ----------------------------------------------------------------
+describe("GET /api/reports", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const MOCK_REPORT = {
+    id: "report-1",
+    date: new Date("2026-06-01T00:00:00.000Z"),
+    authorId: "user-1",
+    author: { name: "山田太郎" },
+    workContent: "作業内容",
+    tomorrowPlan: "明日の予定",
+    notes: "所感",
+  };
+
+  describe("認証", () => {
+    it("Authorization ヘッダーなしで 401 を返す", async () => {
+      const res = await GET(new NextRequest("http://localhost/api/reports", { method: "GET" }));
+      expect(res.status).toBe(401);
+    });
+
+    it("Bearer スキーム以外で 401 を返す", async () => {
+      const res = await GET(
+        new NextRequest("http://localhost/api/reports", {
+          method: "GET",
+          headers: { authorization: "Basic somekey" },
+        }),
+      );
+      expect(res.status).toBe(401);
+    });
+
+    it("存在しない API キーで 401 を返す", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+      const res = await GET(makeGetRequest({}, "invalid-key"));
+      expect(res.status).toBe(401);
+    });
+
+    it("isActive=false のユーザーで 401 を返す", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...VALID_USER,
+        isActive: false,
+      } as never);
+      const res = await GET(makeGetRequest({}, VALID_API_KEY));
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("バリデーション", () => {
+    beforeEach(() => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
+    });
+
+    it("date が不正形式の場合 422 を返す", async () => {
+      const res = await GET(makeGetRequest({ date: "20260601" }, VALID_API_KEY));
+      expect(res.status).toBe(422);
+    });
+
+    it("date が実在しない日付の場合 422 を返す", async () => {
+      const res = await GET(makeGetRequest({ date: "2026-99-99" }, VALID_API_KEY));
+      expect(res.status).toBe(422);
+    });
+
+    it("from だけ指定した場合 422 を返す", async () => {
+      const res = await GET(makeGetRequest({ from: "2026-06-01" }, VALID_API_KEY));
+      expect(res.status).toBe(422);
+    });
+
+    it("to だけ指定した場合 422 を返す", async () => {
+      const res = await GET(makeGetRequest({ to: "2026-06-30" }, VALID_API_KEY));
+      expect(res.status).toBe(422);
+    });
+
+    it("from が不正形式の場合 422 を返す", async () => {
+      const res = await GET(
+        makeGetRequest({ from: "20260601", to: "2026-06-30" }, VALID_API_KEY),
+      );
+      expect(res.status).toBe(422);
+    });
+
+    it("to が不正形式の場合 422 を返す", async () => {
+      const res = await GET(
+        makeGetRequest({ from: "2026-06-01", to: "20260630" }, VALID_API_KEY),
+      );
+      expect(res.status).toBe(422);
+    });
+  });
+
+  describe("正常系", () => {
+    beforeEach(() => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
+      vi.mocked(prisma.report.findMany).mockResolvedValue([MOCK_REPORT] as never);
+    });
+
+    it("パラメータなしで 200 と reports を返す", async () => {
+      const res = await GET(makeGetRequest({}, VALID_API_KEY));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.reports).toHaveLength(1);
+      expect(json.reports[0]).toEqual({
+        id: "report-1",
+        date: "2026-06-01",
+        authorId: "user-1",
+        authorName: "山田太郎",
+        workContent: "作業内容",
+        tomorrowPlan: "明日の予定",
+        notes: "所感",
+      });
+    });
+
+    it("date 指定で findMany に日付フィルターが渡される", async () => {
+      const res = await GET(makeGetRequest({ date: "2026-06-01" }, VALID_API_KEY));
+      expect(res.status).toBe(200);
+      expect(prisma.report.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            date: new Date("2026-06-01T00:00:00.000Z"),
+          }),
+        }),
+      );
+    });
+
+    it("from/to 指定で findMany に期間フィルターが渡される", async () => {
+      const res = await GET(
+        makeGetRequest({ from: "2026-06-01", to: "2026-06-30" }, VALID_API_KEY),
+      );
+      expect(res.status).toBe(200);
+      expect(prisma.report.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            date: {
+              gte: new Date("2026-06-01T00:00:00.000Z"),
+              lte: new Date("2026-06-30T00:00:00.000Z"),
+            },
+          }),
+        }),
+      );
+    });
+
+    it("authorId 指定で findMany に authorId フィルターが渡される", async () => {
+      const res = await GET(makeGetRequest({ authorId: "user-1" }, VALID_API_KEY));
+      expect(res.status).toBe(200);
+      expect(prisma.report.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ authorId: "user-1" }),
+        }),
+      );
+    });
+
+    it("日報なしの場合は空配列を返す", async () => {
+      vi.mocked(prisma.report.findMany).mockResolvedValue([] as never);
+      const res = await GET(makeGetRequest({}, VALID_API_KEY));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.reports).toEqual([]);
+    });
+
+    it("VIEWER ロールでも参照できる", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...VALID_USER,
+        role: "VIEWER",
+      } as never);
+      const res = await GET(makeGetRequest({}, VALID_API_KEY));
+      expect(res.status).toBe(200);
+    });
+  });
+});
+
+// ----------------------------------------------------------------
+// POST /api/reports
+// ----------------------------------------------------------------
 describe("POST /api/reports", () => {
   beforeEach(() => vi.clearAllMocks());
 

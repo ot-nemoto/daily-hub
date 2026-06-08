@@ -10,8 +10,60 @@ Server Actions の定義は [docs/actions.md](actions.md) を参照。
 
 | メソッド | パス | 概要 | 認証 |
 |---------|------|------|------|
+| `GET` | `/api/reports` | 日報一覧取得 | APIキー（全ロール） |
 | `POST` | `/api/reports` | 日報作成 | APIキー（MEMBER / ADMIN） |
 | `POST` | `/api/admin/reports` | 日報バッチ登録（ADMIN専用） | APIキー（ADMIN のみ） |
+
+---
+
+## `GET /api/reports` — 日報一覧取得
+
+**認証:** `Authorization: Bearer <api-key>` ヘッダー必須
+
+**クエリパラメータ**
+
+| パラメータ | 型 | 必須 | 説明 |
+|---|---|---|---|
+| `date` | `YYYY-MM-DD` | - | 特定日で絞り込む（`from`/`to` と排他。同時指定時は `date` 優先） |
+| `from` | `YYYY-MM-DD` | - | 期間開始日（`to` とセットで指定） |
+| `to` | `YYYY-MM-DD` | - | 期間終了日（`from` とセットで指定） |
+| `authorId` | string | - | 特定ユーザーに絞り込む |
+
+**レスポンス**
+
+```http
+GET /api/reports?date=2026-06-01&authorId=xxx
+Authorization: Bearer <api-key>
+```
+
+```json
+{
+  "reports": [
+    {
+      "id": "<report-id>",
+      "date": "YYYY-MM-DD",
+      "authorId": "<user-id>",
+      "authorName": "山田太郎",
+      "workContent": "...",
+      "tomorrowPlan": "...",
+      "notes": "..."
+    }
+  ]
+}
+```
+
+ソート順: `date` 降順、同日内は `authorName` 昇順
+
+| ステータス | 内容 |
+|---|---|
+| 200 | `{ "reports": [...] }`（該当なしは空配列） |
+| 401 | APIキーなし・無効・アカウント無効 |
+| 422 | バリデーションエラー（`{ "error": "<メッセージ>" }`） |
+
+**権限ルール**
+
+- `ADMIN` / `MEMBER` / `VIEWER` すべて参照可能
+- `isActive=false` のユーザーは 401
 
 ---
 
