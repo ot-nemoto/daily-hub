@@ -26,6 +26,7 @@
 | 4 | 未ログイン | `/reports/[任意のID]` にアクセスする | 未認証リダイレクト | `/login` にリダイレクトされる |
 | 5 | 未ログイン | `/settings` にアクセスする | 未認証リダイレクト | `/login` にリダイレクトされる |
 | 6 | 未ログイン | `/admin/users` にアクセスする | 未認証リダイレクト | `/login` にリダイレクトされる |
+| 7 | 未ログイン | `/reports/status` にアクセスする | 未認証リダイレクト | `/login` にリダイレクトされる |
 | 7 | `tsukune@example.com` | `/login` でメールアドレス・パスワードを入力してサインインする | ログイン成功後の遷移 | `/reports/daily` に遷移する |
 | 8 | `sunagimo@example.com` | `/login` でサインインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
 | 9 | `sunagimo@example.com` | `/auth-error` で「サインアウト」ボタンをクリックする | サインアウト遷移 | `/login` にリダイレクトされる |
@@ -37,10 +38,34 @@
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | ログイン後にヘッダーを確認する | ヘッダー項目の表示 | 「日次ビュー」「月次ビュー」「日報作成」「tsukune」「ログアウト」が表示される |
+| 1 | `tsukune@example.com` | ログイン後にヘッダーを確認する | ヘッダー項目の表示 | 「日次ビュー」「月次ビュー」「日報作成」「提出状況」「tsukune」「ログアウト」が表示される |
 | 2 | `bonjiri@example.com` | ログイン後にヘッダーを確認する | ADMIN 専用リンク | 「ユーザー管理」リンクが表示される |
 | 3 | `tsukune@example.com` | ログイン後にヘッダーを確認する | MEMBER の表示 | 「ユーザー管理」リンクが表示されない |
-| 4 | `nankotsu@example.com` | ログイン後にヘッダーを確認する | VIEWER の表示 | 「日報作成」リンクが表示されない |
+| 4 | `nankotsu@example.com` | ログイン後にヘッダーを確認する | VIEWER の表示 | 「日報作成」リンクが表示されず「提出状況」リンクは表示される |
+| 5 | `tsukune@example.com` | `/reports/daily` を開く | アクティブメニュー | 「日次ビュー」が背景色ハイライト（bg-zinc-100）で表示される |
+| 6 | `tsukune@example.com` | `/reports/monthly` を開く | アクティブメニュー | 「月次ビュー」がハイライトされ、「日次ビュー」はハイライトが解除される |
+| 7 | `tsukune@example.com` | `/reports/status` を開く | アクティブメニュー | 「提出状況」がハイライトされる |
+| 8 | `tsukune@example.com` | `/reports/new` を開く | アクティブメニュー | 「日報作成」がハイライトされる |
+| 9 | `bonjiri@example.com` | `/admin/users` を開く | アクティブメニュー | 「ユーザー管理」がハイライトされる |
+| 10 | `tsukune@example.com` | 非アクティブなメニューリンクにカーソルを当てる | ホバースタイル | カーソルを当てたリンクに背景色が付く |
+
+---
+
+## 提出状況
+
+| # | ユーザー | 手順 | 確認観点 | 期待値 |
+|---|---------|------|---------|-------|
+| 1 | `tsukune@example.com` | `/reports/status` にアクセスする | 初期表示 | ユーザー×日付のマトリクスが表示され、期間ボタン「2W」がハイライトされている |
+| 2 | `tsukune@example.com` | `/reports/status` にアクセスする | 日付列の順序 | 左が古い日付、右（最新列）が今日の日付になっている |
+| 3 | `tsukune@example.com` | `/reports/status` にアクセスする | ユーザー行 | isActive=true のユーザーのみ名前昇順で表示される |
+| 4 | `tsukune@example.com` | 日報を提出済みのセルを確認する | 提出済み表示 | 緑色の「✓」バッジが表示される |
+| 5 | `tsukune@example.com` | 日報未提出のセルを確認する | 未提出表示 | 「—」が表示される |
+| 6 | `tsukune@example.com` | 土曜・日曜の列を確認する | 週末の色分け | 列ヘッダーが青（土）・赤（日）で表示され、セル背景が淡色になる |
+| 7 | `tsukune@example.com` | 期間ボタン「1W」をクリックする | 期間切り替え | 表示が7日間に変わり「1W」ボタンがハイライトされる |
+| 8 | `tsukune@example.com` | 期間ボタン「1M」をクリックする | 期間切り替え | 表示が30日間に変わり「1M」ボタンがハイライトされる |
+| 9 | `tsukune@example.com` | 「日付」input で任意の過去日付を選択する | 基準日変更 | 選択した日付が最新列（右端）になりマトリクスが更新される |
+| 10 | `tsukune@example.com` | 列数が多い場合（1M以上）に横スクロールする | 横スクロール | テーブルが横スクロールでき、左端のユーザー名列は固定表示される |
+| 11 | `nankotsu@example.com` | `/reports/status` にアクセスする | VIEWER のアクセス | ページが正常に表示される（全ロール閲覧可） |
 
 ---
 
@@ -191,6 +216,18 @@ curl -X POST http://localhost:3000/api/reports \
 | 9 | `torikawa@example.com` | 無効化後にログインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
 | 10 | `bonjiri@example.com` | `torikawa@example.com` を再有効化する | アカウント再有効化 | isActive が true になる |
 | 11 | `bonjiri@example.com` | 自分自身（bonjiri）を無効化しようとする | 自己無効化の防止 | 操作できない（ボタンが無効または操作不可） |
+
+---
+
+## カーソル表示（UI 共通）
+
+| # | ユーザー | 手順 | 確認観点 | 期待値 |
+|---|---------|------|---------|-------|
+| 1 | `bonjiri@example.com` | `/admin/users` で「無効化」「削除」ボタン、ロール変更セレクトにカーソルを当てる | pointer カーソル | すべての要素で pointer カーソルが表示される |
+| 2 | `tsukune@example.com` | `/reports/new` で「日報を作成」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
+| 3 | `tsukune@example.com` | `/reports/[id]/edit` で「保存する」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
+| 4 | `tsukune@example.com` | `/settings` で各ボタン（保存する・生成する・再生成・失効・表示/隠す）にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
+| 5 | `tsukune@example.com` | `/reports/daily` のユーザーフィルタ select にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 
 ---
 
