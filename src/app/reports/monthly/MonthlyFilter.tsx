@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { isValidMonth } from "@/lib/dateUtils";
@@ -15,6 +15,7 @@ type Props = {
 
 export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [month, setMonth] = useState(currentMonth);
   const [monthError, setMonthError] = useState(false);
 
@@ -31,7 +32,9 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
     params.set("from", `${m}-01`);
     params.set("to", `${m}-${String(lastDay).padStart(2, "0")}`);
     if (authorId) params.set("authorId", authorId);
-    router.push(`/reports/monthly?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/reports/monthly?${params.toString()}`);
+    });
   }
 
   function handleMonthChange(value: string) {
@@ -92,6 +95,21 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
           ))}
         </select>
       </div>
+      {isPending && (
+        <div role="status" aria-live="polite" className="flex items-center gap-1.5 text-xs text-zinc-400">
+          <svg
+            className="h-4 w-4 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          読み込み中...
+        </div>
+      )}
     </div>
   );
 }
