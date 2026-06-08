@@ -71,8 +71,6 @@ Authorization: Bearer <api-key>
 
 **認証:** `Authorization: Bearer <api-key>` ヘッダー必須（個人設定で発行）
 
-単体オブジェクトと配列の両方を受け付ける。
-
 単体オブジェクトと配列の両方を受け付ける。既存日報がある場合は上書き（upsert）。
 
 **リクエスト（単体）**
