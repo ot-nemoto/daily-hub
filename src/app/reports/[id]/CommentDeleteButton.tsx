@@ -41,7 +41,7 @@ export function CommentDeleteButton({ reportId, commentId }: Props) {
         type="button"
         onClick={handleDelete}
         disabled={pending}
-        className="text-xs text-zinc-400 hover:text-red-500 disabled:opacity-50"
+        className="cursor-pointer text-xs text-zinc-400 hover:text-red-500 disabled:opacity-50"
       >
         {pending ? "削除中..." : "削除"}
       </button>

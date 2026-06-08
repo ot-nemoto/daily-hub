@@ -152,7 +152,7 @@ export function UserTable({
                       loading === `role-${user.id}`
                     }
                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                    className="rounded border border-zinc-200 bg-white px-2 py-1 text-xs disabled:opacity-50"
+                    className="cursor-pointer rounded border border-zinc-200 bg-white px-2 py-1 text-xs disabled:opacity-50"
                   >
                     <option value="ADMIN">ADMIN</option>
                     <option value="MEMBER">MEMBER</option>
@@ -185,7 +185,7 @@ export function UserTable({
                         type="button"
                         disabled={loading === `active-${user.id}`}
                         onClick={() => handleToggleActive(user.id, user.isActive)}
-                        className={`rounded px-3 py-1 text-xs font-medium disabled:opacity-50 ${
+                        className={`cursor-pointer rounded px-3 py-1 text-xs font-medium disabled:opacity-50 ${
                           user.isActive
                             ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
                             : "bg-green-50 text-green-700 hover:bg-green-100"
@@ -202,7 +202,7 @@ export function UserTable({
                           setDeleteNameInput("");
                           setDeleteDialog({ userId: user.id, userName: user.name });
                         }}
-                        className="rounded bg-red-50 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+                        className="cursor-pointer rounded bg-red-50 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
                       >
                         {loading === `delete-${user.id}` ? "削除中..." : "削除"}
                       </button>
@@ -247,7 +247,7 @@ export function UserTable({
               <button
                 type="button"
                 onClick={() => { setDeleteDialog(null); setDeleteNameInput(""); setDeleteError(""); }}
-                className="rounded-md border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
+                className="cursor-pointer rounded-md border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
               >
                 キャンセル
               </button>
@@ -255,7 +255,7 @@ export function UserTable({
                 type="button"
                 disabled={deleteNameInput !== deleteDialog.userName || loading === `delete-${deleteDialog.userId}`}
                 onClick={handleDelete}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {loading === `delete-${deleteDialog.userId}` ? "削除中..." : "削除する"}
               </button>
