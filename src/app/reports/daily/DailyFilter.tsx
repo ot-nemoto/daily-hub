@@ -82,7 +82,7 @@ export function DailyFilter({ currentDate, currentUserId, users }: Props) {
           id="userId"
           value={currentUserId}
           onChange={(e) => handleUserChange(e.target.value)}
-          className="mt-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          className="mt-1 cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
         >
           <option value="">全員</option>
           {users.map((u) => (

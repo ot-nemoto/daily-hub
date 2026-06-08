@@ -53,7 +53,7 @@ export async function Header() {
               {session.user.name}
             </Link>
           )}
-          <SignOutButton className="shrink-0 rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50" />
+          <SignOutButton className="shrink-0 cursor-pointer rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50" />
         </div>
       </div>
     </header>

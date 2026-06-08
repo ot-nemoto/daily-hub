@@ -120,7 +120,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
           <button
             type="submit"
             disabled={namePending}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
           >
             {namePending ? "保存中..." : "保存する"}
           </button>
@@ -139,7 +139,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
               type="button"
               onClick={handleGenerateApiKey}
               disabled={apiKeyPending}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+              className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
             >
               {apiKeyPending ? "生成中..." : "生成する"}
             </button>
@@ -156,7 +156,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
                 <button
                   type="button"
                   onClick={() => setApiKeyVisible((v) => !v)}
-                  className="shrink-0 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
+                  className="shrink-0 cursor-pointer rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
                 >
                   {apiKeyVisible ? "隠す" : "表示"}
                 </button>
@@ -166,7 +166,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
                   type="button"
                   onClick={handleGenerateApiKey}
                   disabled={apiKeyPending}
-                  className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
                 >
                   {apiKeyPending ? "処理中..." : "再生成"}
                 </button>
@@ -174,7 +174,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
                   type="button"
                   onClick={handleRevokeApiKey}
                   disabled={apiKeyPending}
-                  className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  className="cursor-pointer rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                 >
                   {apiKeyPending ? "処理中..." : "失効"}
                 </button>
@@ -196,7 +196,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
                   type="button"
                   onClick={handleGenerateApiKey}
                   disabled={apiKeyPending}
-                  className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
                 >
                   {apiKeyPending ? "処理中..." : "再生成"}
                 </button>
@@ -204,7 +204,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
                   type="button"
                   onClick={handleRevokeApiKey}
                   disabled={apiKeyPending}
-                  className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  className="cursor-pointer rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                 >
                   {apiKeyPending ? "処理中..." : "失効"}
                 </button>
