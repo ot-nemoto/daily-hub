@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
   // 6. 各レポートを処理
   const results = await Promise.all(
     parsed.data.map(async ({ userName, date, workContent, tomorrowPlan, notes }) => {
-      const authorId = userMap.get(userName)!;
+      const authorId = userMap.get(userName);
+      if (!authorId) throw new Error(`userName not resolved: ${userName}`);
       const { id, status } = await upsertReportByAuthorId({
         authorId,
         date: new Date(`${date}T00:00:00.000Z`),
