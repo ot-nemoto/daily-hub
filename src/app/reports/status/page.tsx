@@ -11,7 +11,7 @@ const PERIOD_DAYS: Record<Period, number> = {
   "3m": 90,
 };
 
-const DEFAULT_PERIOD: Period = "2w";
+const DEFAULT_PERIOD: Period = "1w";
 const VALID_PERIODS = new Set<string>(Object.keys(PERIOD_DAYS));
 
 function todayUTC(): Date {
