@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getSession } from "@/lib/auth";
+import { NavLinks } from "./NavLinks";
 import { SignOutButton } from "./SignOutButton";
 
 export async function Header() {
@@ -14,34 +15,7 @@ export async function Header() {
             Daily Hub
           </Link>
           <nav className="flex items-center gap-2 sm:gap-4">
-            <Link
-              href="/reports/daily"
-              className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
-            >
-              日次ビュー
-            </Link>
-            <Link
-              href="/reports/monthly"
-              className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
-            >
-              月次ビュー
-            </Link>
-            {(session?.user?.role === "ADMIN" || session?.user?.role === "MEMBER") && (
-              <Link
-                href="/reports/new"
-                className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
-              >
-                日報作成
-              </Link>
-            )}
-            {session?.user?.role === "ADMIN" && (
-              <Link
-                href="/admin/users"
-                className="whitespace-nowrap text-sm text-zinc-600 hover:text-zinc-900"
-              >
-                ユーザー管理
-              </Link>
-            )}
+            <NavLinks role={session?.user?.role} />
           </nav>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
