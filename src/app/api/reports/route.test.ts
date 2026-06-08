@@ -314,6 +314,18 @@ describe("POST /api/reports", () => {
       );
     });
 
+    it("不正な JSON で 422 を返す", async () => {
+      const req = new NextRequest("http://localhost/api/reports", {
+        method: "POST",
+        headers: { authorization: `Bearer ${VALID_API_KEY}`, "content-type": "application/json" },
+        body: "invalid-json",
+      });
+      const res = await POST(req);
+      expect(res.status).toBe(422);
+      const json = await res.json();
+      expect(json.error).toBe("リクエストボディが不正な JSON です");
+    });
+
     it("空配列で 422 を返す", async () => {
       const res = await POST(makeRequest([], VALID_API_KEY));
       expect(res.status).toBe(422);

@@ -115,6 +115,9 @@ export async function POST(req: NextRequest) {
 
   // 3. リクエストボディのバリデーション（単体・配列どちらも配列に正規化）
   const body = await req.json().catch(() => null);
+  if (body === null) {
+    return NextResponse.json({ error: "リクエストボディが不正な JSON です" }, { status: 422 });
+  }
   const normalized = Array.isArray(body) ? body : [body];
 
   const parsed = z
