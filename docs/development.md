@@ -22,7 +22,7 @@ DIRECT_URL="postgresql://<user>:<password>@<host>.<region>.aws.neon.tech/<db>?ss
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
 CLERK_SECRET_KEY=sk_test_xxx
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
-NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/daily
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/new
 # MOCK_USER_ID=<DB の users.id>
 # MOCK_USER_EMAIL=<DB の users.email>
 ```
