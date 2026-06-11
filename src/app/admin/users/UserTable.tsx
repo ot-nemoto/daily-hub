@@ -126,10 +126,10 @@ export function UserTable({
             type="checkbox"
             checked={showInactive}
             onChange={(e) => setShowInactive(e.target.checked)}
-            className="sr-only"
+            className="peer sr-only"
           />
           <span
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-500 peer-focus-visible:ring-offset-1 ${
               showInactive ? "bg-zinc-700" : "bg-zinc-300"
             }`}
           >
