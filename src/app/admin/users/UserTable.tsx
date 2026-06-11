@@ -13,7 +13,6 @@ type User = {
   isActive: boolean;
   createdAt: string;
   lastReportAt: string | null;
-  submissionRate30d: number;
 };
 
 type DeleteDialog = { userId: string; userName: string };
@@ -126,7 +125,6 @@ export function UserTable({
               <th className="pb-3 pr-4 font-medium">メールアドレス</th>
               <th className="pb-3 pr-4 font-medium">ロール</th>
               <th className="pb-3 pr-4 font-medium">状態</th>
-              <th className="pb-3 pr-4 font-medium">提出率（30日）</th>
               <th className="pb-3 pr-4 font-medium">最終日報</th>
               <th className="pb-3 font-medium">操作</th>
             </tr>
@@ -169,9 +167,6 @@ export function UserTable({
                   >
                     {user.isActive ? "有効" : "無効"}
                   </span>
-                </td>
-                <td className="py-3 pr-4 text-zinc-600">
-                  {Math.round(user.submissionRate30d * 100)}%
                 </td>
                 <td className="py-3 pr-4 text-zinc-600">
                   {user.lastReportAt

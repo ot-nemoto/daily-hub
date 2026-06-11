@@ -207,7 +207,7 @@ curl -X POST http://localhost:3000/api/reports \
 |---|---------|------|---------|-------|
 | 1 | `tsukune@example.com` | `/admin/users` にアクセスする | MEMBER のアクセス制御 | `/` にリダイレクトされ、最終的に `/reports/daily` に遷移する |
 | 2 | `nankotsu@example.com` | `/admin/users` にアクセスする | VIEWER のアクセス制御 | `/` にリダイレクトされ、最終的に `/reports/daily` に遷移する |
-| 3 | `bonjiri@example.com` | `/admin/users` にアクセスする | ユーザー一覧表示 | 名前・メール・ロール・登録日・最終日報投稿日・直近30日提出率が表示される |
+| 3 | `bonjiri@example.com` | `/admin/users` にアクセスする | ユーザー一覧表示 | 名前・メール・ロール・状態・最終日報投稿日が表示される |
 | 4 | `bonjiri@example.com` | bonjiri 自身の行を確認する | 最終日報投稿日 | 「なし」と表示される（bonjiri は日報なし） |
 | 5 | `bonjiri@example.com` | `torikawa@example.com` のロールを VIEWER に変更する | ロール変更 | 変更後のロールが一覧に反映される |
 | 6 | `bonjiri@example.com` | `torikawa@example.com` のロールを MEMBER に戻す | ロール変更の復元 | MEMBER に戻ったことが一覧に反映される |
