@@ -18,6 +18,14 @@ export function NavLinks({ role }: Props) {
 
   return (
     <>
+      {(role === "ADMIN" || role === "MEMBER") && (
+        <Link
+          href="/reports/new"
+          className={navLinkClass(pathname.startsWith("/reports/new"))}
+        >
+          日報作成
+        </Link>
+      )}
       <Link
         href="/reports/daily"
         className={navLinkClass(pathname.startsWith("/reports/daily"))}
@@ -30,14 +38,6 @@ export function NavLinks({ role }: Props) {
       >
         月次ビュー
       </Link>
-      {(role === "ADMIN" || role === "MEMBER") && (
-        <Link
-          href="/reports/new"
-          className={navLinkClass(pathname.startsWith("/reports/new"))}
-        >
-          日報作成
-        </Link>
-      )}
       <Link
         href="/reports/status"
         className={navLinkClass(pathname.startsWith("/reports/status"))}
