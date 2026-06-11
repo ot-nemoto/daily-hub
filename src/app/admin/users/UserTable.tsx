@@ -122,8 +122,13 @@ export function UserTable({
       )}
       <div className="mb-4 flex justify-end">
         <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-600">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+            className="sr-only"
+          />
           <span
-            onClick={() => setShowInactive((v) => !v)}
             className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
               showInactive ? "bg-zinc-700" : "bg-zinc-300"
             }`}
