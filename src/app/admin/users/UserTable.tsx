@@ -30,8 +30,11 @@ export function UserTable({
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
   const [deleteNameInput, setDeleteNameInput] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const visibleUsers = showInactive ? users : users.filter((u) => u.isActive);
 
   // モーダル表示時に input へ自動フォーカス
   useEffect(() => {
@@ -117,6 +120,17 @@ export function UserTable({
       {actionError && (
         <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{actionError}</p>
       )}
+      <div className="mb-4 flex justify-end">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-600">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+            className="cursor-pointer rounded border-zinc-300"
+          />
+          無効化ユーザーを表示
+        </label>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -130,7 +144,7 @@ export function UserTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
-            {users.map((user) => (
+            {visibleUsers.map((user) => (
               <tr
                 key={user.id}
                 className={`py-3 ${!user.isActive ? "opacity-50" : ""}`}

@@ -216,6 +216,9 @@ curl -X POST http://localhost:3000/api/reports \
 | 9 | `torikawa@example.com` | 無効化後にログインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
 | 10 | `bonjiri@example.com` | `torikawa@example.com` を再有効化する | アカウント再有効化 | isActive が true になる |
 | 11 | `bonjiri@example.com` | 自分自身（bonjiri）を無効化しようとする | 自己無効化の防止 | 操作できない（ボタンが無効または操作不可） |
+| 12 | `bonjiri@example.com` | `/admin/users` を開いた直後の一覧を確認する | 無効化ユーザーのデフォルト非表示 | 無効化ユーザー（sunagimo）が一覧に表示されない |
+| 13 | `bonjiri@example.com` | 「無効化ユーザーを表示」チェックボックスを ON にする | 無効化ユーザーの表示 | 無効化ユーザーが薄い表示（opacity低）で一覧に追加される |
+| 14 | `bonjiri@example.com` | チェックボックスを OFF に戻す | 非表示への切り替え | 無効化ユーザーが一覧から消える（ページリロードなし） |
 
 ---
 
