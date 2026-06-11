@@ -135,7 +135,7 @@ export function UserTable({
           >
             <span
               className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${
-                showInactive ? "translate-x-4.5" : "translate-x-0.5"
+                showInactive ? "translate-x-[18px]" : "translate-x-0.5"
               }`}
             />
           </span>
