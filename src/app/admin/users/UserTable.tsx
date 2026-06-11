@@ -122,12 +122,18 @@ export function UserTable({
       )}
       <div className="mb-4 flex justify-end">
         <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-600">
-          <input
-            type="checkbox"
-            checked={showInactive}
-            onChange={(e) => setShowInactive(e.target.checked)}
-            className="cursor-pointer rounded border-zinc-300"
-          />
+          <span
+            onClick={() => setShowInactive((v) => !v)}
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+              showInactive ? "bg-zinc-700" : "bg-zinc-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${
+                showInactive ? "translate-x-4.5" : "translate-x-0.5"
+              }`}
+            />
+          </span>
           無効化ユーザーを表示
         </label>
       </div>
