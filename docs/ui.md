@@ -84,12 +84,11 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 
 ### 日次ビュー（`/reports/daily`）
 
-指定した日付の全ユーザーの日報を一覧表示する。日付入力とユーザー選択でフィルタリングできる。自分の日報には編集ボタンが表示される。
+指定した日付に投稿された全ユーザーの日報を一覧表示する。日付フィルターのみ。自分の日報には編集ボタンが表示される。
 
 | 機能 | 説明 |
 |------|------|
 | 日付フィルター | 日付入力（`<input type="date">`）。有効値で即時反映、不正値は赤枠表示 |
-| ユーザーフィルター | ユーザー選択（`<select>`）。変更で即時反映 |
 | 日報カード | 感想/課題/問題点を全文表示（改行保持）。コメント件数も表示 |
 | 編集ボタン | 自分の日報のみ表示 |
 | 詳細ボタン | 全員の日報に表示。日報詳細へ遷移 |
@@ -299,7 +298,7 @@ src/app/layout.tsx（RootLayout）
 
 | コンポーネント | 種別 | 用途 |
 |--------------|------|------|
-| `DailyFilter` | Client Component | 日次ビューの日付・ユーザー絞り込み。変更時に `router.push()` |
+| `DailyFilter` | Client Component | 日次ビューの日付フィルター。変更時に `router.push()` |
 | `MonthlyFilter` | Client Component | 月次ビューの月・ユーザー絞り込み。変更時に `router.push()` |
 | `ReportNewForm` | Client Component | 日報作成フォーム。送信後 `/reports/[id]` にリダイレクト |
 | `ReportEditForm` | Client Component | 日報編集フォーム。送信後 `/reports/[id]` にリダイレクト |
