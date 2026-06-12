@@ -23,7 +23,7 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
   const searchRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentLabel = users.find((u) => u.id === currentAuthorId)?.name ?? "";
+  const currentLabel = users.find((u) => u.id === currentAuthorId)?.name ?? "（不明）";
   const filtered = filterQuery
     ? users.filter((u) => u.name.toLowerCase().includes(filterQuery.toLowerCase()))
     : users;
