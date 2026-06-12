@@ -13,7 +13,6 @@ type User = {
   isActive: boolean;
   createdAt: string;
   lastReportAt: string | null;
-  submissionRate30d: number;
 };
 
 type DeleteDialog = { userId: string; userName: string };
@@ -31,8 +30,11 @@ export function UserTable({
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
   const [deleteNameInput, setDeleteNameInput] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const visibleUsers = showInactive ? users : users.filter((u) => u.isActive);
 
   // モーダル表示時に input へ自動フォーカス
   useEffect(() => {
@@ -118,6 +120,28 @@ export function UserTable({
       {actionError && (
         <p className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{actionError}</p>
       )}
+      <div className="mb-4 flex justify-end">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-600">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+            className="peer sr-only"
+          />
+          <span
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-500 peer-focus-visible:ring-offset-1 ${
+              showInactive ? "bg-zinc-700" : "bg-zinc-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${
+                showInactive ? "translate-x-[18px]" : "translate-x-0.5"
+              }`}
+            />
+          </span>
+          無効化ユーザーを表示
+        </label>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -126,13 +150,12 @@ export function UserTable({
               <th className="pb-3 pr-4 font-medium">メールアドレス</th>
               <th className="pb-3 pr-4 font-medium">ロール</th>
               <th className="pb-3 pr-4 font-medium">状態</th>
-              <th className="pb-3 pr-4 font-medium">提出率（30日）</th>
               <th className="pb-3 pr-4 font-medium">最終日報</th>
               <th className="pb-3 font-medium">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
-            {users.map((user) => (
+            {visibleUsers.map((user) => (
               <tr
                 key={user.id}
                 className={`py-3 ${!user.isActive ? "opacity-50" : ""}`}
@@ -169,9 +192,6 @@ export function UserTable({
                   >
                     {user.isActive ? "有効" : "無効"}
                   </span>
-                </td>
-                <td className="py-3 pr-4 text-zinc-600">
-                  {Math.round(user.submissionRate30d * 100)}%
                 </td>
                 <td className="py-3 pr-4 text-zinc-600">
                   {user.lastReportAt

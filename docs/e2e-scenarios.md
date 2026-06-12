@@ -27,10 +27,12 @@
 | 5 | 未ログイン | `/settings` にアクセスする | 未認証リダイレクト | `/login` にリダイレクトされる |
 | 6 | 未ログイン | `/admin/users` にアクセスする | 未認証リダイレクト | `/login` にリダイレクトされる |
 | 7 | 未ログイン | `/reports/status` にアクセスする | 未認証リダイレクト | `/login` にリダイレクトされる |
-| 7 | `tsukune@example.com` | `/login` でメールアドレス・パスワードを入力してサインインする | ログイン成功後の遷移 | `/reports/daily` に遷移する |
-| 8 | `sunagimo@example.com` | `/login` でサインインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
-| 9 | `sunagimo@example.com` | `/auth-error` で「サインアウト」ボタンをクリックする | サインアウト遷移 | `/login` にリダイレクトされる |
-| 10 | `tsukune@example.com` | ログイン後にヘッダーの「ログアウト」ボタンをクリックする | ログアウト | `/login` にリダイレクトされる |
+| 8 | `tsukune@example.com` | `/login` でメールアドレス・パスワードを入力してサインインする | ログイン成功後の遷移 | `/reports/new` に遷移する |
+| 9 | `nankotsu@example.com` | `/login` でサインインする | VIEWER のログイン後遷移 | `/reports/new` 経由で `/reports/daily` にリダイレクトされる |
+| 10 | `tsukune@example.com` | ルート（`/`）にアクセスする | ルートのリダイレクト | `/reports/new` にリダイレクトされる |
+| 11 | `sunagimo@example.com` | `/login` でサインインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
+| 12 | `sunagimo@example.com` | `/auth-error` で「サインアウト」ボタンをクリックする | サインアウト遷移 | `/login` にリダイレクトされる |
+| 13 | `tsukune@example.com` | ログイン後にヘッダーの「ログアウト」ボタンをクリックする | ログアウト | `/login` にリダイレクトされる |
 
 ---
 
@@ -38,7 +40,7 @@
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | ログイン後にヘッダーを確認する | ヘッダー項目の表示 | 「日次ビュー」「月次ビュー」「日報作成」「提出状況」「tsukune」「ログアウト」が表示される |
+| 1 | `tsukune@example.com` | ログイン後にヘッダーを確認する | ヘッダー項目の表示・並び順 | 「日報作成」「日次ビュー」「月次ビュー」「提出状況」の順に並び、「tsukune」「ログアウト」が表示される |
 | 2 | `bonjiri@example.com` | ログイン後にヘッダーを確認する | ADMIN 専用リンク | 「ユーザー管理」リンクが表示される |
 | 3 | `tsukune@example.com` | ログイン後にヘッダーを確認する | MEMBER の表示 | 「ユーザー管理」リンクが表示されない |
 | 4 | `nankotsu@example.com` | ログイン後にヘッダーを確認する | VIEWER の表示 | 「日報作成」リンクが表示されず「提出状況」リンクは表示される |
@@ -205,9 +207,9 @@ curl -X POST http://localhost:3000/api/reports \
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | `/admin/users` にアクセスする | MEMBER のアクセス制御 | `/` にリダイレクトされ、最終的に `/reports/daily` に遷移する |
-| 2 | `nankotsu@example.com` | `/admin/users` にアクセスする | VIEWER のアクセス制御 | `/` にリダイレクトされ、最終的に `/reports/daily` に遷移する |
-| 3 | `bonjiri@example.com` | `/admin/users` にアクセスする | ユーザー一覧表示 | 名前・メール・ロール・登録日・最終日報投稿日・直近30日提出率が表示される |
+| 1 | `tsukune@example.com` | `/admin/users` にアクセスする | MEMBER のアクセス制御 | `/` にリダイレクトされ、最終的に `/reports/new` に遷移する |
+| 2 | `nankotsu@example.com` | `/admin/users` にアクセスする | VIEWER のアクセス制御 | `/` にリダイレクトされ、最終的に `/reports/daily` に遷移する（VIEWER は `/reports/new` から再リダイレクト） |
+| 3 | `bonjiri@example.com` | `/admin/users` にアクセスする | ユーザー一覧表示 | 名前・メール・ロール・状態・最終日報投稿日が表示される |
 | 4 | `bonjiri@example.com` | bonjiri 自身の行を確認する | 最終日報投稿日 | 「なし」と表示される（bonjiri は日報なし） |
 | 5 | `bonjiri@example.com` | `torikawa@example.com` のロールを VIEWER に変更する | ロール変更 | 変更後のロールが一覧に反映される |
 | 6 | `bonjiri@example.com` | `torikawa@example.com` のロールを MEMBER に戻す | ロール変更の復元 | MEMBER に戻ったことが一覧に反映される |
@@ -216,6 +218,9 @@ curl -X POST http://localhost:3000/api/reports \
 | 9 | `torikawa@example.com` | 無効化後にログインする | 無効化アカウントのリダイレクト | `/auth-error?reason=inactive` にリダイレクトされ「アカウントが無効化されています」と表示される |
 | 10 | `bonjiri@example.com` | `torikawa@example.com` を再有効化する | アカウント再有効化 | isActive が true になる |
 | 11 | `bonjiri@example.com` | 自分自身（bonjiri）を無効化しようとする | 自己無効化の防止 | 操作できない（ボタンが無効または操作不可） |
+| 12 | `bonjiri@example.com` | `/admin/users` を開いた直後の一覧を確認する | 無効化ユーザーのデフォルト非表示 | 無効化ユーザー（sunagimo）が一覧に表示されない |
+| 13 | `bonjiri@example.com` | 「無効化ユーザーを表示」チェックボックスを ON にする | 無効化ユーザーの表示 | 無効化ユーザーが薄い表示（opacity低）で一覧に追加される |
+| 14 | `bonjiri@example.com` | チェックボックスを OFF に戻す | 非表示への切り替え | 無効化ユーザーが一覧から消える（ページリロードなし） |
 
 ---
 

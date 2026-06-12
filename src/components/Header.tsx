@@ -11,7 +11,7 @@ export async function Header() {
     <header className="border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3 sm:gap-6">
-          <Link href="/reports/daily" className="shrink-0 text-sm font-bold text-zinc-900">
+          <Link href="/reports/new" className="shrink-0 text-sm font-bold text-zinc-900">
             Daily Hub
           </Link>
           <nav className="flex items-center gap-2 sm:gap-4">

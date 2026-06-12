@@ -1,8 +1,7 @@
-import Link from "next/link";
-
 import { getSession } from "@/lib/auth";
 import { currentMonth, formatMonthJa, isValidDate, monthRange } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
+import { ReportSearchList } from "@/components/ReportSearchList";
 import { MonthlyFilter } from "./MonthlyFilter";
 
 export default async function MonthlyViewPage({
@@ -54,59 +53,20 @@ export default async function MonthlyViewPage({
           />
         </div>
 
-        <div className="space-y-3">
-          {reports.length === 0 ? (
-            <div className="rounded-lg bg-white p-6 shadow-sm">
-              <p className="text-sm text-zinc-500">
-                {formatMonthJa(displayMonth)} の日報はありません
-              </p>
-            </div>
-          ) : (
-            reports.map((report) => {
-              const dateStr = report.date.toISOString().slice(0, 10);
-              const isAuthor = session?.user?.id === report.authorId;
-              return (
-                <div key={report.id} className="rounded-lg bg-white p-5 shadow-sm">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-zinc-900">{dateStr}</p>
-                      <p className="text-xs text-zinc-400">{report.author.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {report._count.comments > 0 && (
-                        <span className="text-xs text-zinc-400">
-                          💬 {report._count.comments}
-                        </span>
-                      )}
-                      {isAuthor && (
-                        <Link
-                          href={`/reports/${report.id}/edit`}
-                          className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-                        >
-                          編集
-                        </Link>
-                      )}
-                      <Link
-                        href={`/reports/${report.id}`}
-                        className="rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700"
-                      >
-                        詳細
-                      </Link>
-                    </div>
-                  </div>
-                  <dl>
-                    <div>
-                      <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">感想/課題/問題点</dt>
-                      <dd className="mt-0.5 whitespace-pre-wrap text-sm text-zinc-900">
-                        {report.notes}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              );
-            })
-          )}
-        </div>
+        <ReportSearchList
+          primary="date"
+          emptyMessage={`${formatMonthJa(displayMonth)} の日報はありません`}
+          reports={reports.map((report) => ({
+            id: report.id,
+            date: report.date.toISOString().slice(0, 10),
+            authorName: report.author.name,
+            workContent: report.workContent,
+            tomorrowPlan: report.tomorrowPlan,
+            notes: report.notes,
+            commentCount: report._count.comments,
+            isAuthor: session?.user?.id === report.authorId,
+          }))}
+        />
       </div>
     </div>
   );

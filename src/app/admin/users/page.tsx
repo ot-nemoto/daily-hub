@@ -1,6 +1,5 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { startOfTodayUtc } from "@/lib/dateUtils";
 import { redirect } from "next/navigation";
 import { UserTable } from "./UserTable";
 
@@ -8,10 +7,6 @@ export default async function AdminUsersPage() {
   const session = await getSession({ redirectOnInactive: true });
   if (!session?.user) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/");
-
-  const today = startOfTodayUtc();
-  const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 29);
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
@@ -25,15 +20,13 @@ export default async function AdminUsersPage() {
       reports: {
         select: { date: true },
         orderBy: { date: "desc" },
+        take: 1,
       },
     },
   });
 
   const usersWithStats = users.map((user) => {
     const lastReport = user.reports[0] ?? null;
-    const reportsInRange = user.reports.filter(
-      (r) => r.date >= thirtyDaysAgo && r.date <= today
-    );
     return {
       id: user.id,
       name: user.name,
@@ -42,7 +35,6 @@ export default async function AdminUsersPage() {
       isActive: user.isActive,
       createdAt: user.createdAt.toISOString(),
       lastReportAt: lastReport ? lastReport.date.toISOString() : null,
-      submissionRate30d: Math.round((reportsInRange.length / 30) * 100) / 100,
     };
   });
 
