@@ -137,12 +137,12 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
               />
             </div>
             {/* リスト */}
-            <ul id="author-listbox" role="listbox" className="max-h-48 overflow-y-auto py-1">
+            <div id="author-listbox" role="listbox" className="max-h-48 overflow-y-auto py-1">
               {filtered.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-zinc-400">該当なし</li>
+                <div className="px-3 py-2 text-sm text-zinc-400">該当なし</div>
               ) : (
                 filtered.map((u) => (
-                  <li key={u.id} role="option" aria-selected={u.id === currentAuthorId}>
+                  <div key={u.id} role="option" aria-selected={u.id === currentAuthorId}>
                     <button
                       type="button"
                       onMouseDown={(e) => {
@@ -155,10 +155,10 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
                     >
                       {u.name}
                     </button>
-                  </li>
+                  </div>
                 ))
               )}
-            </ul>
+            </div>
           </div>
         )}
       </div>
