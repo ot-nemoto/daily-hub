@@ -142,7 +142,7 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
                 <li className="px-3 py-2 text-sm text-zinc-400">該当なし</li>
               ) : (
                 filtered.map((u) => (
-                  <li key={u.id}>
+                  <li key={u.id} role="option" aria-selected={u.id === currentAuthorId}>
                     <button
                       type="button"
                       onMouseDown={(e) => {
