@@ -102,10 +102,13 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
       </div>
 
       <div ref={containerRef} className="relative">
-        <p className="block text-sm font-medium text-zinc-700">ユーザー</p>
+        <label htmlFor="author-trigger" className="block text-sm font-medium text-zinc-700">ユーザー</label>
         {/* トリガーボタン */}
         <button
+          id="author-trigger"
           type="button"
+          aria-expanded={open}
+          aria-controls="author-listbox"
           onClick={() => { setOpen((v) => !v); setFilterQuery(""); }}
           className="mt-1 flex w-40 items-center justify-between rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-left text-sm shadow-sm hover:bg-zinc-50 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
         >
