@@ -132,6 +132,7 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
                   if (e.key === "Escape") { setOpen(false); setFilterQuery(""); }
                 }}
                 placeholder="絞り込み..."
+                aria-label="ユーザーを絞り込む"
                 className="w-full rounded border border-zinc-200 px-2 py-1 text-sm focus:border-zinc-400 focus:outline-none"
               />
             </div>
