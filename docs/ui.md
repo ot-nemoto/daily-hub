@@ -100,7 +100,7 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 | 機能 | 説明 |
 |------|------|
 | 月フィルター | 月入力（`<input type="month">`）。有効値で即時反映、不正値は赤枠表示 |
-| ユーザーフィルター | ユーザー選択（`<select>`）。デフォルトは自分 |
+| ユーザーフィルター | 検索付きコンボボックス。テキスト入力でインクリメンタル絞り込み。「全員」選択可。デフォルトは自分 |
 | 日報カード | 日付・作成者・感想/課題/問題点を全文表示（改行保持） |
 
 ### 日報作成（`/reports/new`）
@@ -299,7 +299,7 @@ src/app/layout.tsx（RootLayout）
 | コンポーネント | 種別 | 用途 |
 |--------------|------|------|
 | `DailyFilter` | Client Component | 日次ビューの日付フィルター。変更時に `router.push()` |
-| `MonthlyFilter` | Client Component | 月次ビューの月・ユーザー絞り込み。変更時に `router.push()` |
+| `MonthlyFilter` | Client Component | 月次ビューの月・ユーザー絞り込み。ユーザー選択は検索付きコンボボックス。変更時に `router.push()` |
 | `ReportNewForm` | Client Component | 日報作成フォーム。送信後 `/reports/[id]` にリダイレクト |
 | `ReportEditForm` | Client Component | 日報編集フォーム。送信後 `/reports/[id]` にリダイレクト |
 | `CommentForm` | Client Component | コメント追加フォーム。送信後ページをリロード |

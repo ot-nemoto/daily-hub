@@ -93,7 +93,7 @@
 |---|---------|------|---------|-------|
 | 1 | `tsukune@example.com` | `/reports/monthly` にアクセスする | デフォルト表示 | 自分（tsukune）の今月分の日報が表示される |
 | 2 | `tsukune@example.com` | 日報が存在しない月を選択する | 空状態表示 | 「YYYY年M月 の日報はありません」と表示される |
-| 3 | `tsukune@example.com` | ユーザーフィルターで「tebasaki」を選択する | 他ユーザーへの切り替え | tebasaki の日報が表示される |
+| 3 | `tsukune@example.com` | ユーザー検索欄をクリックし「teba」と入力して「tebasaki」を選択する | 検索付きコンボボックスの絞り込み・切り替え | tebasaki の日報が表示される |
 | 4 | `tsukune@example.com` | 月入力に不正な値（例: `2026-13`）を入力する | バリデーション | 入力フィールドが赤枠表示され、URL が更新されない |
 | 5 | `tsukune@example.com` | 有効な月（例: `2026-01`）を入力する | 有効値の即時反映 | URL が更新され、その月の日報一覧が表示される |
 

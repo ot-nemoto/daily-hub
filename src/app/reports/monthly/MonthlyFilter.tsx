@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { isValidMonth } from "@/lib/dateUtils";
@@ -18,12 +18,32 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
   const [isPending, startTransition] = useTransition();
   const [month, setMonth] = useState(currentMonth);
   const [monthError, setMonthError] = useState(false);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // ナビゲーション後に props が変化したら入力をリセット
+  const currentUser = users.find((u) => u.id === currentAuthorId);
+  const allOption = { id: "", name: "全員" };
+  const filtered = [allOption, ...users].filter((u) =>
+    u.name.toLowerCase().includes(query.toLowerCase())
+  );
+
   useEffect(() => {
     setMonth(currentMonth);
     setMonthError(false);
   }, [currentMonth]);
+
+  // フォーカスが外れたらドロップダウンを閉じる
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function pushWithMonth(m: string, authorId: string) {
     const [year, mon] = m.split("-");
@@ -51,10 +71,18 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
     }
   }
 
-  function handleAuthorChange(authorId: string) {
-    // 月が不正な場合は最後に有効だった URL の月で遷移
+  function handleSelect(authorId: string) {
     const effectiveMonth = isValidMonth(month) ? month : currentMonth;
     pushWithMonth(effectiveMonth, authorId);
+    setOpen(false);
+    setQuery("");
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") {
+      setOpen(false);
+      setQuery("");
+    }
   }
 
   return (
@@ -78,22 +106,43 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
           <p className="mt-1 text-xs text-red-500">正しい月を入力してください</p>
         )}
       </div>
-      <div>
-        <label htmlFor="authorId" className="block text-sm font-medium text-zinc-700">
+      <div ref={containerRef} className="relative">
+        <label htmlFor="author-search" className="block text-sm font-medium text-zinc-700">
           ユーザー
         </label>
-        <select
-          id="authorId"
-          value={currentAuthorId}
-          onChange={(e) => handleAuthorChange(e.target.value)}
-          className="mt-1 cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-        >
-          {users.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
-          ))}
-        </select>
+        <input
+          id="author-search"
+          type="text"
+          autoComplete="off"
+          placeholder={currentAuthorId ? (currentUser?.name ?? "") : "全員"}
+          value={open ? query : ""}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="mt-1 w-40 rounded-md border border-zinc-300 px-3 py-1.5 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+        />
+        {open && (
+          <ul className="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-zinc-200 bg-white py-1 shadow-lg">
+            {filtered.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-zinc-400">該当なし</li>
+            ) : (
+              filtered.map((u) => (
+                <li key={u.id}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleSelect(u.id)}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 ${
+                      u.id === currentAuthorId ? "font-medium text-zinc-900" : "text-zinc-700"
+                    }`}
+                  >
+                    {u.name}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        )}
       </div>
       {isPending && (
         <div role="status" aria-live="polite" className="flex items-center gap-1.5 text-xs text-zinc-400">
