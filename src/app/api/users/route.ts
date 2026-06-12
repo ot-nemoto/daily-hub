@@ -1,18 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { prisma } from "@/lib/prisma";
-
-async function getAuthenticatedUser(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const apiKey = authHeader.slice(7).trim();
-  if (!apiKey) return null;
-  const user = await prisma.user.findUnique({
-    where: { apiKey },
-    select: { id: true, role: true, isActive: true },
-  });
-  return user?.isActive ? user : null;
-}
 
 export async function GET(req: NextRequest) {
   const user = await getAuthenticatedUser(req);

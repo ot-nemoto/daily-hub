@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { prisma } from "@/lib/prisma";
 import { upsertReportByAuthorId } from "@/lib/reports";
 
@@ -18,18 +19,6 @@ const ReportItemSchema = z.object({
   tomorrowPlan: z.string().min(1, "tomorrowPlan は必須です").max(5000),
   notes: z.string().max(5000).default(""),
 });
-
-async function getAuthenticatedUser(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const apiKey = authHeader.slice(7).trim();
-  if (!apiKey) return null;
-  const user = await prisma.user.findUnique({
-    where: { apiKey },
-    select: { id: true, role: true, isActive: true },
-  });
-  return user?.isActive ? user : null;
-}
 
 export async function GET(req: NextRequest) {
   // 1. 認証
