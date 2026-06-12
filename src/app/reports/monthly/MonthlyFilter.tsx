@@ -142,20 +142,21 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
                 <div className="px-3 py-2 text-sm text-zinc-400">該当なし</div>
               ) : (
                 filtered.map((u) => (
-                  <div key={u.id} role="option" aria-selected={u.id === currentAuthorId}>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        selectUser(u);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 ${
-                        u.id === currentAuthorId ? "font-medium text-zinc-900" : "text-zinc-700"
-                      }`}
-                    >
-                      {u.name}
-                    </button>
-                  </div>
+                  <button
+                    key={u.id}
+                    type="button"
+                    role="option"
+                    aria-selected={u.id === currentAuthorId}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectUser(u);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 ${
+                      u.id === currentAuthorId ? "font-medium text-zinc-900" : "text-zinc-700"
+                    }`}
+                  >
+                    {u.name}
+                  </button>
                 ))
               )}
             </div>
