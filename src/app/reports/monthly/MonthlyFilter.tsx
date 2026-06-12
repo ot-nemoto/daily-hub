@@ -137,7 +137,7 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
               />
             </div>
             {/* リスト */}
-            <ul className="max-h-48 overflow-y-auto py-1">
+            <ul id="author-listbox" role="listbox" className="max-h-48 overflow-y-auto py-1">
               {filtered.length === 0 ? (
                 <li className="px-3 py-2 text-sm text-zinc-400">該当なし</li>
               ) : (
