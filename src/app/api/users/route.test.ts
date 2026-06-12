@@ -66,14 +66,14 @@ describe("GET /api/users", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(MEMBER_USER as never);
       const res = await GET(makeRequest("member-key"));
       expect(res.status).toBe(403);
-      expect(await res.json()).toEqual({ error: "Forbidden" });
+      expect(await res.json()).toEqual({ error: "この操作には ADMIN 権限が必要です" });
     });
 
     it("VIEWER ロール → 403", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(VIEWER_USER as never);
       const res = await GET(makeRequest("viewer-key"));
       expect(res.status).toBe(403);
-      expect(await res.json()).toEqual({ error: "Forbidden" });
+      expect(await res.json()).toEqual({ error: "この操作には ADMIN 権限が必要です" });
     });
   });
 
