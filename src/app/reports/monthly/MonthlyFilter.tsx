@@ -18,31 +18,35 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
   const [isPending, startTransition] = useTransition();
   const [month, setMonth] = useState(currentMonth);
   const [monthError, setMonthError] = useState(false);
-  const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [filterQuery, setFilterQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentUser = users.find((u) => u.id === currentAuthorId);
-  const allOption = { id: "", name: "全員" };
-  const filtered = [allOption, ...users].filter((u) =>
-    u.name.toLowerCase().includes(query.toLowerCase())
-  );
+  const currentLabel = users.find((u) => u.id === currentAuthorId)?.name ?? "";
+  const filtered = filterQuery
+    ? users.filter((u) => u.name.toLowerCase().includes(filterQuery.toLowerCase()))
+    : users;
 
   useEffect(() => {
     setMonth(currentMonth);
     setMonthError(false);
   }, [currentMonth]);
 
-  // フォーカスが外れたらドロップダウンを閉じる
+  // ドロップダウンを開いたら検索欄にフォーカス
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    if (open) searchRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
-        setQuery("");
+        setFilterQuery("");
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
   }, []);
 
   function pushWithMonth(m: string, authorId: string) {
@@ -59,10 +63,7 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
 
   function handleMonthChange(value: string) {
     setMonth(value);
-    if (!value) {
-      setMonthError(false);
-      return;
-    }
+    if (!value) { setMonthError(false); return; }
     if (isValidMonth(value)) {
       setMonthError(false);
       pushWithMonth(value, currentAuthorId);
@@ -71,18 +72,11 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
     }
   }
 
-  function handleSelect(authorId: string) {
-    const effectiveMonth = isValidMonth(month) ? month : currentMonth;
-    pushWithMonth(effectiveMonth, authorId);
+  function selectUser(user: User) {
     setOpen(false);
-    setQuery("");
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape") {
-      setOpen(false);
-      setQuery("");
-    }
+    setFilterQuery("");
+    const effectiveMonth = isValidMonth(month) ? month : currentMonth;
+    pushWithMonth(effectiveMonth, user.id);
   }
 
   return (
@@ -106,53 +100,68 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
           <p className="mt-1 text-xs text-red-500">正しい月を入力してください</p>
         )}
       </div>
+
       <div ref={containerRef} className="relative">
-        <label htmlFor="author-search" className="block text-sm font-medium text-zinc-700">
-          ユーザー
-        </label>
-        <input
-          id="author-search"
-          type="text"
-          autoComplete="off"
-          placeholder={currentAuthorId ? (currentUser?.name ?? "") : "全員"}
-          value={open ? query : ""}
-          onFocus={() => setOpen(true)}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="mt-1 w-40 rounded-md border border-zinc-300 px-3 py-1.5 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-        />
+        <p className="block text-sm font-medium text-zinc-700">ユーザー</p>
+        {/* トリガーボタン */}
+        <button
+          type="button"
+          onClick={() => { setOpen((v) => !v); setFilterQuery(""); }}
+          className="mt-1 flex w-40 items-center justify-between rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-left text-sm shadow-sm hover:bg-zinc-50 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+        >
+          <span className="truncate">{currentLabel}</span>
+          <svg className={`ml-2 h-4 w-4 shrink-0 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+          </svg>
+        </button>
+
+        {/* ドロップダウン */}
         {open && (
-          <ul className="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-zinc-200 bg-white py-1 shadow-lg">
-            {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-zinc-400">該当なし</li>
-            ) : (
-              filtered.map((u) => (
-                <li key={u.id}>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleSelect(u.id)}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 ${
-                      u.id === currentAuthorId ? "font-medium text-zinc-900" : "text-zinc-700"
-                    }`}
-                  >
-                    {u.name}
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
+          <div className="absolute z-10 mt-1 w-40 rounded-md border border-zinc-200 bg-white shadow-lg">
+            {/* 検索入力 */}
+            <div className="p-1.5">
+              <input
+                ref={searchRef}
+                type="text"
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") { setOpen(false); setFilterQuery(""); }
+                }}
+                placeholder="絞り込み..."
+                className="w-full rounded border border-zinc-200 px-2 py-1 text-sm focus:border-zinc-400 focus:outline-none"
+              />
+            </div>
+            {/* リスト */}
+            <ul className="max-h-48 overflow-y-auto py-1">
+              {filtered.length === 0 ? (
+                <li className="px-3 py-2 text-sm text-zinc-400">該当なし</li>
+              ) : (
+                filtered.map((u) => (
+                  <li key={u.id}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        selectUser(u);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-zinc-100 ${
+                        u.id === currentAuthorId ? "font-medium text-zinc-900" : "text-zinc-700"
+                      }`}
+                    >
+                      {u.name}
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
         )}
       </div>
+
       {isPending && (
         <div role="status" aria-live="polite" className="flex items-center gap-1.5 text-xs text-zinc-400">
-          <svg
-            className="h-4 w-4 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
+          <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
