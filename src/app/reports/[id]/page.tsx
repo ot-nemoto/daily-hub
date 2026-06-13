@@ -1,10 +1,12 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PendingLink } from "@/components/PendingLink";
 import { CommentDeleteButton } from "./CommentDeleteButton";
 import { CommentForm } from "./CommentForm";
+
+export const metadata = { title: "日報詳細" };
 
 export default async function ReportDetailPage({
   params,
@@ -41,12 +43,12 @@ export default async function ReportDetailPage({
               </h1>
             </div>
             {isAuthor && (
-              <Link
+              <PendingLink
                 href={`/reports/${id}/edit`}
                 className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
               >
                 編集
-              </Link>
+              </PendingLink>
             )}
           </div>
 

@@ -1,3 +1,5 @@
+export const metadata = { title: "月次ビュー" };
+
 import { getSession } from "@/lib/auth";
 import { currentMonth, formatMonthJa, isValidDate, monthRange } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";

@@ -1,3 +1,5 @@
+export const metadata = { title: "提出状況" };
+
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { type Period, StatusFilter } from "./StatusFilter";

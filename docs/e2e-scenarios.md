@@ -50,6 +50,21 @@
 | 8 | `tsukune@example.com` | `/reports/new` を開く | アクティブメニュー | 「日報作成」がハイライトされる |
 | 9 | `bonjiri@example.com` | `/admin/users` を開く | アクティブメニュー | 「ユーザー管理」がハイライトされる |
 | 10 | `tsukune@example.com` | 非アクティブなメニューリンクにカーソルを当てる | ホバースタイル | カーソルを当てたリンクに背景色が付く |
+| 11 | `tsukune@example.com` | ページをスクロールする | ヘッダー固定 | スクロール中もヘッダーが画面上部に固定表示される |
+| 12 | `tsukune@example.com` | ヘッダー右端のギアアイコンをクリックする | 個人設定モーダル | 個人設定モーダルが中央に開く |
+| 13 | `tsukune@example.com` | ヘッダーの「日次ビュー」「月次ビュー」などのナビリンクをクリックする | ナビゲーション中スピナー | クリックしたリンクの右横に小さなスピナーが表示され、遷移完了後に消える |
+
+---
+
+## ページ遷移中ローディング
+
+| # | ユーザー | 手順 | 確認観点 | 期待値 |
+|---|---------|------|---------|-------|
+| 1 | `tsukune@example.com` | ヘッダーの「日報作成」リンクをクリックする | loading.tsx スケルトン | 遷移中にフォームのスケルトン（グレーのパルスアニメーション）が表示される |
+| 2 | `tsukune@example.com` | 日報一覧の「編集」ボタンをクリックする | loading.tsx スケルトン | 遷移中にフォームのスケルトンが表示される |
+| 3 | `tsukune@example.com` | 日報詳細の「編集」ボタンをクリックする | loading.tsx スケルトン | 遷移中にフォームのスケルトンが表示される |
+| 4 | `bonjiri@example.com` | ヘッダーの「ユーザー管理」リンクをクリックする | loading.tsx スケルトン | 遷移中にテーブルのスケルトンが表示される |
+| 5 | `tsukune@example.com` | 日報一覧の「詳細」ボタンをクリックする | ボタン内スピナー | ボタン内にスピナーが表示され、遷移完了後に消える |
 
 ---
 
@@ -79,12 +94,11 @@
 | 2 | `tsukune@example.com` | `/reports/daily` にアクセスする | 自分の日報表示 | tsukune の日報が表示される |
 | 3 | `tsukune@example.com` | `/reports/daily` にアクセスする | 他ユーザーの日報表示 | tebasaki の日報も一覧に表示される |
 | 4 | `tsukune@example.com` | 日報が存在しない日付を選択する | 空状態表示 | 「YYYY年M月D日 の日報はありません」と表示される |
-| 5 | `tsukune@example.com` | ユーザーフィルターで「tsukune」を選択する | ユーザー絞り込み | tsukune の日報のみ表示される |
-| 6 | `tsukune@example.com` | 日付入力に不正な値（例: `2026-02-30`）を入力する | バリデーション | 入力フィールドが赤枠表示され、URL が更新されない |
-| 7 | `tsukune@example.com` | 有効な日付（例: `2026-01-01`）を入力する | 有効値の即時反映 | URL が更新され、その日付の日報一覧が表示される |
-| 8 | `tsukune@example.com` | tsukune の日報カードを確認する | 自分の日報の操作ボタン | 「詳細」「編集」ボタンが表示される |
-| 9 | `tsukune@example.com` | tebasaki の日報カードを確認する | 他ユーザーへの編集ボタン非表示 | 「詳細」ボタンのみ表示され「編集」ボタンは表示されない |
-| 10 | `tsukune@example.com` | 日報カードの「詳細」ボタンをクリックする | 詳細ページへの遷移 | `/reports/[id]` に遷移する |
+| 5 | `tsukune@example.com` | 日付入力に不正な値（例: `2026-02-30`）を入力する | バリデーション | 入力フィールドが赤枠表示され、URL が更新されない |
+| 6 | `tsukune@example.com` | 有効な日付（例: `2026-01-01`）を入力する | 有効値の即時反映 | URL が更新され、その日付の日報一覧が表示される |
+| 7 | `tsukune@example.com` | tsukune の日報カードを確認する | 自分の日報の操作ボタン | 「詳細」「編集」ボタンが表示される |
+| 8 | `tsukune@example.com` | tebasaki の日報カードを確認する | 他ユーザーへの編集ボタン非表示 | 「詳細」ボタンのみ表示され「編集」ボタンは表示されない |
+| 9 | `tsukune@example.com` | 日報カードの「詳細」ボタンをクリックする | 詳細ページへの遷移 | `/reports/[id]` に遷移する |
 
 ---
 
@@ -94,7 +108,7 @@
 |---|---------|------|---------|-------|
 | 1 | `tsukune@example.com` | `/reports/monthly` にアクセスする | デフォルト表示 | 自分（tsukune）の今月分の日報が表示される |
 | 2 | `tsukune@example.com` | 日報が存在しない月を選択する | 空状態表示 | 「YYYY年M月 の日報はありません」と表示される |
-| 3 | `tsukune@example.com` | ユーザーフィルターで「tebasaki」を選択する | 他ユーザーへの切り替え | tebasaki の日報が表示される |
+| 3 | `tsukune@example.com` | ユーザーのトリガーボタンをクリックしてドロップダウンを開き、「teba」と入力して「tebasaki」を選択する | 検索付きコンボボックスの絞り込み・切り替え | tebasaki の日報が表示される |
 | 4 | `tsukune@example.com` | 月入力に不正な値（例: `2026-13`）を入力する | バリデーション | 入力フィールドが赤枠表示され、URL が更新されない |
 | 5 | `tsukune@example.com` | 有効な月（例: `2026-01`）を入力する | 有効値の即時反映 | URL が更新され、その月の日報一覧が表示される |
 
@@ -157,12 +171,14 @@
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | `/settings` にアクセスする | 現在の情報表示 | 現在の名前（tsukune）とメールアドレスが表示される |
-| 2 | `tsukune@example.com` | メールアドレスフィールドを確認する | 読み取り専用 | メールアドレスフィールドが変更不可（読み取り専用）になっている |
-| 3 | `tsukune@example.com` | 名前を「tsukune-updated」に変更して「保存」をクリックする | 名前変更の反映 | 保存成功フィードバックが表示され、ヘッダーの名前も更新される |
-| 4 | `tsukune@example.com` | 名前を「tsukune」に戻して「保存」をクリックする | 名前の復元 | 保存成功フィードバックが表示され、ヘッダーが「tsukune」に戻る |
-| 5 | `tsukune@example.com` | 名前を空にして「保存」をクリックする | 必須バリデーション | エラーが表示され保存されない |
-| 6 | `tsukune@example.com` | 101文字の名前を入力して「保存」をクリックする | 文字数バリデーション | エラーが表示され保存されない |
+| 1 | `tsukune@example.com` | ヘッダーのギアアイコンをクリックする | モーダル表示 | 個人設定モーダルが開き、現在の名前（tsukune）とメールアドレスが表示される |
+| 2 | `tsukune@example.com` | モーダルのメールアドレスフィールドを確認する | 読み取り専用 | メールアドレスフィールドが変更不可（読み取り専用）になっている |
+| 3 | `tsukune@example.com` | モーダルで名前を「tsukune-updated」に変更して「保存」をクリックする | 名前変更の反映 | 保存成功フィードバックが表示され、ヘッダーの名前も更新される |
+| 4 | `tsukune@example.com` | モーダルで名前を「tsukune」に戻して「保存」をクリックする | 名前の復元 | 保存成功フィードバックが表示され、ヘッダーが「tsukune」に戻る |
+| 5 | `tsukune@example.com` | モーダルで名前を空にして「保存」をクリックする | 必須バリデーション | エラーが表示され保存されない |
+| 6 | `tsukune@example.com` | モーダルで101文字の名前を入力して「保存」をクリックする | 文字数バリデーション | エラーが表示され保存されない |
+| 7 | `tsukune@example.com` | モーダルのオーバーレイをクリックする | モーダルを閉じる | モーダルが閉じる |
+| 8 | `tsukune@example.com` | モーダルを開いて Escape キーを押す | モーダルを閉じる | モーダルが閉じる |
 
 ---
 
@@ -170,14 +186,14 @@
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | `/settings` でAPIキー欄を確認する（シード後） | 既存キーの表示状態 | APIキーがマスク表示され、「再生成」「失効」ボタンのみ表示される（「表示」ボタンは表示されない） |
+| 1 | `tsukune@example.com` | ギアアイコンをクリックして個人設定モーダルを開き、APIキー欄を確認する（シード後） | 既存キーの表示状態 | APIキーがマスク表示され、「再生成」「失効」ボタンのみ表示される（「表示」ボタンは表示されない） |
 | 2 | `tsukune@example.com` | 「再生成」をクリックする | キーの更新 | 新しいキーが生成され、プレーンテキストで表示される |
 | 3 | `tsukune@example.com` | 「隠す」をクリックする | マスク表示への切り替え | APIキーがマスク表示に切り替わる |
 | 4 | `tsukune@example.com` | 「表示」をクリックする | プレーンテキスト表示への切り替え | APIキーがプレーンテキストで表示される（再生成直後のセッション内のみ） |
 | 5 | `tsukune@example.com` | ページをリロードする | リロード後のマスク表示 | マスク表示に戻り「表示」ボタンは表示されない |
 | 6 | `tsukune@example.com` | 「失効」をクリックする | キーの削除 | キーが削除され「生成する」ボタンに戻る |
 | 7 | `tsukune@example.com` | 「生成する」をクリックする | キーの新規生成 | キーが生成され、プレーンテキストで表示される |
-| 8 | `tebasaki@example.com` | `/settings` でAPIキー欄を確認する | ユーザー分離 | tsukune のキーは表示されない（tebasaki はキーなし） |
+| 8 | `tebasaki@example.com` | ギアアイコンをクリックして個人設定モーダルを開き、APIキー欄を確認する | ユーザー分離 | tsukune のキーは表示されない（tebasaki はキーなし） |
 
 ---
 
@@ -231,7 +247,7 @@ curl -X POST http://localhost:3000/api/reports \
 | 1 | `bonjiri@example.com` | `/admin/users` で「無効化」「削除」ボタン、ロール変更セレクトにカーソルを当てる | pointer カーソル | すべての要素で pointer カーソルが表示される |
 | 2 | `tsukune@example.com` | `/reports/new` で「日報を作成」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 | 3 | `tsukune@example.com` | `/reports/[id]/edit` で「保存する」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
-| 4 | `tsukune@example.com` | `/settings` で各ボタン（保存する・生成する・再生成・失効・表示/隠す）にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
+| 4 | `tsukune@example.com` | 個人設定モーダルで各ボタン（保存する・生成する・再生成・失効・表示/隠す）にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 | 5 | `tsukune@example.com` | `/reports/daily` のユーザーフィルタ select にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 
 ---
@@ -243,4 +259,4 @@ curl -X POST http://localhost:3000/api/reports \
 | 1 | `tsukune@example.com` → `tebasaki@example.com` | tsukune でログインして日次ビューを確認後、ログアウトして tebasaki でログインする | 日報の分離 | tebasaki 視点では自分の日報と他ユーザーの日報が表示されるが、編集できるのは自分の日報のみ |
 | 2 | `tebasaki@example.com` | tsukune の日報編集 URL（`/reports/[id]/edit`）に直接アクセスする | 他ユーザーの編集ガード | `/reports/[id]` にリダイレクトされる |
 | 3 | `tsukune@example.com` → `tebasaki@example.com` | tsukune でコメントを投稿後、ログアウトして tebasaki でログインしてそのコメントを確認する | コメントの削除ボタン分離 | tebasaki には tsukune のコメントの削除ボタンが表示されない |
-| 4 | `tsukune@example.com` → `tebasaki@example.com` | tsukune の `/settings` で APIキーを確認後、ログアウトして tebasaki でログインし `/settings` を確認する | APIキーの分離 | tebasaki には tsukune の APIキーが表示されない |
+| 4 | `tsukune@example.com` → `tebasaki@example.com` | tsukune の個人設定モーダルで APIキーを確認後、ログアウトして tebasaki でログインし個人設定モーダルを確認する | APIキーの分離 | tebasaki には tsukune の APIキーが表示されない |
