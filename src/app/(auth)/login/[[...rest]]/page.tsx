@@ -1,7 +1,7 @@
 import { SignIn } from "@clerk/nextjs";
 
 export const metadata = {
-  title: "ログイン | Daily Hub",
+  title: "ログイン",
 };
 
 export default function LoginPage() {

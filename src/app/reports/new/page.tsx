@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { ReportNewForm } from "./ReportNewForm";
 
 export const metadata = {
-  title: "日報作成 | Daily Hub",
+  title: "日報作成",
 };
 
 export default async function ReportNewPage() {
