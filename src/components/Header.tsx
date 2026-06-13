@@ -1,11 +1,20 @@
 import Link from "next/link";
 
 import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { NavLinks } from "./NavLinks";
+import { SettingsModalTrigger } from "./SettingsModalTrigger";
 import { SignOutButton } from "./SignOutButton";
 
 export async function Header() {
   const session = await getSession({ redirectOnInactive: true });
+
+  const dbUser = session?.user
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { email: true, apiKey: true },
+      })
+    : null;
 
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white">
@@ -20,12 +29,11 @@ export async function Header() {
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           {session?.user?.name && (
-            <Link
-              href="/settings"
-              className="hidden text-sm text-zinc-500 hover:text-zinc-900 sm:inline"
-            >
-              {session.user.name}
-            </Link>
+            <SettingsModalTrigger
+              name={session.user.name}
+              email={dbUser?.email ?? ""}
+              hasInitialApiKey={dbUser?.apiKey !== null}
+            />
           )}
           <SignOutButton className="shrink-0 cursor-pointer rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50" />
         </div>
