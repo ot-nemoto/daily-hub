@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+export const metadata = { title: "日報詳細" };
 import { CommentDeleteButton } from "./CommentDeleteButton";
 import { CommentForm } from "./CommentForm";
 

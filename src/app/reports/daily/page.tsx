@@ -1,3 +1,5 @@
+export const metadata = { title: "日次ビュー" };
+
 import { getSession } from "@/lib/auth";
 import { formatDateJa, isValidDate, today } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";

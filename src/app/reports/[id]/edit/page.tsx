@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ReportEditForm } from "./ReportEditForm";
 
 export const metadata = {
-  title: "日報編集 | Daily Hub",
+  title: "日報編集",
 };
 
 export default async function ReportEditPage({
