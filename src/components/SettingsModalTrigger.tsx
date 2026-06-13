@@ -15,8 +15,8 @@ export function SettingsModalTrigger({ name, email, hasInitialApiKey }: Props) {
 
   return (
     <>
-      <div className="hidden items-center gap-1.5 sm:flex">
-        <span className="text-sm text-zinc-500">{name}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="hidden text-sm text-zinc-500 sm:inline">{name}</span>
         <button
           type="button"
           onClick={() => setOpen(true)}
