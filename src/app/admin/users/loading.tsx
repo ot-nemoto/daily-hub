@@ -6,9 +6,8 @@ export default function AdminUsersLoading() {
         <div className="rounded-lg bg-white shadow-sm">
           {/* Table header skeleton */}
           <div className="flex gap-4 border-b border-zinc-100 px-6 py-3">
-            {[40, 48, 32, 20, 24].map((w, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
-              <div key={i} className={`h-4 w-${w} animate-pulse rounded bg-zinc-200`} />
+            {["w-40", "w-48", "w-32", "w-20", "w-24"].map((w) => (
+              <div key={w} className={`h-4 ${w} animate-pulse rounded bg-zinc-200`} />
             ))}
           </div>
           {/* Row skeletons */}
