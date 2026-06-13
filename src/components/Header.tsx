@@ -21,9 +21,15 @@ export async function Header() {
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3 sm:gap-6">
           <Link href="/reports/new" className="shrink-0 flex items-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden="true">
-              <rect width="24" height="24" rx="6" fill="#18181b"/>
-              <text x="12" y="16.5" fontFamily="sans-serif" fontSize="10" fontWeight="700" fill="white" textAnchor="middle">DH</text>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-7 w-7 shrink-0" aria-hidden="true">
+              <rect width="32" height="32" rx="8" fill="#18181b"/>
+              <rect x="8" y="6" width="13" height="17" rx="2" fill="white" opacity="0.15"/>
+              <rect x="8" y="6" width="13" height="17" rx="2" fill="none" stroke="white" strokeWidth="1.5"/>
+              <line x1="11" y1="11" x2="18" y2="11" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
+              <line x1="11" y1="14" x2="18" y2="14" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
+              <line x1="11" y1="17" x2="15" y2="17" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
+              <circle cx="22" cy="22" r="6" fill="#22c55e"/>
+              <polyline points="19,22 21,24 25,20" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <span className="text-sm font-bold text-zinc-900">Daily Hub</span>
           </Link>

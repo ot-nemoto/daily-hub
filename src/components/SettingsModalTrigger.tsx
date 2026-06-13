@@ -18,7 +18,7 @@ export function SettingsModalTrigger({ name, email, hasInitialApiKey }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden text-sm text-zinc-500 hover:text-zinc-900 sm:inline"
+        className="hidden cursor-pointer text-sm text-zinc-500 hover:text-zinc-900 sm:inline"
       >
         {name}
       </button>
