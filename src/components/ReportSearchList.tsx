@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+
+import { PendingLink } from "./PendingLink";
 
 export type SearchableReport = {
   id: string;
@@ -86,19 +87,19 @@ export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
                   <span className="text-xs text-zinc-400">💬 {report.commentCount}</span>
                 )}
                 {report.isAuthor && (
-                  <Link
+                  <PendingLink
                     href={`/reports/${report.id}/edit`}
                     className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
                   >
                     編集
-                  </Link>
+                  </PendingLink>
                 )}
-                <Link
+                <PendingLink
                   href={`/reports/${report.id}`}
                   className="rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700"
                 >
                   詳細
-                </Link>
+                </PendingLink>
               </div>
             </div>
             <dl>
