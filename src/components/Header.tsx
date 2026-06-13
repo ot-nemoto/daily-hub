@@ -22,7 +22,7 @@ export async function Header() {
         <div className="flex items-center gap-3 sm:gap-6">
           <Link href="/reports/new" className="shrink-0 flex items-center gap-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-7 w-7 shrink-0" aria-hidden="true">
-              <rect width="32" height="32" rx="8" fill="#18181b"/>
+              <rect width="32" height="32" rx="8" fill="#3f3f46"/>
               <rect x="8" y="6" width="13" height="17" rx="2" fill="white" opacity="0.15"/>
               <rect x="8" y="6" width="13" height="17" rx="2" fill="none" stroke="white" strokeWidth="1.5"/>
               <line x1="11" y1="11" x2="18" y2="11" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
@@ -31,7 +31,7 @@ export async function Header() {
               <circle cx="22" cy="22" r="6" fill="#22c55e"/>
               <polyline points="19,22 21,24 25,20" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="text-sm font-bold text-zinc-900">Daily Hub</span>
+            <span className="text-base font-bold text-zinc-900">Daily Hub</span>
           </Link>
           <nav className="flex items-center gap-2 sm:gap-4">
             <NavLinks role={session?.user?.role} />
