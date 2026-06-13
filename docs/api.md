@@ -13,6 +13,7 @@ Server Actions の定義は [docs/actions.md](actions.md) を参照。
 | `GET` | `/api/reports` | 日報一覧取得 | APIキー（全ロール） |
 | `POST` | `/api/reports` | 日報作成・一括登録 | APIキー（MEMBER / ADMIN） |
 | `POST` | `/api/admin/reports` | 日報バッチ登録（ADMIN専用） | APIキー（ADMIN のみ） |
+| `GET` | `/api/users` | ユーザー一覧取得 | APIキー（ADMIN のみ） |
 
 ---
 
@@ -158,6 +159,41 @@ Content-Type: application/json
 - `userName` で対象ユーザーを指定（`User.name` と一致する最初の1件を使用）
 - 対象ユーザーが存在しない場合は自動作成（email: ランダム文字列 + `@example.com`、role: `VIEWER`）
 - 既存日報がある場合は上書き（upsert）
+
+---
+
+## `GET /api/users` — ユーザー一覧取得
+
+**認証:** `Authorization: Bearer <api-key>` ヘッダー必須（ADMIN ロールのみ）
+
+**レスポンス**
+
+```http
+GET /api/users
+Authorization: Bearer <api-key>
+```
+
+```json
+{
+  "users": [
+    {
+      "id": "<user-id>",
+      "name": "山田太郎",
+      "email": "yamada@example.com",
+      "role": "MEMBER",
+      "isActive": true
+    }
+  ]
+}
+```
+
+ソート順: `name` 昇順
+
+| ステータス | 内容 |
+|---|---|
+| 200 | `{ "users": [...] }`（該当なしは空配列） |
+| 401 | APIキーなし・無効・アカウント無効 |
+| 403 | ADMIN 以外によるアクセス |
 
 ---
 

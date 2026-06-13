@@ -22,10 +22,10 @@ type Props = {
   emptyMessage: string;
 };
 
-function matches(report: SearchableReport, query: string) {
+function matches(report: SearchableReport, query: string, includeAuthor: boolean) {
   const q = query.toLowerCase();
   return (
-    report.authorName.toLowerCase().includes(q) ||
+    (includeAuthor && report.authorName.toLowerCase().includes(q)) ||
     report.workContent.toLowerCase().includes(q) ||
     report.tomorrowPlan.toLowerCase().includes(q) ||
     report.notes.toLowerCase().includes(q)
@@ -35,8 +35,9 @@ function matches(report: SearchableReport, query: string) {
 export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
   const [query, setQuery] = useState("");
 
+  const includeAuthor = primary === "authorName";
   const trimmed = query.trim();
-  const filtered = trimmed ? reports.filter((r) => matches(r, trimmed)) : reports;
+  const filtered = trimmed ? reports.filter((r) => matches(r, trimmed, includeAuthor)) : reports;
 
   if (reports.length === 0) {
     return (
@@ -53,7 +54,7 @@ export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="ユーザー名・日報内容で検索"
+          placeholder={includeAuthor ? "ユーザー名・日報内容で検索" : "日報内容で検索"}
           aria-label="日報を検索"
           className="block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
         />

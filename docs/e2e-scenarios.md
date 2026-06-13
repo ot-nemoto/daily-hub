@@ -79,12 +79,11 @@
 | 2 | `tsukune@example.com` | `/reports/daily` にアクセスする | 自分の日報表示 | tsukune の日報が表示される |
 | 3 | `tsukune@example.com` | `/reports/daily` にアクセスする | 他ユーザーの日報表示 | tebasaki の日報も一覧に表示される |
 | 4 | `tsukune@example.com` | 日報が存在しない日付を選択する | 空状態表示 | 「YYYY年M月D日 の日報はありません」と表示される |
-| 5 | `tsukune@example.com` | ユーザーフィルターで「tsukune」を選択する | ユーザー絞り込み | tsukune の日報のみ表示される |
-| 6 | `tsukune@example.com` | 日付入力に不正な値（例: `2026-02-30`）を入力する | バリデーション | 入力フィールドが赤枠表示され、URL が更新されない |
-| 7 | `tsukune@example.com` | 有効な日付（例: `2026-01-01`）を入力する | 有効値の即時反映 | URL が更新され、その日付の日報一覧が表示される |
-| 8 | `tsukune@example.com` | tsukune の日報カードを確認する | 自分の日報の操作ボタン | 「詳細」「編集」ボタンが表示される |
-| 9 | `tsukune@example.com` | tebasaki の日報カードを確認する | 他ユーザーへの編集ボタン非表示 | 「詳細」ボタンのみ表示され「編集」ボタンは表示されない |
-| 10 | `tsukune@example.com` | 日報カードの「詳細」ボタンをクリックする | 詳細ページへの遷移 | `/reports/[id]` に遷移する |
+| 5 | `tsukune@example.com` | 日付入力に不正な値（例: `2026-02-30`）を入力する | バリデーション | 入力フィールドが赤枠表示され、URL が更新されない |
+| 6 | `tsukune@example.com` | 有効な日付（例: `2026-01-01`）を入力する | 有効値の即時反映 | URL が更新され、その日付の日報一覧が表示される |
+| 7 | `tsukune@example.com` | tsukune の日報カードを確認する | 自分の日報の操作ボタン | 「詳細」「編集」ボタンが表示される |
+| 8 | `tsukune@example.com` | tebasaki の日報カードを確認する | 他ユーザーへの編集ボタン非表示 | 「詳細」ボタンのみ表示され「編集」ボタンは表示されない |
+| 9 | `tsukune@example.com` | 日報カードの「詳細」ボタンをクリックする | 詳細ページへの遷移 | `/reports/[id]` に遷移する |
 
 ---
 
@@ -94,7 +93,7 @@
 |---|---------|------|---------|-------|
 | 1 | `tsukune@example.com` | `/reports/monthly` にアクセスする | デフォルト表示 | 自分（tsukune）の今月分の日報が表示される |
 | 2 | `tsukune@example.com` | 日報が存在しない月を選択する | 空状態表示 | 「YYYY年M月 の日報はありません」と表示される |
-| 3 | `tsukune@example.com` | ユーザーフィルターで「tebasaki」を選択する | 他ユーザーへの切り替え | tebasaki の日報が表示される |
+| 3 | `tsukune@example.com` | ユーザーのトリガーボタンをクリックしてドロップダウンを開き、「teba」と入力して「tebasaki」を選択する | 検索付きコンボボックスの絞り込み・切り替え | tebasaki の日報が表示される |
 | 4 | `tsukune@example.com` | 月入力に不正な値（例: `2026-13`）を入力する | バリデーション | 入力フィールドが赤枠表示され、URL が更新されない |
 | 5 | `tsukune@example.com` | 有効な月（例: `2026-01`）を入力する | 有効値の即時反映 | URL が更新され、その月の日報一覧が表示される |
 
