@@ -25,7 +25,7 @@ export function SettingsModal({ initialName, email, hasInitialApiKey, onClose }:
       className="fixed inset-0 z-50 flex items-center justify-center"
       role="dialog"
       aria-modal="true"
-      aria-label="個人設定"
+      aria-labelledby="settings-dialog-title"
     >
       {/* オーバーレイ */}
       <div
@@ -36,7 +36,7 @@ export function SettingsModal({ initialName, email, hasInitialApiKey, onClose }:
       {/* ダイアログ本体 */}
       <div className="relative z-10 mx-4 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-xl bg-zinc-50 shadow-xl">
         <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 rounded-t-xl">
-          <h2 className="text-base font-bold text-zinc-900">個人設定</h2>
+          <h2 id="settings-dialog-title" className="text-base font-bold text-zinc-900">個人設定</h2>
           <button
             type="button"
             onClick={onClose}
