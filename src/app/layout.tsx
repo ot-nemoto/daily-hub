@@ -12,6 +12,9 @@ const mPlus1Code = M_PLUS_1_Code({
 export const metadata: Metadata = {
   title: "Daily Hub",
   description: "チームの日報管理アプリ",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

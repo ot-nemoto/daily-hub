@@ -20,8 +20,12 @@ export async function Header() {
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3 sm:gap-6">
-          <Link href="/reports/new" className="shrink-0 text-sm font-bold text-zinc-900">
-            Daily Hub
+          <Link href="/reports/new" className="shrink-0 flex items-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden="true">
+              <rect width="24" height="24" rx="6" fill="#18181b"/>
+              <text x="12" y="16.5" fontFamily="sans-serif" fontSize="10" fontWeight="700" fill="white" textAnchor="middle">DH</text>
+            </svg>
+            <span className="text-sm font-bold text-zinc-900">Daily Hub</span>
           </Link>
           <nav className="flex items-center gap-2 sm:gap-4">
             <NavLinks role={session?.user?.role} />
