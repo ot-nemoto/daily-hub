@@ -109,7 +109,7 @@ export default async function StatusPage({
           <table className="border-collapse text-xs">
             <thead>
               <tr className="border-b border-zinc-200">
-                <th className="sticky left-0 top-0 z-30 min-w-[8rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
+                <th className="sticky left-0 top-0 z-30 w-32 border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
                   ユーザー
                 </th>
                 <th className="sticky left-32 top-0 z-30 min-w-[4rem] border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-500">
