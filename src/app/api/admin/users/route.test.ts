@@ -30,14 +30,14 @@ function makeRequest(apiKey?: string) {
   if (apiKey !== undefined) {
     headers.authorization = `Bearer ${apiKey}`;
   }
-  return new NextRequest("http://localhost/api/users", { method: "GET", headers });
+  return new NextRequest("http://localhost/api/admin/users", { method: "GET", headers });
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("GET /api/users", () => {
+describe("GET /api/admin/users", () => {
   describe("認証", () => {
     it("Authorization ヘッダーなし → 401", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);

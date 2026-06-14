@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error", "/api/reports(.*)", "/api/admin/reports(.*)", "/api/users(.*)"]);
+const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error", "/api/reports(.*)", "/api/admin/(.*)"]);
 
 export default clerkMiddleware(async (auth, request) => {
   // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合はバイパス
@@ -13,6 +13,10 @@ export default clerkMiddleware(async (auth, request) => {
   // ロールベースの認可チェックは Edge Runtime で DB アクセスができないため
   // 各ページ・API ルートで getSession() を使って実施する
   if (!isPublicRoute(request)) {
+    // API ルートは JSON 404 を返す（画面はリダイレクト）
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Not Found" }, { status: 404 });
+    }
     await auth.protect();
   }
 });
