@@ -105,12 +105,15 @@ export default async function StatusPage({
       {users.length === 0 ? (
         <p className="text-sm text-zinc-500">有効なユーザーがいません。</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+        <div className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-zinc-200 bg-white">
           <table className="border-collapse text-xs">
             <thead>
               <tr className="border-b border-zinc-200">
-                <th className="sticky left-0 z-10 min-w-[8rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
+                <th className="sticky left-0 top-0 z-30 w-32 border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
                   ユーザー
+                </th>
+                <th className="sticky left-32 top-0 z-30 min-w-[4rem] border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-500">
+                  提出率
                 </th>
                 {dates.map((d) => {
                   const dow = d.getUTCDay();
@@ -119,7 +122,7 @@ export default async function StatusPage({
                   return (
                     <th
                       key={formatDate(d)}
-                      className={`min-w-[4.5rem] border-r border-zinc-100 px-1 py-2 text-center font-medium ${
+                      className={`sticky top-0 z-20 min-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center font-medium ${
                         isSat
                           ? "text-blue-500"
                           : isSun
@@ -134,10 +137,18 @@ export default async function StatusPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {users.map((user) => (
+              {users.map((user) => {
+                const submittedCount = dates.filter((d) =>
+                  submitted.has(`${user.id}_${formatDate(d)}`),
+                ).length;
+                const rate = dates.length > 0 ? Math.floor((submittedCount / dates.length) * 100) : 0;
+                return (
                 <tr key={user.id} className="hover:bg-zinc-50">
-                  <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
+                  <td className="sticky left-0 z-10 w-32 max-w-[8rem] truncate border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
                     {user.name}
+                  </td>
+                  <td className="sticky left-32 z-10 border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-700 hover:bg-zinc-50">
+                    {rate}%
                   </td>
                   {dates.map((d) => {
                     const key = `${user.id}_${formatDate(d)}`;
@@ -162,7 +173,8 @@ export default async function StatusPage({
                     );
                   })}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
