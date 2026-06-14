@@ -108,8 +108,8 @@ export default async function StatusPage({
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="border-collapse text-xs">
             <thead>
-              <tr className="border-b border-zinc-200">
-                <th className="sticky left-0 z-10 min-w-[8rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
+              <tr className="sticky top-[52px] z-20 border-b border-zinc-200 bg-white">
+                <th className="sticky left-0 z-30 min-w-[8rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
                   ユーザー
                 </th>
                 {dates.map((d) => {
