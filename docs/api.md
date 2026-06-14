@@ -13,7 +13,7 @@ Server Actions の定義は [docs/actions.md](actions.md) を参照。
 | `GET` | `/api/reports` | 日報一覧取得 | APIキー（全ロール） |
 | `POST` | `/api/reports` | 日報作成・一括登録 | APIキー（MEMBER / ADMIN） |
 | `POST` | `/api/admin/reports` | 日報バッチ登録（ADMIN専用） | APIキー（ADMIN のみ） |
-| `GET` | `/api/users` | ユーザー一覧取得 | APIキー（ADMIN のみ） |
+| `GET` | `/api/admin/users` | ユーザー一覧取得 | APIキー（ADMIN のみ） |
 
 ---
 
@@ -162,14 +162,14 @@ Content-Type: application/json
 
 ---
 
-## `GET /api/users` — ユーザー一覧取得
+## `GET /api/admin/users` — ユーザー一覧取得
 
 **認証:** `Authorization: Bearer <api-key>` ヘッダー必須（ADMIN ロールのみ）
 
 **レスポンス**
 
 ```http
-GET /api/users
+GET /api/admin/users
 Authorization: Bearer <api-key>
 ```
 
