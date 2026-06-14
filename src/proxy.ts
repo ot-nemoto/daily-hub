@@ -13,6 +13,10 @@ export default clerkMiddleware(async (auth, request) => {
   // ロールベースの認可チェックは Edge Runtime で DB アクセスができないため
   // 各ページ・API ルートで getSession() を使って実施する
   if (!isPublicRoute(request)) {
+    // API ルートは JSON 404 を返す（画面はリダイレクト）
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Not Found" }, { status: 404 });
+    }
     await auth.protect();
   }
 });
