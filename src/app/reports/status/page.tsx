@@ -144,7 +144,7 @@ export default async function StatusPage({
                 const rate = dates.length > 0 ? Math.floor((submittedCount / dates.length) * 100) : 0;
                 return (
                 <tr key={user.id} className="hover:bg-zinc-50">
-                  <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
+                  <td className="sticky left-0 z-10 w-32 max-w-[8rem] truncate border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
                     {user.name}
                   </td>
                   <td className="sticky left-32 z-10 border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-700 hover:bg-zinc-50">
