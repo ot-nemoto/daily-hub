@@ -108,11 +108,11 @@ export default async function StatusPage({
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="border-collapse text-xs">
             <thead>
-              <tr className="sticky top-[52px] z-20 border-b border-zinc-200 bg-white">
-                <th className="sticky left-0 z-30 min-w-[8rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
+              <tr className="border-b border-zinc-200">
+                <th className="sticky left-0 top-[52px] z-30 min-w-[8rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
                   ユーザー
                 </th>
-                <th className="sticky left-32 z-30 min-w-[4rem] border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-500">
+                <th className="sticky left-32 top-[52px] z-30 min-w-[4rem] border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-500">
                   提出率
                 </th>
                 {dates.map((d) => {
@@ -122,7 +122,7 @@ export default async function StatusPage({
                   return (
                     <th
                       key={formatDate(d)}
-                      className={`min-w-[4.5rem] border-r border-zinc-100 px-1 py-2 text-center font-medium ${
+                      className={`sticky top-[52px] z-20 min-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center font-medium ${
                         isSat
                           ? "text-blue-500"
                           : isSun
