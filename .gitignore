@@ -44,7 +44,7 @@ next-env.d.ts
 /src/generated/prisma
 
 # Claude Code (personal settings)
-.claude/settings.local.json
+.claude/
 
 # Playwright
 e2e/.auth/
@@ -55,6 +55,3 @@ test-results/
 # clerk configuration (can include secrets)
 /.clerk/
 
-# Wiki scripts (local use only)
-parse_wiki.pl
-wiki_page.html
