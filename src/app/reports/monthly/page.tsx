@@ -39,7 +39,7 @@ export default async function MonthlyViewPage({
         author: { select: { id: true, name: true } },
         _count: { select: { comments: true } },
       },
-      orderBy: [{ date: "asc" }],
+      orderBy: [{ date: "desc" }],
     }),
   ]);
 
