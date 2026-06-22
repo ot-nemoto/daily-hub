@@ -16,12 +16,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@clerk/backend": "^3.7.1",
-    "@clerk/nextjs": "^7.5.3",
+    "@clerk/backend": "^3.8.2",
+    "@clerk/nextjs": "^7.5.7",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "next": "16.2.9",
-    "pg": "^8.21.0",
+    "pg": "^8.22.0",
     "prisma": "^7.8.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
