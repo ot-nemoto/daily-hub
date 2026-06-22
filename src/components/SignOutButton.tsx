@@ -27,12 +27,7 @@ export function SignOutButton({ className }: Props) {
   return (
     <div>
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button
-        type="button"
-        disabled={loading}
-        onClick={handleSignOut}
-        className={className}
-      >
+      <button type="button" disabled={loading} onClick={handleSignOut} className={className}>
         {loading ? "ログアウト中..." : "ログアウト"}
       </button>
     </div>

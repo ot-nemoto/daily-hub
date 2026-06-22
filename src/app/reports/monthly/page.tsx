@@ -1,9 +1,9 @@
 export const metadata = { title: "月次ビュー" };
 
+import { ReportSearchList } from "@/components/ReportSearchList";
 import { getSession } from "@/lib/auth";
 import { currentMonth, formatMonthJa, isValidDate, monthRange } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
-import { ReportSearchList } from "@/components/ReportSearchList";
 import { MonthlyFilter } from "./MonthlyFilter";
 
 export default async function MonthlyViewPage({
@@ -11,7 +11,10 @@ export default async function MonthlyViewPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string; authorId?: string }>;
 }) {
-  const [session, params] = await Promise.all([getSession({ redirectOnInactive: true }), searchParams]);
+  const [session, params] = await Promise.all([
+    getSession({ redirectOnInactive: true }),
+    searchParams,
+  ]);
 
   const month = currentMonth();
   // 不正な日付が URL から渡された場合は今月にフォールバック
@@ -48,11 +51,7 @@ export default async function MonthlyViewPage({
       <div className="mx-auto max-w-3xl space-y-6 px-4">
         <div className="rounded-lg bg-white p-6 shadow-sm">
           <h1 className="mb-4 text-lg font-bold text-zinc-900">月次ビュー</h1>
-          <MonthlyFilter
-            currentMonth={displayMonth}
-            currentAuthorId={authorId}
-            users={users}
-          />
+          <MonthlyFilter currentMonth={displayMonth} currentAuthorId={authorId} users={users} />
         </div>
 
         <ReportSearchList

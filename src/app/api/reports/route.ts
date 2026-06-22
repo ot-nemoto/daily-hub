@@ -42,10 +42,7 @@ export async function GET(req: NextRequest) {
     }
   } else if (from || to) {
     if (!from || !to) {
-      return NextResponse.json(
-        { error: "from と to はセットで指定してください" },
-        { status: 422 },
-      );
+      return NextResponse.json({ error: "from と to はセットで指定してください" }, { status: 422 });
     }
     const fromResult = DateString.safeParse(from);
     if (!fromResult.success) {
@@ -96,10 +93,7 @@ export async function POST(req: NextRequest) {
 
   // 2. VIEWER ロールは作成不可
   if (user.role === "VIEWER") {
-    return NextResponse.json(
-      { error: "日報を作成する権限がありません" },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: "日報を作成する権限がありません" }, { status: 403 });
   }
 
   // 3. リクエストボディのバリデーション（単体・配列どちらも配列に正規化）
@@ -114,10 +108,7 @@ export async function POST(req: NextRequest) {
     .min(1, "1件以上の日報を指定してください")
     .safeParse(normalized);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0].message },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 422 });
   }
 
   // 4. 日報を upsert（全件 created → 201、1件でも updated → 200）

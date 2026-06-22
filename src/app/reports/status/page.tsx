@@ -92,9 +92,7 @@ export default async function StatusPage({
   ]);
 
   // 提出済みセットを (authorId_YYYY-MM-DD) で管理
-  const submitted = new Set(
-    reports.map((r) => `${r.authorId}_${formatDate(r.date)}`),
-  );
+  const submitted = new Set(reports.map((r) => `${r.authorId}_${formatDate(r.date)}`));
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -123,11 +121,7 @@ export default async function StatusPage({
                     <th
                       key={formatDate(d)}
                       className={`sticky top-0 z-20 min-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center font-medium ${
-                        isSat
-                          ? "text-blue-500"
-                          : isSun
-                            ? "text-red-500"
-                            : "text-zinc-500"
+                        isSat ? "text-blue-500" : isSun ? "text-red-500" : "text-zinc-500"
                       }`}
                     >
                       {formatDateLabel(d)}
@@ -141,38 +135,39 @@ export default async function StatusPage({
                 const submittedCount = dates.filter((d) =>
                   submitted.has(`${user.id}_${formatDate(d)}`),
                 ).length;
-                const rate = dates.length > 0 ? Math.floor((submittedCount / dates.length) * 100) : 0;
+                const rate =
+                  dates.length > 0 ? Math.floor((submittedCount / dates.length) * 100) : 0;
                 return (
-                <tr key={user.id} className="hover:bg-zinc-50">
-                  <td className="sticky left-0 z-10 w-32 max-w-[8rem] truncate border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
-                    {user.name}
-                  </td>
-                  <td className="sticky left-32 z-10 border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-700 hover:bg-zinc-50">
-                    {rate}%
-                  </td>
-                  {dates.map((d) => {
-                    const key = `${user.id}_${formatDate(d)}`;
-                    const done = submitted.has(key);
-                    const dow = d.getUTCDay();
-                    const isWeekend = dow === 0 || dow === 6;
-                    return (
-                      <td
-                        key={formatDate(d)}
-                        className={`border-r border-zinc-100 px-1 py-2 text-center ${
-                          isWeekend ? "bg-zinc-50" : ""
-                        }`}
-                      >
-                        {done ? (
-                          <span className="inline-block rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">
-                            ✓
-                          </span>
-                        ) : (
-                          <span className="text-zinc-300">—</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
+                  <tr key={user.id} className="hover:bg-zinc-50">
+                    <td className="sticky left-0 z-10 w-32 max-w-[8rem] truncate border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
+                      {user.name}
+                    </td>
+                    <td className="sticky left-32 z-10 border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-700 hover:bg-zinc-50">
+                      {rate}%
+                    </td>
+                    {dates.map((d) => {
+                      const key = `${user.id}_${formatDate(d)}`;
+                      const done = submitted.has(key);
+                      const dow = d.getUTCDay();
+                      const isWeekend = dow === 0 || dow === 6;
+                      return (
+                        <td
+                          key={formatDate(d)}
+                          className={`border-r border-zinc-100 px-1 py-2 text-center ${
+                            isWeekend ? "bg-zinc-50" : ""
+                          }`}
+                        >
+                          {done ? (
+                            <span className="inline-block rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="text-zinc-300">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
                 );
               })}
             </tbody>

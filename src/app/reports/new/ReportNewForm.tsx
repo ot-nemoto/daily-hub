@@ -70,7 +70,9 @@ export function ReportNewForm() {
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
           onChange={(e) => setCounts((prev) => ({ ...prev, workContent: e.target.value.length }))}
         />
-        <p className={`mt-1 text-right text-xs ${counts.workContent > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+        <p
+          className={`mt-1 text-right text-xs ${counts.workContent > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}
+        >
           {counts.workContent.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
         </p>
       </div>
@@ -87,14 +89,15 @@ export function ReportNewForm() {
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
           onChange={(e) => setCounts((prev) => ({ ...prev, tomorrowPlan: e.target.value.length }))}
         />
-        <p className={`mt-1 text-right text-xs ${counts.tomorrowPlan > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+        <p
+          className={`mt-1 text-right text-xs ${counts.tomorrowPlan > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}
+        >
           {counts.tomorrowPlan.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
         </p>
       </div>
       <div>
         <label htmlFor="notes" className="block text-sm font-medium text-zinc-700">
-          感想/課題/問題点{" "}
-          <span className="font-normal text-zinc-400">（任意）</span>
+          感想/課題/問題点 <span className="font-normal text-zinc-400">（任意）</span>
         </label>
         <textarea
           id="notes"
@@ -104,7 +107,9 @@ export function ReportNewForm() {
           className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
           onChange={(e) => setCounts((prev) => ({ ...prev, notes: e.target.value.length }))}
         />
-        <p className={`mt-1 text-right text-xs ${counts.notes > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}>
+        <p
+          className={`mt-1 text-right text-xs ${counts.notes > MAX_LENGTH * 0.9 ? "text-red-500" : "text-zinc-400"}`}
+        >
           {counts.notes.toLocaleString()} / {MAX_LENGTH.toLocaleString()}
         </p>
       </div>

@@ -4,7 +4,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
-import { createReport, resolveOrCreateUserByName, updateReport, upsertReportForUserName } from "./reports";
+import {
+  createReport,
+  resolveOrCreateUserByName,
+  updateReport,
+  upsertReportForUserName,
+} from "./reports";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {

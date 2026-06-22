@@ -49,7 +49,13 @@ export async function upsertReportForUserName(input: {
 }): Promise<{ id: string; status: "created" | "updated" }> {
   const { userName, date, workContent, tomorrowPlan, notes } = input;
   const targetUser = await resolveOrCreateUserByName(userName);
-  return upsertReportByAuthorId({ authorId: targetUser.id, date, workContent, tomorrowPlan, notes });
+  return upsertReportByAuthorId({
+    authorId: targetUser.id,
+    date,
+    workContent,
+    tomorrowPlan,
+    notes,
+  });
 }
 
 export async function createReport(input: {

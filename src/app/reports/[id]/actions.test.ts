@@ -10,7 +10,10 @@ vi.mock("@/lib/comments", () => ({ createComment: vi.fn(), deleteComment: vi.fn(
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { createComment as libCreateComment, deleteComment as libDeleteComment } from "@/lib/comments";
+import {
+  createComment as libCreateComment,
+  deleteComment as libDeleteComment,
+} from "@/lib/comments";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { updateReport as libUpdateReport } from "@/lib/reports";
 import { createComment, deleteComment, updateReport } from "./actions";
@@ -19,7 +22,12 @@ const memberSession = { user: { id: "user-1", role: "MEMBER", isActive: true } }
 const viewerSession = { user: { id: "user-2", role: "VIEWER", isActive: true } };
 
 describe("updateReport", () => {
-  const input = { id: "report-1", workContent: "更新内容", tomorrowPlan: "明日の予定", notes: "所感" };
+  const input = {
+    id: "report-1",
+    workContent: "更新内容",
+    tomorrowPlan: "明日の予定",
+    notes: "所感",
+  };
   beforeEach(() => vi.clearAllMocks());
 
   it("正常系: 日報を更新して空オブジェクトを返す", async () => {

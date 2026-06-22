@@ -1,8 +1,8 @@
 export const metadata = { title: "ユーザー管理" };
 
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
 import { UserTable } from "./UserTable";
 
 export default async function AdminUsersPage() {
@@ -47,10 +47,7 @@ export default async function AdminUsersPage() {
           <div className="mb-6">
             <h1 className="text-lg font-bold text-zinc-900">ユーザー管理</h1>
           </div>
-          <UserTable
-            users={usersWithStats}
-            currentUserId={session.user.id ?? ""}
-          />
+          <UserTable users={usersWithStats} currentUserId={session.user.id ?? ""} />
         </div>
       </div>
     </div>

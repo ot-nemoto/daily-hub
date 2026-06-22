@@ -1,9 +1,9 @@
 export const metadata = { title: "日次ビュー" };
 
+import { ReportSearchList } from "@/components/ReportSearchList";
 import { getSession } from "@/lib/auth";
 import { formatDateJa, isValidDate, today } from "@/lib/dateUtils";
 import { prisma } from "@/lib/prisma";
-import { ReportSearchList } from "@/components/ReportSearchList";
 import { DailyFilter } from "./DailyFilter";
 
 export default async function DailyViewPage({
@@ -11,7 +11,10 @@ export default async function DailyViewPage({
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
-  const [session, params] = await Promise.all([getSession({ redirectOnInactive: true }), searchParams]);
+  const [session, params] = await Promise.all([
+    getSession({ redirectOnInactive: true }),
+    searchParams,
+  ]);
   // 不正な日付が URL から渡された場合は today() にフォールバック
   const date = params.date && isValidDate(params.date) ? params.date : today();
 

@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
+import { Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "./prisma";
 
@@ -13,7 +13,9 @@ export type Session = {
   };
 };
 
-export async function getSession(options?: { redirectOnInactive?: boolean }): Promise<Session | null> {
+export async function getSession(options?: {
+  redirectOnInactive?: boolean;
+}): Promise<Session | null> {
   const redirectOnInactive = options?.redirectOnInactive ?? false;
 
   // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合は DB から直接セッションを返す
@@ -24,7 +26,9 @@ export async function getSession(options?: { redirectOnInactive?: boolean }): Pr
         select: { id: true, name: true, role: true, isActive: true },
       });
       if (!user) {
-        console.error(`[MOCK] MOCK_USER_ID="${process.env.MOCK_USER_ID}" に対応するユーザーが DB に存在しません`);
+        console.error(
+          `[MOCK] MOCK_USER_ID="${process.env.MOCK_USER_ID}" に対応するユーザーが DB に存在しません`,
+        );
         return null;
       }
       if (!user.isActive) {
@@ -40,7 +44,9 @@ export async function getSession(options?: { redirectOnInactive?: boolean }): Pr
         select: { id: true, name: true, role: true, isActive: true },
       });
       if (!user) {
-        console.error(`[MOCK] MOCK_USER_EMAIL="${process.env.MOCK_USER_EMAIL}" に対応するユーザーが DB に存在しません`);
+        console.error(
+          `[MOCK] MOCK_USER_EMAIL="${process.env.MOCK_USER_EMAIL}" に対応するユーザーが DB に存在しません`,
+        );
         return null;
       }
       if (!user.isActive) {
