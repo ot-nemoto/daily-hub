@@ -130,16 +130,12 @@ describe("GET /api/reports", () => {
     });
 
     it("from が不正形式の場合 422 を返す", async () => {
-      const res = await GET(
-        makeGetRequest({ from: "20260601", to: "2026-06-30" }, VALID_API_KEY),
-      );
+      const res = await GET(makeGetRequest({ from: "20260601", to: "2026-06-30" }, VALID_API_KEY));
       expect(res.status).toBe(422);
     });
 
     it("to が不正形式の場合 422 を返す", async () => {
-      const res = await GET(
-        makeGetRequest({ from: "2026-06-01", to: "20260630" }, VALID_API_KEY),
-      );
+      const res = await GET(makeGetRequest({ from: "2026-06-01", to: "20260630" }, VALID_API_KEY));
       expect(res.status).toBe(422);
     });
   });
@@ -309,9 +305,7 @@ describe("POST /api/reports", () => {
       const { notes: _, ...bodyWithoutNotes } = VALID_BODY;
       const res = await POST(makeRequest(bodyWithoutNotes, VALID_API_KEY));
       expect(res.status).toBe(201);
-      expect(upsertReportByAuthorId).toHaveBeenCalledWith(
-        expect.objectContaining({ notes: "" }),
-      );
+      expect(upsertReportByAuthorId).toHaveBeenCalledWith(expect.objectContaining({ notes: "" }));
     });
 
     it("不正な JSON で 422 を返す", async () => {
@@ -410,9 +404,7 @@ describe("POST /api/reports", () => {
     });
 
     it("配列内の date が不正形式の場合 422 を返す", async () => {
-      const res = await POST(
-        makeRequest([{ ...VALID_BODY, date: "20260412" }], VALID_API_KEY),
-      );
+      const res = await POST(makeRequest([{ ...VALID_BODY, date: "20260412" }], VALID_API_KEY));
       expect(res.status).toBe(422);
     });
   });

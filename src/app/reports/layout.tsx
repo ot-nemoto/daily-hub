@@ -1,10 +1,6 @@
 import { Header } from "@/components/Header";
 
-export default function ReportsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ReportsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />

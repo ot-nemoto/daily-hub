@@ -65,9 +65,7 @@ export function StatusFilter({ base, period }: Props) {
         ))}
       </div>
 
-      {isPending && (
-        <span className="text-xs text-zinc-400">読み込み中...</span>
-      )}
+      {isPending && <span className="text-xs text-zinc-400">読み込み中...</span>}
     </div>
   );
 }

@@ -7,7 +7,9 @@ vi.mock("@clerk/nextjs/server", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  redirect: vi.fn((url: string) => { throw new Error(`NEXT_REDIRECT:${url}`); }),
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  }),
 }));
 
 vi.mock("./prisma", () => ({
@@ -21,10 +23,10 @@ vi.mock("./prisma", () => ({
   },
 }));
 
-import { auth, currentUser } from "@clerk/nextjs/server";
 import type { EmailAddress, User } from "@clerk/backend";
-import { prisma } from "./prisma";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { getSession } from "./auth";
+import { prisma } from "./prisma";
 
 const mockAuth = vi.mocked(auth);
 const mockCurrentUser = vi.mocked(currentUser);
@@ -43,7 +45,11 @@ describe("getSession", () => {
 
     beforeEach(() => {
       const { MOCK_USER_EMAIL, ...envWithoutMockUserEmail } = originalEnv;
-      process.env = { ...envWithoutMockUserEmail, NODE_ENV: "development", MOCK_USER_ID: "mock-user-id" };
+      process.env = {
+        ...envWithoutMockUserEmail,
+        NODE_ENV: "development",
+        MOCK_USER_ID: "mock-user-id",
+      };
     });
 
     afterEach(() => {
@@ -52,7 +58,12 @@ describe("getSession", () => {
 
     it("MOCK_USER_ID に対応する DB ユーザーのセッションを返す", async () => {
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "モックユーザー", role: "MEMBER", isActive: true });
+      mockFindUnique.mockResolvedValue({
+        id: "mock-user-id",
+        name: "モックユーザー",
+        role: "MEMBER",
+        isActive: true,
+      });
 
       const result = await getSession();
       expect(result).toEqual({
@@ -78,15 +89,27 @@ describe("getSession", () => {
 
     it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "無効ユーザー", role: "MEMBER", isActive: false });
+      mockFindUnique.mockResolvedValue({
+        id: "mock-user-id",
+        name: "無効ユーザー",
+        role: "MEMBER",
+        isActive: false,
+      });
 
-      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow(
+        "NEXT_REDIRECT:/auth-error?reason=inactive",
+      );
       expect(mockAuth).not.toHaveBeenCalled();
     });
 
     it("MOCK_USER_ID ユーザーが isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "mock-user-id", name: "無効ユーザー", role: "MEMBER", isActive: false });
+      mockFindUnique.mockResolvedValue({
+        id: "mock-user-id",
+        name: "無効ユーザー",
+        role: "MEMBER",
+        isActive: false,
+      });
 
       const result = await getSession();
       expect(result).toBeNull();
@@ -99,7 +122,11 @@ describe("getSession", () => {
 
     beforeEach(() => {
       const { MOCK_USER_ID, ...envWithoutMockUserId } = originalEnv;
-      process.env = { ...envWithoutMockUserId, NODE_ENV: "development", MOCK_USER_EMAIL: "mock@example.com" };
+      process.env = {
+        ...envWithoutMockUserId,
+        NODE_ENV: "development",
+        MOCK_USER_EMAIL: "mock@example.com",
+      };
     });
 
     afterEach(() => {
@@ -108,7 +135,12 @@ describe("getSession", () => {
 
     it("MOCK_USER_EMAIL に対応する DB ユーザーのセッションを返す", async () => {
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "モックユーザー", role: "MEMBER", isActive: true });
+      mockFindUnique.mockResolvedValue({
+        id: "user-uuid",
+        name: "モックユーザー",
+        role: "MEMBER",
+        isActive: true,
+      });
 
       const result = await getSession();
       expect(result).toEqual({
@@ -134,15 +166,27 @@ describe("getSession", () => {
 
     it("MOCK_USER_EMAIL ユーザーが isActive=false かつ redirectOnInactive=true のとき /auth-error?reason=inactive にリダイレクトする", async () => {
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+      mockFindUnique.mockResolvedValue({
+        id: "user-uuid",
+        name: "無効ユーザー",
+        role: "MEMBER",
+        isActive: false,
+      });
 
-      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow(
+        "NEXT_REDIRECT:/auth-error?reason=inactive",
+      );
       expect(mockAuth).not.toHaveBeenCalled();
     });
 
     it("MOCK_USER_EMAIL ユーザーが isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+      mockFindUnique.mockResolvedValue({
+        id: "user-uuid",
+        name: "無効ユーザー",
+        role: "MEMBER",
+        isActive: false,
+      });
 
       const result = await getSession();
       expect(result).toBeNull();
@@ -163,7 +207,12 @@ describe("getSession", () => {
     // @ts-expect-error
     mockAuth.mockResolvedValue({ userId: "clerk-abc123" });
     // @ts-expect-error
-    mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "テストユーザー", role: "MEMBER", isActive: true });
+    mockFindUnique.mockResolvedValue({
+      id: "user-uuid",
+      name: "テストユーザー",
+      role: "MEMBER",
+      isActive: true,
+    });
 
     const result = await getSession();
     expect(result).toEqual({
@@ -176,7 +225,12 @@ describe("getSession", () => {
     // @ts-expect-error
     mockAuth.mockResolvedValue({ userId: "clerk-admin123" });
     // @ts-expect-error
-    mockFindUnique.mockResolvedValue({ id: "admin-uuid", name: "管理者", role: "ADMIN", isActive: true });
+    mockFindUnique.mockResolvedValue({
+      id: "admin-uuid",
+      name: "管理者",
+      role: "ADMIN",
+      isActive: true,
+    });
 
     const result = await getSession();
     expect(result?.user.role).toBe("ADMIN");
@@ -189,9 +243,20 @@ describe("getSession", () => {
       mockFindUnique
         .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         // @ts-expect-error
-        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true, clerkId: null }) // email 検索
+        .mockResolvedValueOnce({
+          id: "user-uuid",
+          name: "田中太郎",
+          role: "MEMBER",
+          isActive: true,
+          clerkId: null,
+        }) // email 検索
         // @ts-expect-error
-        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true }); // updateMany 後の再取得
+        .mockResolvedValueOnce({
+          id: "user-uuid",
+          name: "田中太郎",
+          role: "MEMBER",
+          isActive: true,
+        }); // updateMany 後の再取得
       mockCurrentUser.mockResolvedValue({
         primaryEmailAddress: { emailAddress: "tanaka@example.com" } as unknown as EmailAddress,
         fullName: null,
@@ -215,9 +280,20 @@ describe("getSession", () => {
       mockFindUnique
         .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         // @ts-expect-error
-        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true, clerkId: null }) // email 検索
+        .mockResolvedValueOnce({
+          id: "user-uuid",
+          name: "田中太郎",
+          role: "MEMBER",
+          isActive: true,
+          clerkId: null,
+        }) // email 検索
         // @ts-expect-error
-        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true }); // count=0 後の再取得
+        .mockResolvedValueOnce({
+          id: "user-uuid",
+          name: "田中太郎",
+          role: "MEMBER",
+          isActive: true,
+        }); // count=0 後の再取得
       mockCurrentUser.mockResolvedValue({
         primaryEmailAddress: { emailAddress: "tanaka@example.com" } as unknown as EmailAddress,
         fullName: null,
@@ -244,14 +320,24 @@ describe("getSession", () => {
       } as unknown as User);
       mockCount.mockResolvedValue(0); // DB にユーザーなし
       // @ts-expect-error
-      mockCreate.mockResolvedValue({ id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true });
+      mockCreate.mockResolvedValue({
+        id: "new-uuid",
+        name: "初回ユーザー",
+        role: "ADMIN",
+        isActive: true,
+      });
 
       const result = await getSession();
       expect(result).toEqual({
         user: { id: "new-uuid", name: "初回ユーザー", role: "ADMIN", isActive: true },
       });
       expect(mockCreate).toHaveBeenCalledWith({
-        data: { clerkId: "clerk-new123", email: "new@example.com", name: "初回ユーザー", role: "ADMIN" },
+        data: {
+          clerkId: "clerk-new123",
+          email: "new@example.com",
+          name: "初回ユーザー",
+          role: "ADMIN",
+        },
         select: { id: true, name: true, role: true, isActive: true },
       });
       expect(mockUpdateMany).not.toHaveBeenCalled();
@@ -270,14 +356,24 @@ describe("getSession", () => {
       } as unknown as User);
       mockCount.mockResolvedValue(1); // DB にユーザーあり
       // @ts-expect-error
-      mockCreate.mockResolvedValue({ id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true });
+      mockCreate.mockResolvedValue({
+        id: "new-uuid2",
+        name: "新規ユーザー",
+        role: "MEMBER",
+        isActive: true,
+      });
 
       const result = await getSession();
       expect(result).toEqual({
         user: { id: "new-uuid2", name: "新規ユーザー", role: "MEMBER", isActive: true },
       });
       expect(mockCreate).toHaveBeenCalledWith({
-        data: { clerkId: "clerk-new456", email: "new2@example.com", name: "新規ユーザー", role: "MEMBER" },
+        data: {
+          clerkId: "clerk-new456",
+          email: "new2@example.com",
+          name: "新規ユーザー",
+          role: "MEMBER",
+        },
         select: { id: true, name: true, role: true, isActive: true },
       });
       expect(mockUpdateMany).not.toHaveBeenCalled();
@@ -287,16 +383,28 @@ describe("getSession", () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+      mockFindUnique.mockResolvedValue({
+        id: "user-uuid",
+        name: "無効ユーザー",
+        role: "MEMBER",
+        isActive: false,
+      });
 
-      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow("NEXT_REDIRECT:/auth-error?reason=inactive");
+      await expect(getSession({ redirectOnInactive: true })).rejects.toThrow(
+        "NEXT_REDIRECT:/auth-error?reason=inactive",
+      );
     });
 
     it("isActive=false かつ redirectOnInactive=false（デフォルト）のとき null を返す", async () => {
       // @ts-expect-error
       mockAuth.mockResolvedValue({ userId: "clerk-inactive" });
       // @ts-expect-error
-      mockFindUnique.mockResolvedValue({ id: "user-uuid", name: "無効ユーザー", role: "MEMBER", isActive: false });
+      mockFindUnique.mockResolvedValue({
+        id: "user-uuid",
+        name: "無効ユーザー",
+        role: "MEMBER",
+        isActive: false,
+      });
 
       const result = await getSession();
       expect(result).toBeNull();
@@ -308,7 +416,13 @@ describe("getSession", () => {
       mockFindUnique
         .mockResolvedValueOnce(null) // clerkId 検索 → 未ヒット
         // @ts-expect-error
-        .mockResolvedValueOnce({ id: "user-uuid", name: "田中太郎", role: "MEMBER", isActive: true, clerkId: "clerk-other" }); // email 検索 → 別IDに紐付き済み
+        .mockResolvedValueOnce({
+          id: "user-uuid",
+          name: "田中太郎",
+          role: "MEMBER",
+          isActive: true,
+          clerkId: "clerk-other",
+        }); // email 検索 → 別IDに紐付き済み
       mockCurrentUser.mockResolvedValue({
         primaryEmailAddress: { emailAddress: "tanaka@example.com" } as unknown as EmailAddress,
         fullName: null,

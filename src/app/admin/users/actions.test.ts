@@ -56,7 +56,9 @@ describe("updateUserAdmin", () => {
 
   it("異常系: ForbiddenError で error を返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(libUpdateUserAdmin).mockRejectedValue(new ForbiddenError("Cannot demote yourself from ADMIN"));
+    vi.mocked(libUpdateUserAdmin).mockRejectedValue(
+      new ForbiddenError("Cannot demote yourself from ADMIN"),
+    );
 
     const result = await updateUserAdmin({ id: "admin-1", role: "MEMBER" as never });
 

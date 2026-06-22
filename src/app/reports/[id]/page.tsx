@@ -1,18 +1,13 @@
 import { notFound } from "next/navigation";
-
+import { PendingLink } from "@/components/PendingLink";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PendingLink } from "@/components/PendingLink";
 import { CommentDeleteButton } from "./CommentDeleteButton";
 import { CommentForm } from "./CommentForm";
 
 export const metadata = { title: "日報詳細" };
 
-export default async function ReportDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [session, { id }] = await Promise.all([getSession({ redirectOnInactive: true }), params]);
 
   const report = await prisma.report.findUnique({
@@ -38,9 +33,7 @@ export default async function ReportDetailPage({
           <div className="mb-6 flex items-center justify-between">
             <div>
               <p className="text-sm text-zinc-500">{dateStr}</p>
-              <h1 className="text-xl font-bold text-zinc-900">
-                {report.author.name} の日報
-              </h1>
+              <h1 className="text-xl font-bold text-zinc-900">{report.author.name} の日報</h1>
             </div>
             {isAuthor && (
               <PendingLink
@@ -54,32 +47,34 @@ export default async function ReportDetailPage({
 
           <dl className="space-y-6">
             <div>
-              <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">本日の作業</dt>
+              <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                本日の作業
+              </dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">
                 {report.workContent}
               </dd>
             </div>
             <div>
-              <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">明日の予定</dt>
+              <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                明日の予定
+              </dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">
                 {report.tomorrowPlan}
               </dd>
             </div>
             {report.notes && (
               <div>
-                <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">感想/課題/問題点</dt>
-                <dd className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">
-                  {report.notes}
-                </dd>
+                <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                  感想/課題/問題点
+                </dt>
+                <dd className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">{report.notes}</dd>
               </div>
             )}
           </dl>
         </div>
 
         <div className="rounded-lg bg-white p-8 shadow-sm">
-          <h2 className="mb-4 font-medium text-zinc-900">
-            コメント（{report.comments.length}件）
-          </h2>
+          <h2 className="mb-4 font-medium text-zinc-900">コメント（{report.comments.length}件）</h2>
           {report.comments.length === 0 ? (
             <p className="text-sm text-zinc-500">コメントはまだありません</p>
           ) : (

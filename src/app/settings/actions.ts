@@ -47,9 +47,7 @@ const UpdateMeSchema = z.object({
   name: z.string().min(1).max(100),
 });
 
-export async function updateMe(input: {
-  name: string;
-}): Promise<{ error?: string }> {
+export async function updateMe(input: { name: string }): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) return redirect("/login");
 

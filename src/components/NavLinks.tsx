@@ -14,7 +14,15 @@ function navLinkClass(isActive: boolean) {
     : "whitespace-nowrap rounded-md px-2.5 py-1 text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900";
 }
 
-function NavLink({ href, isActive, children }: { href: string; isActive: boolean; children: React.ReactNode }) {
+function NavLink({
+  href,
+  isActive,
+  children,
+}: {
+  href: string;
+  isActive: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <PendingLink href={href} className={navLinkClass(isActive)}>
       {children}
