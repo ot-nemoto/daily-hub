@@ -8,11 +8,7 @@ export const metadata = {
   title: "日報編集",
 };
 
-export default async function ReportEditPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ReportEditPage({ params }: { params: Promise<{ id: string }> }) {
   const [session, { id }] = await Promise.all([getSession({ redirectOnInactive: true }), params]);
 
   const report = await prisma.report.findUnique({

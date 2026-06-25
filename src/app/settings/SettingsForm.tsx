@@ -114,9 +114,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
             />
           </div>
           <ErrorMessage message={nameError} />
-          {nameSuccess && (
-            <p className="text-sm text-green-600">名前を更新しました</p>
-          )}
+          {nameSuccess && <p className="text-sm text-green-600">名前を更新しました</p>}
           <button
             type="submit"
             disabled={namePending}

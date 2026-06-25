@@ -17,13 +17,7 @@ type User = {
 
 type DeleteDialog = { userId: string; userName: string };
 
-export function UserTable({
-  users,
-  currentUserId,
-}: {
-  users: User[];
-  currentUserId: string;
-}) {
+export function UserTable({ users, currentUserId }: { users: User[]; currentUserId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
@@ -55,7 +49,7 @@ export function UserTable({
       // フォーカストラップ: Tab キーをダイアログ内に限定
       if (e.key === "Tab" && dialogRef.current) {
         const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+          'button:not([disabled]), input, [tabindex]:not([tabindex="-1"])',
         );
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
@@ -156,10 +150,7 @@ export function UserTable({
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {visibleUsers.map((user) => (
-              <tr
-                key={user.id}
-                className={`py-3 ${!user.isActive ? "opacity-50" : ""}`}
-              >
+              <tr key={user.id} className={`py-3 ${!user.isActive ? "opacity-50" : ""}`}>
                 <td className="py-3 pr-4 font-medium text-zinc-900">
                   {user.name}
                   {user.id === currentUserId && (
@@ -170,10 +161,7 @@ export function UserTable({
                 <td className="py-3 pr-4">
                   <select
                     value={user.role}
-                    disabled={
-                      user.id === currentUserId ||
-                      loading === `role-${user.id}`
-                    }
+                    disabled={user.id === currentUserId || loading === `role-${user.id}`}
                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
                     className="cursor-pointer rounded border border-zinc-200 bg-white px-2 py-1 text-xs disabled:opacity-50"
                   >
@@ -185,9 +173,7 @@ export function UserTable({
                 <td className="py-3 pr-4">
                   <span
                     className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      user.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-zinc-100 text-zinc-500"
+                      user.isActive ? "bg-green-100 text-green-700" : "bg-zinc-100 text-zinc-500"
                     }`}
                   >
                     {user.isActive ? "有効" : "無効"}
@@ -211,7 +197,11 @@ export function UserTable({
                             : "bg-green-50 text-green-700 hover:bg-green-100"
                         }`}
                       >
-                        {loading === `active-${user.id}` ? "更新中..." : user.isActive ? "無効化" : "有効化"}
+                        {loading === `active-${user.id}`
+                          ? "更新中..."
+                          : user.isActive
+                            ? "無効化"
+                            : "有効化"}
                       </button>
                     )}
                     {user.id !== currentUserId && (
@@ -245,7 +235,9 @@ export function UserTable({
             aria-labelledby="delete-dialog-title"
             className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl"
           >
-            <h2 id="delete-dialog-title" className="mb-2 text-base font-bold text-zinc-900">ユーザーを削除</h2>
+            <h2 id="delete-dialog-title" className="mb-2 text-base font-bold text-zinc-900">
+              ユーザーを削除
+            </h2>
             <p className="mb-4 text-sm text-zinc-600">
               <span className="font-medium text-zinc-900">{deleteDialog.userName}</span>{" "}
               を削除します。この操作は取り消せません。
@@ -256,24 +248,32 @@ export function UserTable({
               ref={inputRef}
               type="text"
               value={deleteNameInput}
-              onChange={(e) => { setDeleteNameInput(e.target.value); setDeleteError(""); }}
+              onChange={(e) => {
+                setDeleteNameInput(e.target.value);
+                setDeleteError("");
+              }}
               placeholder={deleteDialog.userName}
               className="mb-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-red-400 focus:outline-none"
             />
-            {deleteError && (
-              <p className="mb-3 text-xs text-red-600">{deleteError}</p>
-            )}
+            {deleteError && <p className="mb-3 text-xs text-red-600">{deleteError}</p>}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => { setDeleteDialog(null); setDeleteNameInput(""); setDeleteError(""); }}
+                onClick={() => {
+                  setDeleteDialog(null);
+                  setDeleteNameInput("");
+                  setDeleteError("");
+                }}
                 className="cursor-pointer rounded-md border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
               >
                 キャンセル
               </button>
               <button
                 type="button"
-                disabled={deleteNameInput !== deleteDialog.userName || loading === `delete-${deleteDialog.userId}`}
+                disabled={
+                  deleteNameInput !== deleteDialog.userName ||
+                  loading === `delete-${deleteDialog.userId}`
+                }
                 onClick={handleDelete}
                 className="cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >

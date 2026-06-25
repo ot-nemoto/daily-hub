@@ -31,9 +31,7 @@ export async function parseFieldErrors(res: Response): Promise<ParsedFieldErrors
     const flat = json.error as { formErrors?: string[]; fieldErrors?: Record<string, string[]> };
     const fieldErrors = flat.fieldErrors ?? {};
     const message =
-      flat.formErrors?.[0] ??
-      Object.values(fieldErrors).flat()[0] ??
-      "入力内容を確認してください";
+      flat.formErrors?.[0] ?? Object.values(fieldErrors).flat()[0] ?? "入力内容を確認してください";
     return { message, fieldErrors };
   }
   return { message: "入力内容を確認してください", fieldErrors: {} };

@@ -2,7 +2,16 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { currentMonth, formatDateJa, formatMonthJa, isValidDate, isValidMonth, monthRange, startOfTodayUtc, today } from "./dateUtils";
+import {
+  currentMonth,
+  formatDateJa,
+  formatMonthJa,
+  isValidDate,
+  isValidMonth,
+  monthRange,
+  startOfTodayUtc,
+  today,
+} from "./dateUtils";
 
 describe("startOfTodayUtc", () => {
   it("正常系: 時刻が UTC 00:00:00.000 であること", () => {
@@ -30,10 +39,10 @@ describe("isValidDate", () => {
   });
 
   it("フォーマットが不正な値を拒否する", () => {
-    expect(isValidDate("20250101")).toBe(false);   // ハイフンなし
+    expect(isValidDate("20250101")).toBe(false); // ハイフンなし
     expect(isValidDate("2025/01/01")).toBe(false); // スラッシュ区切り
-    expect(isValidDate("25-01-01")).toBe(false);   // 年2桁
-    expect(isValidDate("2025-1-1")).toBe(false);   // ゼロ埋めなし
+    expect(isValidDate("25-01-01")).toBe(false); // 年2桁
+    expect(isValidDate("2025-1-1")).toBe(false); // ゼロ埋めなし
     expect(isValidDate("")).toBe(false);
   });
 
@@ -137,10 +146,10 @@ describe("isValidMonth", () => {
   });
 
   it("フォーマットが不正な値を拒否する", () => {
-    expect(isValidMonth("202501")).toBe(false);   // ハイフンなし
-    expect(isValidMonth("2025/01")).toBe(false);  // スラッシュ区切り
-    expect(isValidMonth("25-01")).toBe(false);    // 年2桁
-    expect(isValidMonth("2025-1")).toBe(false);   // ゼロ埋めなし
+    expect(isValidMonth("202501")).toBe(false); // ハイフンなし
+    expect(isValidMonth("2025/01")).toBe(false); // スラッシュ区切り
+    expect(isValidMonth("25-01")).toBe(false); // 年2桁
+    expect(isValidMonth("2025-1")).toBe(false); // ゼロ埋めなし
     expect(isValidMonth("")).toBe(false);
   });
 

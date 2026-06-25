@@ -157,9 +157,7 @@ describe("POST /api/admin/reports", () => {
       const res = await POST(makeRequest([VALID_ITEM], VALID_API_KEY));
       expect(res.status).toBe(200);
       const json = await res.json();
-      expect(json.results).toEqual([
-        { date: "2026-06-01", id: "report-1", status: "created" },
-      ]);
+      expect(json.results).toEqual([{ date: "2026-06-01", id: "report-1", status: "created" }]);
     });
 
     it("既存日報への upsert で updated を返す", async () => {
@@ -219,9 +217,7 @@ describe("POST /api/admin/reports", () => {
       const { notes: _, ...itemWithoutNotes } = VALID_ITEM;
       const res = await POST(makeRequest([itemWithoutNotes], VALID_API_KEY));
       expect(res.status).toBe(200);
-      expect(upsertReportByAuthorId).toHaveBeenCalledWith(
-        expect.objectContaining({ notes: "" }),
-      );
+      expect(upsertReportByAuthorId).toHaveBeenCalledWith(expect.objectContaining({ notes: "" }));
     });
   });
 });

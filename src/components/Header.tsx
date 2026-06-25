@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AppIcon } from "./icons/AppIcon";
 import { NavLinks } from "./NavLinks";
 import { SettingsModalTrigger } from "./SettingsModalTrigger";
 import { SignOutButton } from "./SignOutButton";
@@ -21,12 +22,7 @@ export async function Header() {
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3 sm:gap-6">
           <Link href="/reports/new" className="shrink-0 flex items-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-7 w-7 shrink-0" aria-hidden="true">
-              <line x1="11" y1="10" x2="8"  y2="29" stroke="black" strokeWidth="2"   strokeLinecap="round"/>
-              <line x1="21" y1="10" x2="24" y2="29" stroke="black" strokeWidth="2"   strokeLinecap="round"/>
-              <polyline points="4,10 13,10 16,5 19,10 28,10" fill="none" stroke="black" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="11" y1="16" x2="21" y2="16" stroke="black" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
+            <AppIcon className="h-7 w-7 shrink-0" />
             <span className="text-base font-bold text-zinc-900">Daily Hub</span>
           </Link>
           <nav className="flex items-center gap-2 sm:gap-4">

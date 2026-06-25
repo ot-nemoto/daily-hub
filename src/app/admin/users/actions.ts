@@ -32,9 +32,7 @@ export async function updateUserAdmin(input: {
   }
 }
 
-export async function deleteUser(input: {
-  id: string;
-}): Promise<{ error?: string }> {
+export async function deleteUser(input: { id: string }): Promise<{ error?: string }> {
   const session = await getSession();
   if (session?.user.role !== "ADMIN") return redirect("/");
 

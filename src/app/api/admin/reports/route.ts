@@ -18,9 +18,7 @@ const ReportItemSchema = z.object({
   notes: z.string().max(5000).default(""),
 });
 
-const BulkReportSchema = z
-  .array(ReportItemSchema)
-  .min(1, "リクエストは1件以上必要です");
+const BulkReportSchema = z.array(ReportItemSchema).min(1, "リクエストは1件以上必要です");
 
 export async function POST(req: NextRequest) {
   // 1. Authorization ヘッダーから API キーを取得
@@ -54,10 +52,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = BulkReportSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0].message },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 422 });
   }
 
   // 5. ユニークな userName を事前に順次解決（並列 create による重複ユーザー作成を防ぐ）

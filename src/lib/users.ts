@@ -39,10 +39,7 @@ export async function updateUserAdmin(input: {
   return { id: updated.id };
 }
 
-export async function deleteUser(input: {
-  id: string;
-  currentUserId: string;
-}): Promise<void> {
+export async function deleteUser(input: { id: string; currentUserId: string }): Promise<void> {
   const { id, currentUserId } = input;
 
   // 自分自身の削除は禁止
@@ -66,9 +63,7 @@ export async function deleteUser(input: {
   ]);
 }
 
-export async function generateApiKey(input: {
-  id: string;
-}): Promise<{ apiKey: string }> {
+export async function generateApiKey(input: { id: string }): Promise<{ apiKey: string }> {
   const { id } = input;
 
   const user = await prisma.user.findUnique({ where: { id } });
@@ -84,9 +79,7 @@ export async function generateApiKey(input: {
   return { apiKey };
 }
 
-export async function revokeApiKey(input: {
-  id: string;
-}): Promise<void> {
+export async function revokeApiKey(input: { id: string }): Promise<void> {
   const { id } = input;
 
   const user = await prisma.user.findUnique({ where: { id } });

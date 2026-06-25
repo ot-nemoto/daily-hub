@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
-import { createComment as libCreateComment, deleteComment as libDeleteComment } from "@/lib/comments";
+import {
+  createComment as libCreateComment,
+  deleteComment as libDeleteComment,
+} from "@/lib/comments";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { updateReport as libUpdateReport } from "@/lib/reports";
 

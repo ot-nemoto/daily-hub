@@ -100,7 +100,9 @@ describe("GET /api/admin/users", () => {
       vi.mocked(prisma.user.findMany).mockResolvedValue(USERS_LIST as never);
       const res = await GET(makeRequest("admin-key"));
       const { users } = await res.json();
-      expect(Object.keys(users[0]).sort()).toEqual(["email", "id", "isActive", "name", "role"].sort());
+      expect(Object.keys(users[0]).sort()).toEqual(
+        ["email", "id", "isActive", "name", "role"].sort(),
+      );
     });
   });
 });

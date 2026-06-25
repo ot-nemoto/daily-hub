@@ -42,7 +42,11 @@ export function CommentForm({ reportId }: Props) {
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="mt-6 space-y-3 border-t border-zinc-100 pt-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      className="mt-6 space-y-3 border-t border-zinc-100 pt-6"
+    >
       <label htmlFor="body" className="block text-sm font-medium text-zinc-700">
         コメントを追加
       </label>

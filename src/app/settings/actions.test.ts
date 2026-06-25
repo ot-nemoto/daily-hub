@@ -20,7 +20,11 @@ describe("updateMe", () => {
 
   it("正常系: 名前を更新して空オブジェクトを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(session as never);
-    vi.mocked(libUpdateMe).mockResolvedValue({ id: "user-1", name: "新しい名前", email: "user@example.com" });
+    vi.mocked(libUpdateMe).mockResolvedValue({
+      id: "user-1",
+      name: "新しい名前",
+      email: "user@example.com",
+    });
 
     const result = await updateMe({ name: "新しい名前" });
 
