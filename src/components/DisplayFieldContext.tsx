@@ -10,10 +10,9 @@ const TABS: { key: DisplayField; label: string }[] = [
   { key: "notes", label: "感想/課題/問題点" },
 ];
 
-const DisplayFieldContext = createContext<[DisplayField, (f: DisplayField) => void]>([
-  "notes",
-  () => {},
-]);
+type DisplayFieldContextValue = [DisplayField, (f: DisplayField) => void];
+
+const DisplayFieldContext = createContext<DisplayFieldContextValue | null>(null);
 
 export function DisplayFieldProvider({ children }: { children: ReactNode }) {
   const [field, setField] = useState<DisplayField>("notes");
@@ -24,8 +23,12 @@ export function DisplayFieldProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useDisplayField() {
-  return useContext(DisplayFieldContext);
+export function useDisplayField(): DisplayFieldContextValue {
+  const ctx = useContext(DisplayFieldContext);
+  if (!ctx) {
+    throw new Error("useDisplayField must be used within a DisplayFieldProvider");
+  }
+  return ctx;
 }
 
 export function DisplayFieldTabs() {
