@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useDisplayField } from "./DisplayFieldContext";
+import { type DisplayField, useDisplayField } from "./DisplayFieldContext";
 import { PendingLink } from "./PendingLink";
 
 export type SearchableReport = {
@@ -24,7 +24,7 @@ type Props = {
   emptyMessage: string;
 };
 
-const FIELD_LABELS: Record<string, string> = {
+const FIELD_LABELS: Record<DisplayField, string> = {
   workContent: "本日の作業",
   tomorrowPlan: "明日の予定",
   notes: "感想/課題/問題点",
