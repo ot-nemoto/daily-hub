@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 
+import { DisplayFieldTabs } from "@/components/DisplayFieldContext";
 import { isValidMonth } from "@/lib/dateUtils";
 
 type User = { id: string; name: string };
@@ -181,6 +182,8 @@ export function MonthlyFilter({ currentMonth, currentAuthorId, users }: Props) {
           </div>
         )}
       </div>
+
+      <DisplayFieldTabs />
 
       {isPending && (
         <div
