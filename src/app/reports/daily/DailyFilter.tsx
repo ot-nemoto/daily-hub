@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
+import { DisplayFieldTabs } from "@/components/DisplayFieldContext";
 import { isValidDate } from "@/lib/dateUtils";
 
 type Props = {
@@ -42,17 +43,20 @@ export function DailyFilter({ currentDate }: Props) {
         <label htmlFor="date" className="block text-sm font-medium text-zinc-700">
           日付
         </label>
-        <input
-          id="date"
-          type="date"
-          value={date}
-          onChange={(e) => handleDateChange(e.target.value)}
-          className={`mt-1 rounded-md border px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-1 ${
-            dateError
-              ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-              : "border-zinc-300 focus:border-zinc-500 focus:ring-zinc-500"
-          }`}
-        />
+        <div className="mt-1 flex items-center gap-3">
+          <input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className={`rounded-md border px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-1 ${
+              dateError
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                : "border-zinc-300 focus:border-zinc-500 focus:ring-zinc-500"
+            }`}
+          />
+          <DisplayFieldTabs />
+        </div>
         {dateError && <p className="mt-1 text-xs text-red-500">正しい日付を入力してください</p>}
       </div>
       {isPending && (
