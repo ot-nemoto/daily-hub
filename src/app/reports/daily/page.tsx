@@ -1,5 +1,6 @@
 export const metadata = { title: "日次ビュー" };
 
+import { DisplayFieldProvider } from "@/components/DisplayFieldContext";
 import { ReportSearchList } from "@/components/ReportSearchList";
 import { getSession } from "@/lib/auth";
 import { formatDateJa, isValidDate, today } from "@/lib/dateUtils";
@@ -30,28 +31,30 @@ export default async function DailyViewPage({
   });
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-10">
-      <div className="mx-auto max-w-3xl space-y-6 px-4">
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h1 className="mb-4 text-lg font-bold text-zinc-900">日次ビュー</h1>
-          <DailyFilter currentDate={date} />
-        </div>
+    <DisplayFieldProvider>
+      <div className="min-h-screen bg-zinc-50 py-10">
+        <div className="mx-auto max-w-3xl space-y-6 px-4">
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <h1 className="mb-4 text-lg font-bold text-zinc-900">日次ビュー</h1>
+            <DailyFilter currentDate={date} />
+          </div>
 
-        <ReportSearchList
-          primary="authorName"
-          emptyMessage={`${formatDateJa(date)} の日報はありません`}
-          reports={reports.map((report) => ({
-            id: report.id,
-            date,
-            authorName: report.author.name,
-            workContent: report.workContent,
-            tomorrowPlan: report.tomorrowPlan,
-            notes: report.notes,
-            commentCount: report._count.comments,
-            isAuthor: session?.user?.id === report.authorId,
-          }))}
-        />
+          <ReportSearchList
+            primary="authorName"
+            emptyMessage={`${formatDateJa(date)} の日報はありません`}
+            reports={reports.map((report) => ({
+              id: report.id,
+              date,
+              authorName: report.author.name,
+              workContent: report.workContent,
+              tomorrowPlan: report.tomorrowPlan,
+              notes: report.notes,
+              commentCount: report._count.comments,
+              isAuthor: session?.user?.id === report.authorId,
+            }))}
+          />
+        </div>
       </div>
-    </div>
+    </DisplayFieldProvider>
   );
 }

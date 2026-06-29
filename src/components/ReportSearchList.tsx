@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { type DisplayField, useDisplayField } from "./DisplayFieldContext";
 import { PendingLink } from "./PendingLink";
 
 export type SearchableReport = {
@@ -23,6 +24,12 @@ type Props = {
   emptyMessage: string;
 };
 
+const FIELD_LABELS: Record<DisplayField, string> = {
+  workContent: "本日の作業",
+  tomorrowPlan: "明日の予定",
+  notes: "感想/課題/問題点",
+};
+
 function matches(report: SearchableReport, query: string, includeAuthor: boolean) {
   const q = query.toLowerCase();
   return (
@@ -35,6 +42,7 @@ function matches(report: SearchableReport, query: string, includeAuthor: boolean
 
 export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
   const [query, setQuery] = useState("");
+  const [displayField] = useDisplayField();
 
   const includeAuthor = primary === "authorName";
   const trimmed = query.trim();
@@ -105,9 +113,11 @@ export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
             <dl>
               <div>
                 <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-                  感想/課題/問題点
+                  {FIELD_LABELS[displayField]}
                 </dt>
-                <dd className="mt-0.5 whitespace-pre-wrap text-sm text-zinc-900">{report.notes}</dd>
+                <dd className="mt-0.5 whitespace-pre-wrap text-sm text-zinc-900">
+                  {report[displayField]}
+                </dd>
               </div>
             </dl>
           </div>
