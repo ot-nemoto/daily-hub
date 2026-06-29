@@ -34,11 +34,12 @@ export function useDisplayField(): DisplayFieldContextValue {
 export function DisplayFieldTabs() {
   const [field, setField] = useDisplayField();
   return (
-    <div className="flex gap-1">
+    <div role="group" aria-label="表示フィールド切り替え" className="flex gap-1">
       {TABS.map((tab) => (
         <button
           key={tab.key}
           type="button"
+          aria-pressed={tab.key === field}
           onClick={() => setField(tab.key)}
           className={`cursor-pointer rounded-md px-2 py-0.5 text-xs font-medium transition-colors ${
             tab.key === field
