@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "postinstall": "prisma generate && biome migrate --write",
+    "postinstall": "prisma generate",
+    "prepare": "biome migrate --write",
     "build": "next build",
     "start": "next start",
     "lint": "biome lint .",
