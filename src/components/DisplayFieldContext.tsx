@@ -34,7 +34,7 @@ export function useDisplayField(): DisplayFieldContextValue {
 export function DisplayFieldTabs() {
   const [field, setField] = useDisplayField();
   return (
-    <div role="group" aria-label="表示フィールド切り替え" className="flex gap-1">
+    <fieldset aria-label="表示フィールド切り替え" className="flex gap-1 border-none p-0 m-0">
       {TABS.map((tab) => (
         <button
           key={tab.key}
@@ -50,6 +50,6 @@ export function DisplayFieldTabs() {
           {tab.label}
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 }
