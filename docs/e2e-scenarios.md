@@ -247,7 +247,7 @@ curl -X POST http://localhost:3000/api/reports \
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
 | 1 | `bonjiri@example.com` | `/admin/users` で「無効化」「削除」ボタン、ロール変更セレクトにカーソルを当てる | pointer カーソル | すべての要素で pointer カーソルが表示される |
-| 2 | `tsukune@example.com` | `/reports/new` で「日報を作成」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
+| 2 | `tsukune@example.com` | `/reports/new` で「日報を作成」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 | 3 | `tsukune@example.com` | 日報詳細・編集モーダルの「保存する」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 | 4 | `tsukune@example.com` | 個人設定モーダルで各ボタン（保存する・生成する・再生成・失効・表示/隠す）にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 | 5 | `tsukune@example.com` | `/reports/daily` のユーザーフィルタ select にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
