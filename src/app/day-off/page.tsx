@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DayOffCalendar } from "./DayOffCalendar";
@@ -14,6 +16,7 @@ export default async function DayOffPage({
 }) {
   const session = await getSession({ redirectOnInactive: true });
   if (!session) return null;
+  if (session.user.role === "VIEWER") redirect("/reports/daily");
 
   const isAdmin = session.user.role === "ADMIN";
   const params = await searchParams;
