@@ -222,8 +222,9 @@
 
 **認可**
 
-- `userId` 省略または自分のID → 全ロール許可
-- 他ユーザーのID → ADMIN のみ許可（MEMBER/VIEWER は拒否）
+- VIEWER は常に拒否
+- `userId` 省略または自分のID → ADMIN / MEMBER のみ許可
+- 他ユーザーのID → ADMIN のみ許可（MEMBER は拒否）
 - 指定ユーザーが存在しない → エラー
 
 **戻り値**
