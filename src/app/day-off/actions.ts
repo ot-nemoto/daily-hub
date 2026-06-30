@@ -39,6 +39,7 @@ export async function addDayOff(input: {
 }): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) return redirect("/login");
+  if (session.user.role === "VIEWER") return { error: "休日を登録する権限がありません" };
 
   const parsed = DateString.safeParse(input.date);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
