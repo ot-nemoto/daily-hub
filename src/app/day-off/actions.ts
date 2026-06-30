@@ -67,6 +67,7 @@ export async function removeDayOff(input: {
 }): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) return redirect("/login");
+  if (session.user.role === "VIEWER") return { error: "休日を解除する権限がありません" };
 
   const parsed = DateString.safeParse(input.date);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
