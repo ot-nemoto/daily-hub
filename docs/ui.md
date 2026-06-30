@@ -299,7 +299,9 @@ src/app/layout.tsx（RootLayout）
             ├─ src/app/admin/layout.tsx（AdminLayout）
             │    Header
             │    └─ /admin/* の各ページ
-            ├─ src/app/day-off/page.tsx                   Header を直接インポートして使用
+            ├─ src/app/day-off/layout.tsx（DayOffLayout）
+            │    Header
+            │    └─ /day-off/* の各ページ
             └─ src/app/settings/page.tsx                  Header を直接インポートして使用
 ```
 
