@@ -148,46 +148,19 @@
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
 | 1 | `tsukune@example.com` | `/reports/new` にアクセスする | 日付デフォルト値 | 日付フィールドに今日の日付が入力されている |
-| 2 | `tsukune@example.com` | 業務内容・明日の予定・所感を入力して「保存」をクリックする | 作成成功 | 日報詳細ページに遷移し、入力内容が表示される |
+| 2 | `tsukune@example.com` | 業務内容・明日の予定・所感を入力して「保存」をクリックする | 作成成功 | 登録した日付の月次ビュー（自分の月報）に遷移し、作成した日報が一覧に表示される |
 | 3 | `tsukune@example.com` | 作成後に `/reports/daily` を確認する | 日次ビューへの反映 | 作成した日報がデイリービューに表示される |
 | 4 | `tsukune@example.com` | 業務内容を空にして「保存」をクリックする | 必須バリデーション | エラーが表示され保存されない |
 | 5 | `tsukune@example.com` | 明日の予定を空にして「保存」をクリックする | 必須バリデーション | エラーが表示され保存されない |
 | 6 | `tsukune@example.com` | 同じ日付で2件目の日報を作成しようとする | 重複チェック | 409 エラーが表示される |
 | 7 | `tsukune@example.com` | 「保存」をクリックした直後にボタンを確認する | 送信中の状態 | ボタンが「保存中...」に変わり無効化される |
 | 8 | `nankotsu@example.com` | `/reports/new` にアクセスする | VIEWER のアクセス制御 | `/reports/daily` にリダイレクトされる |
-| 9 | `tsukune@example.com` | 「キャンセル」ボタンをクリックする | キャンセル遷移 | `/reports/daily` に戻る |
-
----
-
-## 日報詳細
-
-| # | ユーザー | 手順 | 確認観点 | 期待値 |
-|---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | 自分の日報詳細ページを開く | コンテンツ表示 | 業務内容・明日の予定・所感が正しく表示される |
-| 2 | `tsukune@example.com` | 自分の日報詳細ページを開く | 編集ボタン表示 | 「編集」ボタンが表示される |
-| 3 | `tsukune@example.com` | tebasaki の日報詳細ページを開く | 他ユーザーへの編集ボタン非表示 | 「編集」ボタンが表示されない |
-| 4 | `tsukune@example.com` | コメントがない日報の詳細ページを開く | 空コメント表示 | 「コメントはありません」と表示される |
-| 5 | `tsukune@example.com` | 存在しない ID（例: `/reports/nonexistent`）にアクセスする | 404 表示 | 404 ページが表示される |
-
----
-
-## 日報編集
-
-| # | ユーザー | 手順 | 確認観点 | 期待値 |
-|---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | 自分の日報の編集ページを開く | 既存データの表示 | 現在の業務内容・明日の予定・所感が入力欄に表示される |
-| 2 | `tsukune@example.com` | 内容を変更して「保存」をクリックする | 編集の反映 | 詳細ページに変更後の内容が表示される |
-| 3 | `tsukune@example.com` | 「キャンセル」をクリックする | キャンセル遷移 | `/reports/[id]` に戻り、変更は反映されない |
-| 4 | `tsukune@example.com` | tebasaki の日報の編集 URL（`/reports/[id]/edit`）に直接アクセスする | 他ユーザーの編集ガード | `/reports/[id]` にリダイレクトされる |
-| 5 | `tsukune@example.com` | 「保存」をクリックした直後にボタンを確認する | 送信中の状態 | ボタンが「保存中...」に変わり無効化される |
-
----
 
 ## コメント
 
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
-| 1 | `tsukune@example.com` | 日報詳細でコメントを入力して送信する | コメント投稿 | コメント一覧に追加される |
+| 1 | `tsukune@example.com` | 日報詳細・編集モーダルでコメントを入力して送信する | コメント投稿 | コメント一覧に追加される |
 | 2 | `tsukune@example.com` | コメント入力欄を空にして送信する | 必須バリデーション | 投稿できない |
 | 3 | `tsukune@example.com` | 1001文字のコメントを入力して送信する | 文字数バリデーション | 投稿できない |
 | 4 | `tsukune@example.com` | 自分が投稿したコメントを確認する | 削除ボタン表示 | 削除ボタンが表示される |
@@ -274,8 +247,8 @@ curl -X POST http://localhost:3000/api/reports \
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
 | 1 | `bonjiri@example.com` | `/admin/users` で「無効化」「削除」ボタン、ロール変更セレクトにカーソルを当てる | pointer カーソル | すべての要素で pointer カーソルが表示される |
-| 2 | `tsukune@example.com` | `/reports/new` で「日報を作成」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
-| 3 | `tsukune@example.com` | `/reports/[id]/edit` で「保存する」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
+| 2 | `tsukune@example.com` | `/reports/new` で「日報を作成」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
+| 3 | `tsukune@example.com` | 日報詳細・編集モーダルの「保存する」「キャンセル」ボタンにカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 | 4 | `tsukune@example.com` | 個人設定モーダルで各ボタン（保存する・生成する・再生成・失効・表示/隠す）にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 | 5 | `tsukune@example.com` | `/reports/daily` のユーザーフィルタ select にカーソルを当てる | pointer カーソル | pointer カーソルが表示される |
 
@@ -286,7 +259,7 @@ curl -X POST http://localhost:3000/api/reports \
 | # | ユーザー | 手順 | 確認観点 | 期待値 |
 |---|---------|------|---------|-------|
 | 1 | `tsukune@example.com` → `tebasaki@example.com` | tsukune でログインして日次ビューを確認後、ログアウトして tebasaki でログインする | 日報の分離 | tebasaki 視点では自分の日報と他ユーザーの日報が表示されるが、編集できるのは自分の日報のみ |
-| 2 | `tebasaki@example.com` | tsukune の日報編集 URL（`/reports/[id]/edit`）に直接アクセスする | 他ユーザーの編集ガード | `/reports/[id]` にリダイレクトされる |
+| 2 | `tebasaki@example.com` | 日次ビューで tsukune の日報を開き「編集」ボタンを確認する | 他ユーザーへの編集ボタン非表示 | tsukune の日報には「編集」ボタンが表示されない |
 | 3 | `tsukune@example.com` → `tebasaki@example.com` | tsukune でコメントを投稿後、ログアウトして tebasaki でログインしてそのコメントを確認する | コメントの削除ボタン分離 | tebasaki には tsukune のコメントの削除ボタンが表示されない |
 | 4 | `tsukune@example.com` → `tebasaki@example.com` | tsukune の個人設定モーダルで APIキーを確認後、ログアウトして tebasaki でログインし個人設定モーダルを確認する | APIキーの分離 | tebasaki には tsukune の APIキーが表示されない |
 
