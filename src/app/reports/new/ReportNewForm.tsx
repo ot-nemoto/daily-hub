@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ErrorMessage } from "@/components/ErrorMessage";
-import { today } from "@/lib/dateUtils";
+import { monthRange, today } from "@/lib/dateUtils";
 import { createReport } from "../actions";
 
 const MAX_LENGTH = 5000;
@@ -32,7 +32,9 @@ export function ReportNewForm() {
       if (result.error) {
         setError(result.error);
       } else {
-        router.push(`/reports/${result.id}`);
+        const date = data.get("date") as string;
+        const { from, to } = monthRange(date.slice(0, 7));
+        router.push(`/reports/monthly?from=${from}&to=${to}`);
       }
     } catch {
       setError("保存に失敗しました。時間をおいて再度お試しください");
@@ -114,13 +116,6 @@ export function ReportNewForm() {
         </p>
       </div>
       <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-        >
-          キャンセル
-        </button>
         <button
           type="submit"
           disabled={pending}
