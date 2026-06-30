@@ -3,6 +3,7 @@ export const metadata = { title: "提出状況" };
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { type Period, StatusFilter } from "./StatusFilter";
+import { StatusTableScroll } from "./StatusTableScroll";
 
 const PERIOD_DAYS: Record<Period, number> = {
   "1w": 7,
@@ -79,7 +80,7 @@ export default async function StatusPage({
 
   const dates = buildDateList(fromDate, baseDate);
 
-  const [users, reports] = await Promise.all([
+  const [users, reports, dayOffs] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
@@ -89,10 +90,21 @@ export default async function StatusPage({
       where: { date: { gte: fromDate, lte: baseDate } },
       select: { authorId: true, date: true },
     }),
+    prisma.dayOff.findMany({
+      where: { date: { gte: fromDate, lte: baseDate } },
+      select: { userId: true, date: true },
+    }),
   ]);
 
   // 提出済みセットを (authorId_YYYY-MM-DD) で管理
   const submitted = new Set(reports.map((r) => `${r.authorId}_${formatDate(r.date)}`));
+  // 休日セットを (userId_YYYY-MM-DD) で管理
+  const dayOffSet = new Set(dayOffs.map((d) => `${d.userId}_${formatDate(d.date)}`));
+  // 平日の日付リスト（提出率算出用）
+  const weekdays = dates.filter((d) => {
+    const dow = d.getUTCDay();
+    return dow !== 0 && dow !== 6;
+  });
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -103,15 +115,12 @@ export default async function StatusPage({
       {users.length === 0 ? (
         <p className="text-sm text-zinc-500">有効なユーザーがいません。</p>
       ) : (
-        <div className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-zinc-200 bg-white">
+        <StatusTableScroll>
           <table className="border-collapse text-xs">
             <thead>
               <tr className="border-b border-zinc-200">
-                <th className="sticky left-0 top-0 z-30 w-32 border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
+                <th className="sticky left-0 top-0 z-30 w-48 min-w-[12rem] border-r border-zinc-200 bg-white px-3 py-2 text-left font-medium text-zinc-500">
                   ユーザー
-                </th>
-                <th className="sticky left-32 top-0 z-30 min-w-[4rem] border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-500">
-                  提出率
                 </th>
                 {dates.map((d) => {
                   const dow = d.getUTCDay();
@@ -132,22 +141,28 @@ export default async function StatusPage({
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {users.map((user) => {
-                const submittedCount = dates.filter((d) =>
-                  submitted.has(`${user.id}_${formatDate(d)}`),
+                const userDayOffCount = weekdays.filter((d) =>
+                  dayOffSet.has(`${user.id}_${formatDate(d)}`),
                 ).length;
-                const rate =
-                  dates.length > 0 ? Math.floor((submittedCount / dates.length) * 100) : 0;
+                const denominator = weekdays.length - userDayOffCount;
+                const submittedCount = weekdays.filter(
+                  (d) =>
+                    submitted.has(`${user.id}_${formatDate(d)}`) &&
+                    !dayOffSet.has(`${user.id}_${formatDate(d)}`),
+                ).length;
+                const rate = denominator > 0 ? Math.floor((submittedCount / denominator) * 100) : 0;
                 return (
                   <tr key={user.id} className="hover:bg-zinc-50">
-                    <td className="sticky left-0 z-10 w-32 max-w-[8rem] truncate border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
-                      {user.name}
-                    </td>
-                    <td className="sticky left-32 z-10 border-r border-zinc-200 bg-white px-3 py-2 text-center font-medium text-zinc-700 hover:bg-zinc-50">
-                      {rate}%
+                    <td className="sticky left-0 z-10 w-48 min-w-[12rem] max-w-[12rem] border-r border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-900 hover:bg-zinc-50">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate">{user.name}</span>
+                        <span className="shrink-0 font-normal text-zinc-500">{rate}%</span>
+                      </div>
                     </td>
                     {dates.map((d) => {
                       const key = `${user.id}_${formatDate(d)}`;
                       const done = submitted.has(key);
+                      const isDayOff = dayOffSet.has(key);
                       const dow = d.getUTCDay();
                       const isWeekend = dow === 0 || dow === 6;
                       return (
@@ -157,7 +172,11 @@ export default async function StatusPage({
                             isWeekend ? "bg-zinc-50" : ""
                           }`}
                         >
-                          {done ? (
+                          {isDayOff ? (
+                            <span className="inline-block rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                              休
+                            </span>
+                          ) : done ? (
                             <span className="inline-block rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">
                               ✓
                             </span>
@@ -172,7 +191,7 @@ export default async function StatusPage({
               })}
             </tbody>
           </table>
-        </div>
+        </StatusTableScroll>
       )}
     </main>
   );

@@ -27,7 +27,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   const dateStr = report.date.toISOString().slice(0, 10);
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-10">
+    <div className="bg-zinc-50 py-10">
       <div className="mx-auto max-w-2xl space-y-6 px-4">
         <div className="rounded-lg bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
