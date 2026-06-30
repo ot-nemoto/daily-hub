@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getSession } from "@/lib/auth";
+import { createDayOff, deleteDayOff } from "@/lib/day-off";
+import { ConflictError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
 const DateString = z
@@ -50,15 +52,10 @@ export async function addDayOff(input: {
 
   const date = new Date(`${parsed.data}T00:00:00.000Z`);
 
-  const existing = await prisma.dayOff.findUnique({
-    where: { userId_date: { userId: targetUserId, date } },
-  });
-  if (existing) return { error: "この日付はすでに休日として登録されています" };
-
   try {
-    await prisma.dayOff.create({ data: { userId: targetUserId, date } });
+    await createDayOff({ userId: targetUserId, date });
   } catch (error) {
-    if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2002") {
+    if (error instanceof ConflictError) {
       return { error: "この日付はすでに休日として登録されています" };
     }
     throw error;
@@ -85,8 +82,7 @@ export async function removeDayOff(input: {
 
   const date = new Date(`${parsed.data}T00:00:00.000Z`);
 
-  // userId でスコープするため、未登録日付を指定しても 0 件削除で安全に無視される
-  await prisma.dayOff.deleteMany({ where: { userId: targetUserId, date } });
+  await deleteDayOff({ userId: targetUserId, date });
 
   revalidatePath("/day-off");
   return {};
