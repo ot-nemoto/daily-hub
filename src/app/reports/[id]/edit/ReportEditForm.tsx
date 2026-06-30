@@ -6,18 +6,24 @@ import { useState } from "react";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import { updateReport } from "../actions";
 
+type FormValues = {
+  workContent: string;
+  tomorrowPlan: string;
+  notes: string;
+};
+
 type Props = {
   id: string;
-  defaultValues: {
-    workContent: string;
-    tomorrowPlan: string;
-    notes: string;
-  };
+  defaultValues: FormValues;
+  /* モーダルから利用する場合に保存成功時の挙動を差し替える。未指定なら詳細ページへ遷移する */
+  onSuccess?: (values: FormValues) => void;
+  /* モーダルから利用する場合のキャンセル挙動。未指定なら詳細ページへ遷移する */
+  onCancel?: () => void;
 };
 
 const MAX_LENGTH = 5000;
 
-export function ReportEditForm({ id, defaultValues }: Props) {
+export function ReportEditForm({ id, defaultValues, onSuccess, onCancel }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -33,16 +39,18 @@ export function ReportEditForm({ id, defaultValues }: Props) {
     setError(null);
 
     const data = new FormData(e.currentTarget);
+    const values: FormValues = {
+      workContent: data.get("workContent") as string,
+      tomorrowPlan: data.get("tomorrowPlan") as string,
+      notes: (data.get("notes") as string) ?? "",
+    };
     try {
-      const result = await updateReport({
-        id,
-        workContent: data.get("workContent") as string,
-        tomorrowPlan: data.get("tomorrowPlan") as string,
-        notes: (data.get("notes") as string) ?? "",
-      });
+      const result = await updateReport({ id, ...values });
 
       if (result.error) {
         setError(result.error);
+      } else if (onSuccess) {
+        onSuccess(values);
       } else {
         router.push(`/reports/${id}`);
       }
@@ -118,7 +126,7 @@ export function ReportEditForm({ id, defaultValues }: Props) {
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={() => router.push(`/reports/${id}`)}
+          onClick={() => (onCancel ? onCancel() : router.push(`/reports/${id}`))}
           className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
         >
           キャンセル

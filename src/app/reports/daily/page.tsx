@@ -42,6 +42,7 @@ export default async function DailyViewPage({
           <ReportSearchList
             primary="authorName"
             emptyMessage={`${formatDateJa(date)} の日報はありません`}
+            currentUserId={session?.user?.id ?? ""}
             reports={reports.map((report) => ({
               id: report.id,
               date,

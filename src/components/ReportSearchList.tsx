@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { type DisplayField, useDisplayField } from "./DisplayFieldContext";
-import { PendingLink } from "./PendingLink";
+import { ReportDetailModal } from "./ReportDetailModal";
 
 export type SearchableReport = {
   id: string;
@@ -22,6 +22,7 @@ type Props = {
   primary: "authorName" | "date";
   /* 日報が1件もない場合のメッセージ（検索0件とは区別する） */
   emptyMessage: string;
+  currentUserId: string;
 };
 
 const FIELD_LABELS: Record<DisplayField, string> = {
@@ -40,9 +41,13 @@ function matches(report: SearchableReport, query: string, includeAuthor: boolean
   );
 }
 
-export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
+export function ReportSearchList({ reports, primary, emptyMessage, currentUserId }: Props) {
   const [query, setQuery] = useState("");
   const [displayField] = useDisplayField();
+  const [modal, setModal] = useState<{
+    report: SearchableReport;
+    mode: "detail" | "edit";
+  } | null>(null);
 
   const includeAuthor = primary === "authorName";
   const trimmed = query.trim();
@@ -95,19 +100,21 @@ export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
                   <span className="text-xs text-zinc-400">💬 {report.commentCount}</span>
                 )}
                 {report.isAuthor && (
-                  <PendingLink
-                    href={`/reports/${report.id}/edit`}
-                    className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  <button
+                    type="button"
+                    onClick={() => setModal({ report, mode: "edit" })}
+                    className="cursor-pointer rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
                   >
                     編集
-                  </PendingLink>
+                  </button>
                 )}
-                <PendingLink
-                  href={`/reports/${report.id}`}
-                  className="rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700"
+                <button
+                  type="button"
+                  onClick={() => setModal({ report, mode: "detail" })}
+                  className="cursor-pointer rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700"
                 >
                   詳細
-                </PendingLink>
+                </button>
               </div>
             </div>
             <dl>
@@ -122,6 +129,15 @@ export function ReportSearchList({ reports, primary, emptyMessage }: Props) {
             </dl>
           </div>
         ))
+      )}
+
+      {modal && (
+        <ReportDetailModal
+          report={modal.report}
+          initialMode={modal.mode}
+          currentUserId={currentUserId}
+          onClose={() => setModal(null)}
+        />
       )}
     </div>
   );

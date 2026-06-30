@@ -59,6 +59,7 @@ export default async function MonthlyViewPage({
           <ReportSearchList
             primary="date"
             emptyMessage={`${formatMonthJa(displayMonth)} の日報はありません`}
+            currentUserId={session?.user?.id ?? ""}
             reports={reports.map((report) => ({
               id: report.id,
               date: report.date.toISOString().slice(0, 10),
