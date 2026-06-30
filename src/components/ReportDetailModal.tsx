@@ -72,8 +72,12 @@ export function ReportDetailModal({
     getReportComments(report.id)
       .then((res) => {
         if (!active) return;
-        if (res.comments) setComments(res.comments);
-        else setCommentsError(true);
+        if (res.comments) {
+          setComments(res.comments);
+          setCommentsError(false);
+        } else {
+          setCommentsError(true);
+        }
       })
       .catch(() => {
         if (active) setCommentsError(true);
