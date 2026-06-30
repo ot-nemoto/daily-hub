@@ -40,7 +40,7 @@ export function DayOffUserSelect({ users, currentUserId }: Props) {
   function selectUser(userId: string) {
     setOpen(false);
     setQuery("");
-    router.push(`/day-off?userId=${userId}`);
+    router.push(`/day-off?${new URLSearchParams({ userId }).toString()}`);
   }
 
   return (
