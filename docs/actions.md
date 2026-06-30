@@ -11,6 +11,7 @@
 |--------|---------|------|------|
 | `createReport` | `src/app/reports/actions.ts` | 日報作成 | VIEWER 以外（MEMBER・ADMIN） |
 | `updateReport` | `src/app/reports/[id]/actions.ts` | 日報編集 | 本人かつ VIEWER 以外（MEMBER・ADMIN） |
+| `getReportComments` | `src/app/reports/[id]/actions.ts` | 日報コメント一覧の取得 | 要ログイン |
 | `createComment` | `src/app/reports/[id]/actions.ts` | コメント追加 | 要ログイン |
 | `deleteComment` | `src/app/reports/[id]/actions.ts` | コメント削除 | 本人のみ |
 | `updateMe` | `src/app/settings/actions.ts` | プロフィール更新 | 要ログイン |
@@ -85,6 +86,34 @@
 ---
 
 ## コメント
+
+### `getReportComments`
+
+**ファイル:** `src/app/reports/[id]/actions.ts`
+
+日報詳細・編集モーダルがコメント一覧を遅延取得するために使用する。
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `reportId` | `string` | YES | 日報 ID |
+
+**戻り値**
+
+```ts
+{ comments?: ReportComment[]; error?: string }
+```
+
+`ReportComment` は `{ id; body; authorId; authorName; createdAt }`（`createdAt` は ISO 文字列）。
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| （なし） | 未認証時は `/login` にリダイレクトする |
+
+---
 
 ### `createComment`
 

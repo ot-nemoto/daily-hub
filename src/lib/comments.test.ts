@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/prisma";
 
-import { createComment, deleteComment } from "./comments";
+import { createComment, deleteComment, getComments } from "./comments";
 import { ForbiddenError, NotFoundError } from "./errors";
 
 vi.mock("@/lib/prisma", () => ({
@@ -12,12 +12,33 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
     },
     comment: {
+      findMany: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       delete: vi.fn(),
     },
   },
 }));
+
+describe("getComments", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: 指定した日報のコメントを作成日時の昇順で取得する", async () => {
+    const rows = [
+      { id: "comment-1", body: "1件目", createdAt: new Date(), author: { id: "u1", name: "太郎" } },
+    ];
+    vi.mocked(prisma.comment.findMany).mockResolvedValue(rows as never);
+
+    const result = await getComments("report-1");
+
+    expect(result).toBe(rows);
+    expect(prisma.comment.findMany).toHaveBeenCalledWith({
+      where: { reportId: "report-1" },
+      include: { author: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+  });
+});
 
 describe("createComment", () => {
   const input = {

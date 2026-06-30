@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { PendingLink } from "@/components/PendingLink";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { BackButton } from "./BackButton";
 import { CommentDeleteButton } from "./CommentDeleteButton";
 import { CommentForm } from "./CommentForm";
 
@@ -29,6 +30,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   return (
     <div className="bg-zinc-50 py-10">
       <div className="mx-auto max-w-2xl space-y-6 px-4">
+        <BackButton />
         <div className="rounded-lg bg-white p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <div>

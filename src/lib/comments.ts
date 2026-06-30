@@ -2,6 +2,14 @@ import { prisma } from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "./errors";
 
+export async function getComments(reportId: string) {
+  return prisma.comment.findMany({
+    where: { reportId },
+    include: { author: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
 export async function createComment(input: {
   reportId: string;
   authorId: string;

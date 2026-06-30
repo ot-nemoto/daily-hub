@@ -32,6 +32,7 @@ flowchart TD
     NEW[日報作成]:::screen
     DETAIL[日報詳細]:::screen
     EDIT[日報編集]:::screen
+    MODAL[日報詳細・編集モーダル]:::screen
     SETTINGS[個人設定]:::screen
     ADMIN_USERS[ユーザー管理]:::screen
     DAY_OFF[休日管理]:::screen
@@ -40,10 +41,8 @@ flowchart TD
     LOGIN -->|別 Clerk ID に紐付き済み| AUTH_ERROR
     AUTH_ERROR -->|サインアウト| LOGIN
 
-    DAILY -->|詳細| DETAIL
-    DAILY -->|編集 自分の日報のみ| EDIT
-    MONTHLY -->|詳細| DETAIL
-    MONTHLY -->|編集 自分の日報のみ| EDIT
+    DAILY -->|詳細・編集| MODAL
+    MONTHLY -->|詳細・編集| MODAL
 
     NEW -->|作成成功| DETAIL
     NEW -->|キャンセル| DAILY
@@ -94,8 +93,8 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 |------|------|
 | 日付フィルター | 日付入力（`<input type="date">`）。有効値で即時反映、不正値は赤枠表示 |
 | 日報カード | 感想/課題/問題点を全文表示（改行保持）。コメント件数も表示 |
-| 編集ボタン | 自分の日報のみ表示 |
-| 詳細ボタン | 全員の日報に表示。日報詳細へ遷移 |
+| 編集ボタン | 自分の日報のみ表示。クリックで詳細・編集モーダルを編集モードで開く |
+| 詳細ボタン | 全員の日報に表示。クリックで詳細・編集モーダルを開く（ページ遷移なし） |
 
 ### 月次ビュー（`/reports/monthly`）
 
@@ -105,7 +104,22 @@ Clerk の SignIn UI を表示する。メールアドレス＋パスワードで
 |------|------|
 | 月フィルター | 月入力（`<input type="month">`）。有効値で即時反映、不正値は赤枠表示 |
 | ユーザーフィルター | 検索付きコンボボックス。テキスト入力でインクリメンタル絞り込み。デフォルトは自分 |
-| 日報カード | 日付・作成者・感想/課題/問題点を全文表示（改行保持） |
+| 日報カード | 日付・作成者・感想/課題/問題点を全文表示（改行保持）。詳細・編集ボタンで詳細・編集モーダルを開く |
+
+### 日報詳細・編集モーダル
+
+日次・月次ビューの一覧から「詳細」「編集」ボタンで開くクライアント側モーダル。URL は変更せず、一覧のコンテキストを保ったまま詳細確認・編集ができる。
+
+| 機能 | 説明 |
+|------|------|
+| 日報表示 | 一覧が保持する report データをそのまま表示（作業内容・明日の予定・所感） |
+| コメント一覧 | モーダルを開いた時にサーバーアクション（`getReportComments`）で遅延取得して表示（Loading / Empty / Error の3状態あり） |
+| コメント追加 | モーダル内の `CommentForm` から投稿。送信後 `getReportComments` で再取得しコメント一覧を更新、`router.refresh()` で一覧のコメント件数を同期 |
+| コメント削除 | 自分のコメントのみ「削除」ボタンを表示。削除後クライアント側 state から除去して即時反映、`router.refresh()` で一覧のコメント件数を同期 |
+| 編集切り替え | 本人の日報のみ「編集」ボタンを表示。同一モーダル内で編集フォームに切り替え、保存成功でモーダル内の表示を更新して一覧を `router.refresh()` で同期 |
+| 閉じる操作 | ×ボタン・背景クリック・Escape キー |
+
+> 既存の `/reports/[id]` および `/reports/[id]/edit` ページは直リンク用に残す。
 
 ### 日報作成（`/reports/new`）
 
@@ -324,6 +338,8 @@ src/app/layout.tsx（RootLayout）
 | `Header` | Server Component | ナビゲーション・ユーザー名・ログアウト。ロールに応じてメニュー変化 | ReportsLayout, AdminLayout, SettingsPage |
 | `SignOutButton` | Client Component | Clerk SignOutButton のラッパー。ログアウト後 `/login` にリダイレクト | Header, AuthErrorPage |
 | `ErrorMessage` | Server/Client 両対応 | `message: string \| null` を受け取り、null なら非表示。エラー表示に統一して使用 | ReportNewForm, ReportEditForm, SettingsForm 等 |
+| `ReportSearchList` | Client Component | 日報カード一覧＋検索。詳細・編集ボタンで `ReportDetailModal` を開く | 日次ビュー, 月次ビュー |
+| `ReportDetailModal` | Client Component | 日報の詳細・編集モーダル。コメントを遅延取得し追加・削除まで完結、`ReportEditForm` を内包し編集モードへ切り替え | ReportSearchList |
 
 ### ページ内コンポーネント
 
@@ -332,9 +348,9 @@ src/app/layout.tsx（RootLayout）
 | `DailyFilter` | Client Component | 日次ビューの日付フィルター。変更時に `router.push()` |
 | `MonthlyFilter` | Client Component | 月次ビューの月・ユーザー絞り込み。ユーザー選択は検索付きコンボボックス。変更時に `router.push()` |
 | `ReportNewForm` | Client Component | 日報作成フォーム。送信後 `/reports/[id]` にリダイレクト |
-| `ReportEditForm` | Client Component | 日報編集フォーム。送信後 `/reports/[id]` にリダイレクト |
-| `CommentForm` | Client Component | コメント追加フォーム。送信後ページをリロード |
-| `CommentDeleteButton` | Client Component | コメント削除ボタン。本人のコメントのみ表示 |
+| `ReportEditForm` | Client Component | 日報編集フォーム。デフォルトは送信後 `/reports/[id]` にリダイレクト。`onSuccess`/`onCancel` 指定時はコールバック動作（モーダルから利用） |
+| `CommentForm` | Client Component | コメント追加フォーム。`onCreated` コールバック指定時はコールバック動作（モーダルから利用）、未指定時は `router.refresh()` |
+| `CommentDeleteButton` | Client Component | コメント削除ボタン。本人のコメントのみ表示。`onDeleted` コールバック指定時はコールバック動作（モーダルから利用）、未指定時は `router.refresh()` |
 | `UserTable` | Client Component | ユーザー一覧テーブル。ロール変更・有効化/無効化操作を含む |
 | `SettingsForm` | Client Component | 名前変更フォーム |
 
