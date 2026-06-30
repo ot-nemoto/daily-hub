@@ -95,7 +95,12 @@ export function ReportDetailModal({
 
   async function handleCommentCreated() {
     const res = await getReportComments(report.id);
-    if (res.comments) setComments(res.comments);
+    if (res.comments) {
+      setComments(res.comments);
+      setCommentsError(false);
+    } else {
+      setCommentsError(true);
+    }
     router.refresh();
   }
 
