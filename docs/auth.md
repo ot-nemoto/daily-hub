@@ -106,6 +106,14 @@ const userId = session?.user?.id;
 | `/api/reports/**` | 不要 | 外部連携用 REST API。`/api/reports` 本体および配下のサブパスは、Clerk 認証ではなく APIキー認証（`Authorization: Bearer`）で認可する |
 | その他全パス | **必須** | 未認証なら Clerk が `/login` へリダイレクト |
 
+### アクションレベルの認可
+
+ルート認証（ログイン必須）とは別に、Server Actions でロールベースの認可を行う。
+
+| アクション | 自分への操作 | 他ユーザーへの操作 |
+|-----------|-----------|----------------|
+| `addDayOff` / `removeDayOff` | 全ロール許可 | ADMIN のみ許可 |
+
 ---
 
 ## 環境変数

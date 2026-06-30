@@ -49,6 +49,9 @@ export function NavLinks({ role }: Props) {
       <NavLink href="/reports/status" isActive={pathname.startsWith("/reports/status")}>
         提出状況
       </NavLink>
+      <NavLink href="/day-off" isActive={pathname.startsWith("/day-off")}>
+        休日管理
+      </NavLink>
       {role === "ADMIN" && (
         <NavLink href="/admin/users" isActive={pathname.startsWith("/admin")}>
           ユーザー管理

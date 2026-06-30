@@ -25,7 +25,7 @@ export default async function ReportEditPage({ params }: { params: Promise<{ id:
   if (report.authorId !== session?.user?.id) redirect(`/reports/${id}`);
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-4 py-10">
+    <div className="bg-zinc-50 px-4 py-10">
       <div className="mx-auto max-w-2xl rounded-lg bg-white p-8 shadow-sm">
         <h1 className="mb-6 text-xl font-bold text-zinc-900">日報編集</h1>
         <ReportEditForm

@@ -18,6 +18,8 @@
 | `revokeApiKey` | `src/app/settings/actions.ts` | APIキー失効 | 要ログイン |
 | `updateUserAdmin` | `src/app/admin/users/actions.ts` | ユーザー情報更新 | ADMIN のみ |
 | `deleteUser` | `src/app/admin/users/actions.ts` | ユーザー削除 | ADMIN のみ |
+| `addDayOff` | `src/app/day-off/actions.ts` | 休日登録 | 要ログイン |
+| `removeDayOff` | `src/app/day-off/actions.ts` | 休日削除 | 要ログイン（本人のみ） |
 
 ---
 
@@ -200,6 +202,79 @@
 | error | 原因 |
 |-------|------|
 | `"ユーザーが見つかりません"` | セッションユーザーが DB に存在しない（NotFoundError） |
+
+---
+
+## 休日管理
+
+休日管理ページ（`/day-off`）のカレンダー UI から、日付クリックで休日の登録・解除を行う。
+
+### `addDayOff`
+
+**ファイル:** `src/app/day-off/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `date` | `string` | YES | `YYYY-MM-DD` 形式 |
+| `userId` | `string` | NO | ADMIN のみ有効。省略時は自分 |
+
+**認可**
+
+- `userId` 省略または自分のID → 全ロール許可
+- 他ユーザーのID → ADMIN のみ許可（MEMBER/VIEWER は拒否）
+- 指定ユーザーが存在しない → エラー
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"この日付はすでに休日として登録されています"` | 同一ユーザー・同一日付の休日が既に存在する |
+| `"他のユーザーの休日を変更する権限がありません"` | 非ADMIN が他ユーザーの userId を指定した |
+| `"指定されたユーザーが見つかりません"` | ADMIN が存在しない userId を指定した |
+| バリデーションエラーメッセージ | 日付形式不正 |
+
+---
+
+### `removeDayOff`
+
+**ファイル:** `src/app/day-off/actions.ts`
+
+**引数**
+
+| フィールド | 型 | 必須 | 制約 |
+|-----------|-----|------|------|
+| `date` | `string` | YES | `YYYY-MM-DD` 形式 |
+| `userId` | `string` | NO | ADMIN のみ有効。省略時は自分 |
+
+**認可**
+
+`addDayOff` と同じ。
+
+**戻り値**
+
+```ts
+{ error?: string }
+```
+
+**補足**
+
+- `deleteMany` で削除するため、未登録日付を指定しても 0 件削除で安全に無視される
+
+**エラー**
+
+| error | 原因 |
+|-------|------|
+| `"他のユーザーの休日を変更する権限がありません"` | 非ADMIN が他ユーザーの userId を指定した |
+| `"指定されたユーザーが見つかりません"` | ADMIN が存在しない userId を指定した |
+| バリデーションエラーメッセージ | 日付形式不正 |
 
 ---
 
