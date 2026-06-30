@@ -112,7 +112,7 @@ const userId = session?.user?.id;
 
 | アクション | 自分への操作 | 他ユーザーへの操作 |
 |-----------|-----------|----------------|
-| `addDayOff` / `removeDayOff` | 全ロール許可 | ADMIN のみ許可 |
+| `addDayOff` / `removeDayOff` | ADMIN / MEMBER のみ許可（VIEWER 拒否） | ADMIN のみ許可 |
 
 ---
 
