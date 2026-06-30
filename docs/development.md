@@ -188,10 +188,8 @@ npx prisma generate
 ## デプロイ（Vercel）
 
 1. Vercel ダッシュボードで環境変数を設定（`DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`）
-2. デプロイ前に**手動**でマイグレーションを適用する
+2. `develop` ブランチにプッシュすると自動デプロイ
 
-   ```bash
-   npx prisma migrate deploy
-   ```
-
-3. `main` ブランチにプッシュすると自動デプロイ（Build Command は `next build` のみ）
+   - Vercel は `package.json` の `vercel-build` スクリプトを優先して実行する
+   - `vercel-build` は `prisma migrate deploy && next build` を実行するため、マイグレーションは自動適用される
+   - Vercel ダッシュボードの Build Command 設定変更は不要
