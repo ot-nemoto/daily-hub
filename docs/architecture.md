@@ -171,9 +171,9 @@ Prisma 7 では URL の設定箇所が分離された。
 ```
 git push origin develop
   → Vercel が自動検知
-    → ビルド（next build）
+    → ビルド（vercel-build: prisma migrate deploy && next build）
       → Vercel にデプロイ
-        ※ マイグレーションは事前に手動で実行（prisma migrate deploy）
+        ※ マイグレーションは vercel-build スクリプトで自動実行
 
 git push origin master
   → GitHub Actions (release.yml) が起動

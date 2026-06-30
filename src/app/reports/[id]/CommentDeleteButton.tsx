@@ -9,9 +9,10 @@ import { deleteComment } from "./actions";
 type Props = {
   reportId: string;
   commentId: string;
+  onDeleted?: () => void;
 };
 
-export function CommentDeleteButton({ reportId, commentId }: Props) {
+export function CommentDeleteButton({ reportId, commentId, onDeleted }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,11 @@ export function CommentDeleteButton({ reportId, commentId }: Props) {
       if (result.error) {
         setError(result.error);
       } else {
-        router.refresh();
+        if (onDeleted) {
+          onDeleted();
+        } else {
+          router.refresh();
+        }
       }
     } catch {
       setError("コメントの削除に失敗しました。時間をおいて再度お試しください");

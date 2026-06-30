@@ -8,9 +8,18 @@ import { getSession } from "@/lib/auth";
 import {
   createComment as libCreateComment,
   deleteComment as libDeleteComment,
+  getComments as libGetComments,
 } from "@/lib/comments";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { updateReport as libUpdateReport } from "@/lib/reports";
+
+export type ReportComment = {
+  id: string;
+  body: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+};
 
 const UpdateReportSchema = z.object({
   workContent: z.string().min(1).max(5000),
@@ -21,6 +30,24 @@ const UpdateReportSchema = z.object({
 const CreateCommentSchema = z.object({
   body: z.string().min(1).max(1000),
 });
+
+export async function getReportComments(
+  reportId: string,
+): Promise<{ comments?: ReportComment[]; error?: string }> {
+  const session = await getSession();
+  if (!session) return redirect("/login");
+
+  const comments = await libGetComments(reportId);
+  return {
+    comments: comments.map((c) => ({
+      id: c.id,
+      body: c.body,
+      authorId: c.author.id,
+      authorName: c.author.name,
+      createdAt: c.createdAt.toISOString(),
+    })),
+  };
+}
 
 export async function updateReport(input: {
   id: string;

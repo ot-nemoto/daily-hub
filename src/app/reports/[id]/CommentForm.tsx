@@ -8,9 +8,10 @@ import { createComment } from "./actions";
 
 type Props = {
   reportId: string;
+  onCreated?: () => void;
 };
 
-export function CommentForm({ reportId }: Props) {
+export function CommentForm({ reportId, onCreated }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,11 @@ export function CommentForm({ reportId }: Props) {
         setError(result.error);
       } else {
         formRef.current?.reset();
-        router.refresh();
+        if (onCreated) {
+          onCreated();
+        } else {
+          router.refresh();
+        }
       }
     } catch {
       setError("コメントの投稿に失敗しました。時間をおいて再度お試しください");
