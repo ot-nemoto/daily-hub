@@ -55,7 +55,14 @@ export async function addDayOff(input: {
   });
   if (existing) return { error: "この日付はすでに休日として登録されています" };
 
-  await prisma.dayOff.create({ data: { userId: targetUserId, date } });
+  try {
+    await prisma.dayOff.create({ data: { userId: targetUserId, date } });
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2002") {
+      return { error: "この日付はすでに休日として登録されています" };
+    }
+    throw error;
+  }
 
   revalidatePath("/day-off");
   return {};
