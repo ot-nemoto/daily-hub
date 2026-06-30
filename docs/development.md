@@ -60,7 +60,10 @@ npm run dev
 
 ### マイグレーション
 
-マイグレーションは**常に手動で実行**する（ビルドスクリプトによる自動実行は行わない）。
+マイグレーションの実行タイミングは環境によって異なる。
+
+- **Vercel デプロイ時**: `vercel-build` スクリプト（`prisma migrate deploy && next build`）により自動実行
+- **ローカル開発**: 手動で実行する
 
 ```bash
 # スキーマ変更後に新しいマイグレーションを作成・適用
@@ -69,7 +72,7 @@ npx prisma migrate dev --name <migration-name>
 # 例：初回
 npx prisma migrate dev --name init
 
-# 本番・ステージング環境への適用（デプロイ前に手動実行）
+# 本番・ステージング環境への適用（Vercel 以外の環境で手動実行する場合）
 npx prisma migrate deploy
 ```
 
