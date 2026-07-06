@@ -13,6 +13,7 @@ Server Actions の定義は [docs/actions.md](actions.md) を参照。
 | `GET` | `/api/reports` | 日報一覧取得 | APIキー（全ロール） |
 | `POST` | `/api/reports` | 日報作成・一括登録 | APIキー（MEMBER / ADMIN） |
 | `POST` | `/api/admin/reports` | 日報バッチ登録（ADMIN専用） | APIキー（ADMIN のみ） |
+| `DELETE` | `/api/admin/reports/{id}` | 日報削除（ADMIN専用） | APIキー（ADMIN のみ） |
 | `GET` | `/api/admin/users` | ユーザー一覧取得 | APIキー（ADMIN のみ） |
 
 ---
@@ -162,6 +163,36 @@ Content-Type: application/json
 
 ---
 
+## `DELETE /api/admin/reports/{id}` — 日報削除（ADMIN専用）
+
+**認証:** `Authorization: Bearer <api-key>` ヘッダー必須（ADMIN ロールのユーザーのみ）
+
+API 経由で誤登録した日報を削除する用途。指定した日報に紐づくコメントも同時に削除する。
+
+**リクエスト**
+
+```http
+DELETE /api/admin/reports/<report-id>
+Authorization: Bearer <api-key>
+```
+
+**レスポンス**
+
+| ステータス | 内容 |
+|---|---|
+| 204 | 削除成功（レスポンスボディなし） |
+| 401 | APIキーなし・無効・アカウント無効 |
+| 403 | ADMIN 以外によるアクセス |
+| 404 | 指定された日報が存在しない（`{ "error": "<メッセージ>" }`） |
+
+**権限ルール**
+
+- `ADMIN` ロールのみ利用可能
+- 日報に紐づくコメントも同時に削除する
+- `isActive=false` のユーザーは 401
+
+---
+
 ## `GET /api/admin/users` — ユーザー一覧取得
 
 **認証:** `Authorization: Bearer <api-key>` ヘッダー必須（ADMIN ロールのみ）
@@ -203,5 +234,6 @@ Authorization: Bearer <api-key>
 |----------------|------|------|
 | 401 | `{ "error": "<メッセージ>" }` | 認証失敗 |
 | 403 | `{ "error": "<メッセージ>" }` | 権限不足 |
+| 404 | `{ "error": "<メッセージ>" }` | リソースが存在しない |
 | 409 | `{ "error": "<メッセージ>" }` | リソース競合 |
 | 422 | `{ "error": "<メッセージ>" }` | バリデーションエラー |
