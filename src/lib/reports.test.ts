@@ -133,7 +133,6 @@ describe("deleteReportById", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("正常系: コメント削除と日報削除をトランザクションで実行する", async () => {
-    vi.mocked(prisma.report.findUnique).mockResolvedValue({ id: "report-1" } as never);
     vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
 
     await deleteReportById({ id: "report-1" });
@@ -143,11 +142,17 @@ describe("deleteReportById", () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
-  it("異常系: 存在しない ID で NotFoundError を投げる", async () => {
-    vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
+  it("異常系: 削除対象が存在しない場合（P2025）は NotFoundError に変換する", async () => {
+    const p2025 = Object.assign(new Error("Record to delete does not exist"), { code: "P2025" });
+    vi.mocked(prisma.$transaction).mockRejectedValue(p2025);
 
     await expect(deleteReportById({ id: "missing" })).rejects.toThrow(NotFoundError);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("異常系: その他の DB エラーはそのまま投げる", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(new Error("DB error"));
+
+    await expect(deleteReportById({ id: "report-1" })).rejects.toThrow("DB error");
   });
 });
 
