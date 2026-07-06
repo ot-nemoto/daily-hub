@@ -11,7 +11,7 @@ export const DISPLAY_FIELDS: { key: DisplayField; label: string }[] = [
   { key: "notes", label: "感想/課題/問題点" },
 ];
 
-type DisplayFieldContextValue = [Set<DisplayField>, (f: DisplayField) => void];
+type DisplayFieldContextValue = [ReadonlySet<DisplayField>, (f: DisplayField) => void];
 
 const DisplayFieldContext = createContext<DisplayFieldContextValue | null>(null);
 
