@@ -151,6 +151,27 @@ npx prisma studio
 
 ---
 
+## E2E テスト（ローカル専用）
+
+Playwright による E2E テストは **devcontainer 内で完結** して実行する。方針の詳細は [`docs/testing.md` — E2E テスト](testing.md) を参照。
+
+```bash
+# 初回のみ: ブラウザ導入
+npx playwright install --with-deps chromium
+
+# 実行（シード投入・ロール別ログインは global.setup.ts が自動で行う）
+npm run test:e2e
+
+# UI モード
+npm run test:e2e:ui
+```
+
+- シードは `global.setup.ts` がスイート開始前に自動実行するため、手動シードは不要
+- `webServer` 設定により dev サーバーは自動起動する（起動済みなら再利用）
+- ログインセッションは `e2e/.auth/*.json` にキャッシュされる（gitignore 済み）
+
+---
+
 ## Neon の接続文字列の取得
 
 1. [Neon ダッシュボード](https://console.neon.tech) → プロジェクト → **Connection Details**

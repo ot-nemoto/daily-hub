@@ -10,12 +10,15 @@
     "includes": [
       "src/**",
       "prisma/**",
+      "e2e/**",
+      "playwright.config.ts",
       ".vscode/**",
       ".devcontainer/**",
       "!node_modules",
       "!.next",
       "!public",
-      "!prisma/migrations"
+      "!prisma/migrations",
+      "!e2e/.auth"
     ]
   },
   "formatter": {
