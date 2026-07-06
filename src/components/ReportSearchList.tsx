@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { type DisplayField, useDisplayField } from "./DisplayFieldContext";
+import { DISPLAY_FIELDS, useDisplayField } from "./DisplayFieldContext";
 import { ReportDetailModal } from "./ReportDetailModal";
 
 export type SearchableReport = {
@@ -25,12 +25,6 @@ type Props = {
   currentUserId: string;
 };
 
-const FIELD_LABELS: Record<DisplayField, string> = {
-  workContent: "本日の作業",
-  tomorrowPlan: "明日の予定",
-  notes: "感想/課題/問題点",
-};
-
 function matches(report: SearchableReport, query: string, includeAuthor: boolean) {
   const q = query.toLowerCase();
   return (
@@ -43,7 +37,7 @@ function matches(report: SearchableReport, query: string, includeAuthor: boolean
 
 export function ReportSearchList({ reports, primary, emptyMessage, currentUserId }: Props) {
   const [query, setQuery] = useState("");
-  const [displayField] = useDisplayField();
+  const [displayFields] = useDisplayField();
   const [modal, setModal] = useState<{
     report: SearchableReport;
     mode: "detail" | "edit";
@@ -117,15 +111,17 @@ export function ReportSearchList({ reports, primary, emptyMessage, currentUserId
                 </button>
               </div>
             </div>
-            <dl>
-              <div>
-                <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-                  {FIELD_LABELS[displayField]}
-                </dt>
-                <dd className="mt-0.5 whitespace-pre-wrap text-sm text-zinc-900">
-                  {report[displayField]}
-                </dd>
-              </div>
+            <dl className="space-y-3">
+              {DISPLAY_FIELDS.filter((f) => displayFields.has(f.key)).map((f) => (
+                <div key={f.key}>
+                  <dt className="inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                    {f.label}
+                  </dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap text-sm text-zinc-900">
+                    {report[f.key]}
+                  </dd>
+                </div>
+              ))}
             </dl>
           </div>
         ))
