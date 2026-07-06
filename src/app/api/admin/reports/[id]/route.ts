@@ -1,30 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { NotFoundError } from "@/lib/errors";
-import { prisma } from "@/lib/prisma";
 import { deleteReportById } from "@/lib/reports";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  // 1. Authorization ヘッダーから API キーを取得
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const apiKey = authHeader.slice(7).trim();
-  if (!apiKey) {
+  // 1. 認証
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 2. API キーで DB ユーザーを検索
-  const user = await prisma.user.findUnique({
-    where: { apiKey },
-    select: { id: true, role: true, isActive: true },
-  });
-  if (!user?.isActive) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // 3. ADMIN のみ利用可能
+  // 2. ADMIN のみ利用可能
   if (user.role !== "ADMIN") {
     return NextResponse.json(
       { error: "このエンドポイントは ADMIN のみ使用できます" },
@@ -32,7 +19,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     );
   }
 
-  // 4. 日報を削除（コメントも削除）
+  // 3. 日報を削除（コメントも削除）
   const { id } = await params;
   try {
     await deleteReportById({ id });
