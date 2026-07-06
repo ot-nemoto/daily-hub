@@ -87,6 +87,24 @@ export async function createReport(input: {
   }
 }
 
+export async function deleteReportById(input: { id: string }): Promise<void> {
+  const { id } = input;
+
+  const existing = await prisma.report.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw new NotFoundError("Report not found");
+  }
+
+  // FK制約の順序で、その日報についたコメントを先に削除してから日報を削除する
+  await prisma.$transaction([
+    prisma.comment.deleteMany({ where: { reportId: id } }),
+    prisma.report.delete({ where: { id } }),
+  ]);
+}
+
 export async function updateReport(input: {
   id: string;
   authorId: string;
