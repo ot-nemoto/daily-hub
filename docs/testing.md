@@ -102,6 +102,7 @@ vi.mock("@/lib/prisma", () => ({
 | nankotsu | `nankotsu@example.com` | VIEWER ロール動作確認・REST API 403 確認（apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`） |
 | sunagimo | `sunagimo@example.com` | 無効化アカウントのリダイレクト確認（isActive=false） |
 | torikawa | `torikawa@example.com` | ロール変更・無効化テストの対象ユーザー（MEMBER） |
+| yagen | `yagen@example.com` | 提出状況の「休」表示・提出率（休日除外）確認用（MEMBER、直近14日平日提出 + 休日1件で提出率100%） |
 
 ### 実行
 
