@@ -127,9 +127,19 @@ npx playwright test daily.spec.ts   # 特定ファイルのみ
 
 ### コード化状況
 
-現状コード化済みの範囲（段階的に拡張中）:
+主要機能を一通りコード化済み（`e2e/*.spec.ts`）。
 
-- 認証・リダイレクト、ヘッダー
-- 日次ビュー・月次ビュー（表示フィールド複数選択を含む）
+| spec | 対象 |
+|------|------|
+| `auth.spec.ts` / `header.spec.ts` | 認証・リダイレクト、ヘッダー |
+| `daily.spec.ts` / `monthly.spec.ts` | 日次・月次ビュー（表示フィールド複数選択を含む） |
+| `status.spec.ts` | 提出状況（提出率・休日除外） |
+| `report-new.spec.ts` / `report-modal.spec.ts` | 日報の新規作成・詳細/編集モーダル・コメント |
+| `settings.spec.ts` | プロフィール設定・API キー |
+| `admin-users.spec.ts` | 管理（ユーザー一覧・ロール変更・有効化） |
+| `day-off.spec.ts` | 休日管理（本人・ADMIN 代理） |
+| `cursor.spec.ts` | カーソルページング |
+| `user-isolation.spec.ts` | ユーザー分離 |
+| `api.spec.ts` | REST API（認証・CRUD・権限） |
 
-未コード化の領域（詳細・編集モーダル／コメント／作成／設定／APIキー／管理／休日／提出状況／REST API）は [`docs/e2e-scenarios.md`](e2e-scenarios.md) を参照し、順次追加する。
+シナリオ詳細は [`docs/e2e-scenarios.md`](e2e-scenarios.md) を参照。
