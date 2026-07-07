@@ -351,20 +351,17 @@ async function main() {
 
   console.log("\nSeed completed successfully!");
   console.log("\n--- Users ---");
-  console.log(
-    `  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者・apiKey: ${BONJIRI_APIKEY}`,
-  );
-  console.log(
-    `  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり・apiKey: ${TSUKUNE_APIKEY}`,
-  );
+  console.log(`  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者・apiKey あり`);
+  console.log(`  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり・apiKey あり`);
   console.log(`  ${TEBASAKI_EMAIL} (MEMBER, active)   — 日報7件・コメントあり`);
-  console.log(`  ${NANKOTSU_EMAIL} (VIEWER, active)   — コメントあり・apiKey: ${NANKOTSU_APIKEY}`);
+  console.log(`  ${NANKOTSU_EMAIL} (VIEWER, active)   — コメントあり・apiKey あり`);
   console.log(`  ${SUNAGIMO_EMAIL} (MEMBER, inactive) — 認証エラーリダイレクト確認用`);
   console.log(`  ${TORIKAWA_EMAIL} (MEMBER, active)   — 管理操作テスト対象・日報1件`);
   console.log(
     `  ${YAGEN_EMAIL}    (MEMBER, active)   — 提出状況の休日表示・提出率検証用（提出率100%）`,
   );
-  console.log(`\nPassword: ${SEED_PASSWORD}`);
+  // API キー・パスワードの実値はログに出さない（値は docs/testing.md を参照）
+  console.log("\nAPI キー・パスワードは docs/testing.md を参照してください。");
 }
 
 main()
