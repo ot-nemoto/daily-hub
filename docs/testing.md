@@ -86,7 +86,7 @@ vi.mock("@/lib/prisma", () => ({
 
 ### シード方針
 
-- **スイート開始前に `global.setup.ts` が1回シードを実行する**（`comment`/`report` を全削除して再投入、ユーザーを upsert）
+- **スイート開始前に `global.setup.ts` が1回シードを実行する**（`comment`/`report`/`dayOff` を全削除して再投入、ユーザーを upsert）
 - データ競合を避けるため `workers: 1` で直列実行する
 - 破壊的な操作を伴うテストは、未来日付や専用データで自己完結させ他テストへ影響させない
 
