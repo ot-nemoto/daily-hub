@@ -38,8 +38,10 @@ function getDate(daysAgo: number): Date {
 
 // ---- bonjiri: 管理操作の実行者（ADMIN） ----
 // 日報なし → 管理画面で「最終日報投稿日: なし」の表示確認用
+// apiKey を固定値で設定（admin 系 REST API の動作確認用）
 const BONJIRI_EMAIL = "bonjiri@example.com";
 const BONJIRI_NAME = "bonjiri";
+const BONJIRI_APIKEY = "c1d2e3f4-a5b6-7890-abcd-ef1234567890";
 
 // ---- tsukune: 日報・コメント・ユーザー分離テストのメインユーザー（MEMBER） ----
 // 今日を含む過去7日の日報あり。複数ユーザーからのコメントあり。
@@ -197,7 +199,13 @@ async function main() {
 
   // ユーザーを upsert（ロール・isActive をシード定義にリセット）
   const [bonjiri, tsukune, tebasaki, nankotsu, , torikawa] = await Promise.all([
-    upsertUser({ email: BONJIRI_EMAIL, name: BONJIRI_NAME, role: "ADMIN", isActive: true }),
+    upsertUser({
+      email: BONJIRI_EMAIL,
+      name: BONJIRI_NAME,
+      role: "ADMIN",
+      isActive: true,
+      apiKey: BONJIRI_APIKEY,
+    }),
     upsertUser({
       email: TSUKUNE_EMAIL,
       name: TSUKUNE_NAME,
@@ -307,7 +315,9 @@ async function main() {
 
   console.log("\nSeed completed successfully!");
   console.log("\n--- Users ---");
-  console.log(`  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者`);
+  console.log(
+    `  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者・apiKey: ${BONJIRI_APIKEY}`,
+  );
   console.log(
     `  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり・apiKey: ${TSUKUNE_APIKEY}`,
   );
