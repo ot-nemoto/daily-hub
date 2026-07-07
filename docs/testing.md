@@ -96,7 +96,7 @@ vi.mock("@/lib/prisma", () => ({
 
 | ユーザー | メールアドレス | 用途 |
 |---------|-------------|------|
-| bonjiri | `bonjiri@example.com` | 管理操作テスト（ADMIN） |
+| bonjiri | `bonjiri@example.com` | 管理操作テスト（ADMIN）・admin 系 REST API 確認（apiKey: `c1d2e3f4-a5b6-7890-abcd-ef1234567890`） |
 | tsukune | `tsukune@example.com` | 機能テスト全般・APIキーテスト（MEMBER） |
 | tebasaki | `tebasaki@example.com` | ユーザー分離確認（MEMBER） |
 | nankotsu | `nankotsu@example.com` | VIEWER ロール動作確認・REST API 403 確認（apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`） |
