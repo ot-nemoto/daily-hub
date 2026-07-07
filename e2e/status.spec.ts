@@ -58,6 +58,7 @@ test.describe("提出状況", () => {
 
     await page.getByRole("button", { name: "1M", exact: true }).click();
     await expect(page).toHaveURL(/period=1m/);
+    await expect(page.getByRole("button", { name: "1M", exact: true })).toHaveClass(/bg-zinc-900/);
     await expect(page.locator("thead th")).toHaveCount(31);
   });
 
