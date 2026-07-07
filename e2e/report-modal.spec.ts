@@ -100,10 +100,13 @@ test.describe("日報詳細・編集モーダル", () => {
   });
 
   test("他ユーザーのコメントには削除ボタンがない（#10）", async ({ page }) => {
-    // tsukune の日報には他ユーザー（tebasaki 等）からのコメントがあるが、削除ボタンは出ない
+    // tsukune の日報には他ユーザー（tebasaki 等）からのコメントがある。
+    // モーダル全体ではなく tebasaki のコメント行にスコープして削除ボタンが無いことを検証し、
+    // 「自分のコメントが存在しない」というシード前提に依存しないようにする。
     const dialog = await openReportModal(page, "tsukune");
-    await expect(dialog.getByText("tebasaki")).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "削除" })).toHaveCount(0);
+    const tebasakiComment = dialog.locator("li").filter({ hasText: "tebasaki" });
+    await expect(tebasakiComment).toBeVisible();
+    await expect(tebasakiComment.getByRole("button", { name: "削除" })).toHaveCount(0);
   });
 
   test("×・背景クリック・Escape でモーダルを閉じられる（#13）", async ({ page }) => {
