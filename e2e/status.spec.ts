@@ -36,7 +36,8 @@ test.describe("提出状況", () => {
 
   test("提出済み✓・未提出—が表示される", async ({ page }) => {
     await page.goto("/reports/status");
-    await expect(page.locator("td span.bg-green-100").first()).toBeVisible();
+    // スタイル変更に強いよう表示テキストで検証する
+    await expect(page.getByText("✓").first()).toBeVisible();
     await expect(page.getByText("—").first()).toBeVisible();
   });
 
