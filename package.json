@@ -16,10 +16,9 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test --grep-invert @screenshot",
+    "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:all": "playwright test",
-    "test:e2e:screens": "playwright test --grep @screenshot"
+    "test:e2e:shots": "SHOTS=1 playwright test"
   },
   "dependencies": {
     "@clerk/backend": "^3.8.4",

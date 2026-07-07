@@ -107,28 +107,23 @@ vi.mock("@/lib/prisma", () => ({
 ### 実行
 
 ```bash
-npm run test:e2e          # 通常テスト（@screenshot 撮影は除外・シード込み）
-npm run test:e2e:screens  # 撮影のみ（主要画面のスクリーンショットを保存）
-npm run test:e2e:all      # 通常 + 撮影をすべて実行
+npm run test:e2e          # 通常テスト（シード込み）
+npm run test:e2e:shots    # 通常テスト + 全テストの終了時スクリーンショットを取得（目視レビュー用）
 npm run test:e2e:ui       # UI モードで実行
 npx playwright test daily.spec.ts   # 特定ファイルのみ
 ```
 
 > 初回のみ `npx playwright install --with-deps chromium` でブラウザを導入する。
 
-### スクリーンショット（撮影専用テスト）
+### スクリーンショット（目視レビュー用）
 
-`e2e/visual.spec.ts` は `@screenshot` タグ付きの**撮影専用**テストで、主要画面を `test-results/screens/` に PNG 保存する（`assert` を持たない）。通常の `test:e2e`（`--grep-invert @screenshot`）からは除外され、`test:e2e:screens`（`--grep @screenshot`）で明示的に実行する。
+既定（`test:e2e`）は**失敗時のみ**スクリーンショットを取得する（`playwright.config.ts` の `screenshot: "only-on-failure"`）。
 
-| ファイル | 保存先 |
-|---------|-------|
-| 日次ビュー（デフォルト） | `test-results/screens/daily-default.png` |
-| 日次ビュー（3フィールド固定順） | `test-results/screens/daily-all-fields.png` |
-| 月次ビュー | `test-results/screens/monthly.png` |
+全テストの画面を目視レビューしたいときは `test:e2e:shots` を使う。これは環境変数 `SHOTS=1` で `screenshot: "on"` に切り替え、**全テストの終了時スクリーンショット**を取得して HTML レポートに添付する。
 
 ### レポート
 
-`test:e2e` 実行後に HTML レポート（`playwright-report/`）が生成される。`npx playwright show-report` で開ける（失敗時はトレース・スクリーンショット付き）。
+`test:e2e` / `test:e2e:shots` 実行後に HTML レポート（`playwright-report/`）が生成される。`npx playwright show-report` で開ける（各テストのスクリーンショット・失敗時のトレース付き）。
 
 ### コード化状況
 

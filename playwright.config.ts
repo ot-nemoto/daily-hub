@@ -24,7 +24,8 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     trace: "on-first-retry",
-    screenshot: "only-on-failure",
+    // 既定は失敗時のみ。SHOTS=1 のときは全テストで終了時スクショを取得する（目視レビュー用）
+    screenshot: process.env.SHOTS ? "on" : "only-on-failure",
   },
   projects: [
     // 認証セッション生成とシードを行うセットアップ
