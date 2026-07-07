@@ -1,15 +1,6 @@
-import { authState, expect, test } from "./fixtures";
+import { authState, expect, test, todayStr } from "./fixtures";
 
 test.use({ storageState: authState("tsukune") });
-
-// フォームの date デフォルトは lib/dateUtils.today()（ローカル日付）
-function todayStr(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 // ビュー・他スライス（api の 2099-03）と衝突しない未来日付を使う
 const CREATE_DATE = "2099-04-10";
