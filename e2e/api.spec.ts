@@ -76,6 +76,7 @@ test.describe("REST API（外部連携）", () => {
       headers: auth(TSUKUNE_KEY),
       data: { date: FUTURE.del, workContent: "削除対象", tomorrowPlan: "x", notes: "" },
     });
+    expect(create.status()).toBe(201);
     const id = (await create.json()).results[0].id;
 
     const del = await request.delete(`/api/admin/reports/${id}`, { headers: auth(BONJIRI_KEY) });
