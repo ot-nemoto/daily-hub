@@ -65,6 +65,8 @@ vi.mock("@/lib/prisma", () => ({
 
 **ローカル専用。** CI では実行しない。devcontainer 内で dev サーバー・Playwright・ブラウザをすべて完結させて実行する。
 
+> ⚠️ **実行対象 DB の注意**: `global.setup.ts` が `prisma/seed.ts` を実行し、対象 DB の `comment`/`report` を**全削除**してから再投入する。**必ずローカル/開発用の DB に対してのみ実行すること**（共有 DB・本番相当 DB に向けて実行しない）。実行前に `DATABASE_URL` の向き先を確認する。
+
 シナリオの一覧は [`docs/e2e-scenarios.md`](e2e-scenarios.md) を参照。テストコードは `e2e/` 配下に配置する。
 
 ### 構成
