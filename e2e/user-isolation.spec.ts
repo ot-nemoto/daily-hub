@@ -10,6 +10,12 @@ test.describe("ユーザー分離（tebasaki 視点）", () => {
     await expect(page.getByRole("button", { name: "詳細" })).toHaveCount(1);
     // tsukune の日報カードに編集ボタンは出ない（詳細のみ）
     await expect(page.getByRole("button", { name: "編集" })).toHaveCount(0);
+
+    // 詳細モーダルを開いても編集ボタンは出ない（モーダル側の権限も検証）
+    await page.getByRole("button", { name: "詳細" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "編集" })).toHaveCount(0);
   });
 
   test("他ユーザーのコメントには削除ボタンが表示されない（#3）", async ({ page }) => {
