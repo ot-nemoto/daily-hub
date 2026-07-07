@@ -25,10 +25,16 @@ test.describe("休日管理（本人）", () => {
     const cell = page.getByRole("button", { name: "15", exact: true });
 
     await expect(cell).toHaveAttribute("aria-pressed", "false");
+
     await cell.click(); // 登録
     await expect(cell).toHaveAttribute("aria-pressed", "true");
+    // 楽観的更新の pending 中はセルが disabled になり、次のクリックが無視される。
+    // pending が解ける（enabled に戻る）まで待ってから解除する。
+    await expect(cell).toBeEnabled();
+
     await cell.click(); // 解除
     await expect(cell).toHaveAttribute("aria-pressed", "false");
+    await expect(cell).toBeEnabled();
   });
 
   test("月ナビゲーションで前月・翌月に切り替わる（#4）", async ({ page }) => {
