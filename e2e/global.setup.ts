@@ -16,7 +16,13 @@ const ROLES = [
 
 // Clerk Testing Token の準備とシード投入（スイート開始前に1回）
 setup("prepare clerk and seed", async () => {
-  await clerkSetup({ publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY });
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  if (!publishableKey) {
+    throw new Error(
+      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY が未設定です。E2E 実行前に .env を確認してください。",
+    );
+  }
+  await clerkSetup({ publishableKey });
   execSync("npx tsx prisma/seed.ts", { cwd: process.cwd(), stdio: "inherit" });
 });
 
