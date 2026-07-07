@@ -182,7 +182,7 @@
 | 3 | `tsukune@example.com` | モーダルで名前を「tsukune-updated」に変更して「保存」をクリックする | 名前変更の反映 | 保存成功フィードバックが表示され、ヘッダーの名前も更新される |
 | 4 | `tsukune@example.com` | モーダルで名前を「tsukune」に戻して「保存」をクリックする | 名前の復元 | 保存成功フィードバックが表示され、ヘッダーが「tsukune」に戻る |
 | 5 | `tsukune@example.com` | モーダルで名前を空にして「保存」をクリックする | 必須バリデーション | エラーが表示され保存されない |
-| 6 | `tsukune@example.com` | モーダルで101文字の名前を入力して「保存」をクリックする | 文字数バリデーション | エラーが表示され保存されない |
+| 6 | `tsukune@example.com` | モーダルで100文字を超える名前を入力して「保存」をクリックする | 文字数バリデーション | 入力欄は `maxlength=100` で100文字までに制限され、超過分はサーバ側 `max(100)` でも拒否される（保存されない） |
 | 7 | `tsukune@example.com` | モーダルのオーバーレイをクリックする | モーダルを閉じる | モーダルが閉じる |
 | 8 | `tsukune@example.com` | モーダルを開いて Escape キーを押す | モーダルを閉じる | モーダルが閉じる |
 
@@ -205,16 +205,18 @@
 
 ## REST API（外部連携）
 
-以下は curl などの外部クライアントで手動確認する。使用する API キーは手順ごとに異なる（tsukune: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`、nankotsu: `b1e3a704-e5f6-7890-abcd-ef1234567890`）。
+`e2e/api.spec.ts`（Playwright `request` context）でコード化する。実 DB 依存の挙動に絞り、認証/バリデーションの全マトリクスは API ルートのユニットテスト（`route.test.ts`）で網羅する。使用する API キーはシード固定値（tsukune: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`、nankotsu: `b1e3a704-e5f6-7890-abcd-ef1234567890`、bonjiri/ADMIN: `c1d2e3f4-a5b6-7890-abcd-ef1234567890`）。
+
+> 仕様メモ: `POST /api/reports` は **upsert** で、レスポンスは `{ results: [{ date, id, status }] }`。全件新規なら 201（`status: "created"`）、1件でも更新を含めば 200（`status: "updated"`）。**同日再送は 409 ではなく 200（updated）**。409 は Server Action（画面からの新規作成）側の仕様であり REST API とは異なる。
 
 | # | 手順 | 確認観点 | 期待値 |
 |---|------|---------|-------|
-| 1 | tsukune の有効な API キー（`a1b2c3d4-e5f6-7890-abcd-ef1234567890`）で `POST /api/reports` を呼ぶ | 正常系 | 201 と `{ id }` が返る |
-| 2 | Authorization ヘッダーなしで `POST /api/reports` を呼ぶ | 認証なし | 401 が返る |
-| 3 | 無効な API キーで `POST /api/reports` を呼ぶ | 無効キー | 401 が返る |
-| 4 | nankotsu（VIEWER）の API キー（`b1e3a704-e5f6-7890-abcd-ef1234567890`）で `POST /api/reports` を呼ぶ | 権限不足 | 403 が返る |
-| 5 | 同日に既存の日報がある状態で `POST /api/reports` を呼ぶ | 重複チェック | 409 が返る |
-| 6 | `date` が `YYYY-MM-DD` 形式でない値で `POST /api/reports` を呼ぶ | バリデーション | 422 が返る |
+| 1 | tsukune キーで `POST /api/reports`（新規日付）→ 同一日付で再送 | upsert 実挙動 | 1回目 201（`created`）、2回目 200（`updated`） |
+| 2 | tsukune キーで `GET /api/reports?date=<today>`、続けて `authorId` を付与 | フィルタ | date で対象日、`authorId` で当該ユーザーの行のみ返る |
+| 3 | 日報作成 → bonjiri（ADMIN）キーで `DELETE /api/admin/reports/{id}` → 再削除 | 削除・冪等 | 204 で削除、GET で消滅、再削除は 404 |
+| 4 | bonjiri キーで `POST /api/admin/reports`（`userName` 指定・一括） | userName 解決 | 200、`{ results: [...] }` が返り実 DB に反映 |
+| 5 | bonjiri キーで `GET /api/admin/users` | ADMIN 一覧 | 200、ユーザー一覧が返る |
+| 6 | 認証なし `POST /api/reports` / VIEWER(nankotsu) `POST /api/reports` / 非ADMIN(tsukune) `GET /api/admin/users` | 認証・認可スモーク | それぞれ 401 / 403 / 403 |
 
 ```bash
 curl -X POST http://localhost:3000/api/reports \

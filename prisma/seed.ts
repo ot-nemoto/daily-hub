@@ -4,7 +4,7 @@
  *
  * - テスト直前に実行することを想定
  * - Clerk にユーザーが存在しなければ作成する
- * - 全レポート・コメントを削除してから投入する
+ * - 全レポート・コメント・休日を削除してから投入する
  * - ユーザーは upsert（ロール・isActive をシード定義にリセット）
  */
 import { createClerkClient } from "@clerk/backend";
@@ -38,8 +38,10 @@ function getDate(daysAgo: number): Date {
 
 // ---- bonjiri: 管理操作の実行者（ADMIN） ----
 // 日報なし → 管理画面で「最終日報投稿日: なし」の表示確認用
+// apiKey を固定値で設定（admin 系 REST API の動作確認用）
 const BONJIRI_EMAIL = "bonjiri@example.com";
 const BONJIRI_NAME = "bonjiri";
+const BONJIRI_APIKEY = "c1d2e3f4-a5b6-7890-abcd-ef1234567890";
 
 // ---- tsukune: 日報・コメント・ユーザー分離テストのメインユーザー（MEMBER） ----
 // 今日を含む過去7日の日報あり。複数ユーザーからのコメントあり。
@@ -159,6 +161,12 @@ const TARGET_REPORTS = [
   { daysAgo: 0, workContent: "通常業務の実施", tomorrowPlan: "翌日の作業を進める", notes: "" },
 ];
 
+// ---- yagen: 提出状況の「休」表示・提出率（休日除外）の検証用（MEMBER） ----
+// 直近14日の平日すべてに日報あり。うち1平日を休日登録する。
+// → 提出状況ビュー（2W）で提出率100%（休日は分母から除外）、休日セルは「休」バッジになる。
+const YAGEN_EMAIL = "yagen@example.com";
+const YAGEN_NAME = "yagen";
+
 type Role = "ADMIN" | "MEMBER" | "VIEWER";
 
 /** Clerk にユーザーが存在しなければ作成し、clerkId を返す */
@@ -190,14 +198,21 @@ async function upsertUser(params: {
 }
 
 async function main() {
-  // レポート・コメントを全削除（テスト前のクリーンな状態を保証）
+  // レポート・コメント・休日を全削除（テスト前のクリーンな状態を保証）
   await prisma.comment.deleteMany();
   await prisma.report.deleteMany();
-  console.log("Deleted all reports and comments");
+  await prisma.dayOff.deleteMany();
+  console.log("Deleted all reports, comments and day-offs");
 
   // ユーザーを upsert（ロール・isActive をシード定義にリセット）
-  const [bonjiri, tsukune, tebasaki, nankotsu, , torikawa] = await Promise.all([
-    upsertUser({ email: BONJIRI_EMAIL, name: BONJIRI_NAME, role: "ADMIN", isActive: true }),
+  const [bonjiri, tsukune, tebasaki, nankotsu, , torikawa, yagen] = await Promise.all([
+    upsertUser({
+      email: BONJIRI_EMAIL,
+      name: BONJIRI_NAME,
+      role: "ADMIN",
+      isActive: true,
+      apiKey: BONJIRI_APIKEY,
+    }),
     upsertUser({
       email: TSUKUNE_EMAIL,
       name: TSUKUNE_NAME,
@@ -215,8 +230,9 @@ async function main() {
     }),
     upsertUser({ email: SUNAGIMO_EMAIL, name: SUNAGIMO_NAME, role: "MEMBER", isActive: false }),
     upsertUser({ email: TORIKAWA_EMAIL, name: TORIKAWA_NAME, role: "MEMBER", isActive: true }),
+    upsertUser({ email: YAGEN_EMAIL, name: YAGEN_NAME, role: "MEMBER", isActive: true }),
   ]);
-  console.log("Upserted 6 users");
+  console.log("Upserted 7 users");
 
   // tsukune の日報（7件: 今日〜6日前）
   const tsukuneReports = [];
@@ -261,6 +277,34 @@ async function main() {
     },
   });
   console.log(`${TORIKAWA_EMAIL}: 日報 1 件を投入しました`);
+
+  // yagen: 直近14日の平日すべてに日報を投入し、うち1平日を休日登録する。
+  // 休日登録日は「3日前以降で最初の平日」を選ぶ（実行日の曜日に依存せず必ず平日になる）。
+  let yagenDayOffDaysAgo = 3;
+  while ([0, 6].includes(getDate(yagenDayOffDaysAgo).getUTCDay())) {
+    yagenDayOffDaysAgo++;
+  }
+  let yagenReportCount = 0;
+  for (let i = 0; i < 14; i++) {
+    const d = getDate(i);
+    const dow = d.getUTCDay();
+    if (dow === 0 || dow === 6) continue; // 週末は日報なし
+    if (i === yagenDayOffDaysAgo) continue; // 休日登録日は日報なし（→「休」表示）
+    await prisma.report.create({
+      data: {
+        authorId: yagen.id,
+        date: d,
+        workContent: "通常業務",
+        tomorrowPlan: "翌日も継続",
+        notes: "",
+      },
+    });
+    yagenReportCount++;
+  }
+  await prisma.dayOff.create({ data: { userId: yagen.id, date: getDate(yagenDayOffDaysAgo) } });
+  console.log(
+    `${YAGEN_EMAIL}: 平日日報 ${yagenReportCount} 件 + 休日1件を投入しました（提出率100%・休表示の検証用）`,
+  );
 
   // コメント
   // tsukune の今日の日報（tsukuneReports[0]）
@@ -307,15 +351,17 @@ async function main() {
 
   console.log("\nSeed completed successfully!");
   console.log("\n--- Users ---");
-  console.log(`  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者`);
-  console.log(
-    `  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり・apiKey: ${TSUKUNE_APIKEY}`,
-  );
+  console.log(`  ${BONJIRI_EMAIL}  (ADMIN,  active)   — 管理操作の実行者・apiKey あり`);
+  console.log(`  ${TSUKUNE_EMAIL}  (MEMBER, active)   — 日報7件・コメントあり・apiKey あり`);
   console.log(`  ${TEBASAKI_EMAIL} (MEMBER, active)   — 日報7件・コメントあり`);
-  console.log(`  ${NANKOTSU_EMAIL} (VIEWER, active)   — コメントあり・apiKey: ${NANKOTSU_APIKEY}`);
+  console.log(`  ${NANKOTSU_EMAIL} (VIEWER, active)   — コメントあり・apiKey あり`);
   console.log(`  ${SUNAGIMO_EMAIL} (MEMBER, inactive) — 認証エラーリダイレクト確認用`);
   console.log(`  ${TORIKAWA_EMAIL} (MEMBER, active)   — 管理操作テスト対象・日報1件`);
-  console.log(`\nPassword: ${SEED_PASSWORD}`);
+  console.log(
+    `  ${YAGEN_EMAIL}    (MEMBER, active)   — 提出状況の休日表示・提出率検証用（提出率100%）`,
+  );
+  // API キー・パスワードの実値はログに出さない（値は docs/testing.md を参照）
+  console.log("\nAPI キー・パスワードは docs/testing.md を参照してください。");
 }
 
 main()
