@@ -128,17 +128,18 @@ npx tsx prisma/seed.ts
 
 | email | 名前 | ロール | isActive | 用途 |
 |-------|------|--------|----------|------|
-| bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用） |
+| bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用）。apiKey: `c1d2e3f4-a5b6-7890-abcd-ef1234567890`（admin 系 REST API 確認用） |
 | tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー。apiKey: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`（REST API 動作確認用） |
 | tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
 | nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用。apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`（REST API 403 確認用） |
 | sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
 | torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
+| yagen@example.com | yagen | MEMBER | true | 提出状況の「休」表示・提出率（休日除外）確認用。直近14日の平日すべてに日報 + 1平日を休日登録し提出率100%になる |
 
 - 初期パスワード: `Yakitori2026`
-- シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される
+- シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される（yagen のみ提出率検証のため直近14日の平日分）
 - ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive はシード再実行でリセットされる
-- シードを再実行するとレポート・コメントは全削除して再投入する（ユーザーは upsert のため削除しない）
+- シードを再実行するとレポート・コメント・休日は全削除して再投入する（ユーザーは upsert のため削除しない）
 - `CLERK_SECRET_KEY` は必須。未設定の場合はエラーで終了する。シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
 
 ### Prisma Studio（GUIでDBを確認）
@@ -148,6 +149,27 @@ npx prisma studio
 ```
 
 ブラウザで `http://localhost:5555` が開く。
+
+---
+
+## E2E テスト（ローカル専用）
+
+Playwright による E2E テストは **devcontainer 内で完結** して実行する。方針の詳細は [`docs/testing.md` — E2E テスト](testing.md) を参照。
+
+```bash
+# 初回のみ: ブラウザ導入
+npx playwright install --with-deps chromium
+
+# 実行（シード投入・ロール別ログインは global.setup.ts が自動で行う）
+npm run test:e2e
+
+# UI モード
+npm run test:e2e:ui
+```
+
+- シードは `global.setup.ts` がスイート開始前に自動実行するため、手動シードは不要
+- `webServer` 設定により dev サーバーは自動起動する（起動済みなら再利用）
+- ログインセッションは `e2e/.auth/*.json` にキャッシュされる（gitignore 済み）
 
 ---
 
