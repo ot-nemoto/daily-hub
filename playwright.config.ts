@@ -41,5 +41,8 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: true,
     timeout: 120_000,
+    // dev サーバーの stdout（Clerk 開発キー警告・ブラウザ転送ログ・SSL/pg 警告）を抑止する。
+    // 起動判定は url 待ちで行うため影響なし。stderr は既定のまま（起動エラーは表示される）。
+    stdout: "ignore",
   },
 });
