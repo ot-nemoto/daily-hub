@@ -134,11 +134,12 @@ npx tsx prisma/seed.ts
 | nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用。apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`（REST API 403 確認用） |
 | sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
 | torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
+| yagen@example.com | yagen | MEMBER | true | 提出状況の「休」表示・提出率（休日除外）確認用。直近14日の平日すべてに日報 + 1平日を休日登録し提出率100%になる |
 
 - 初期パスワード: `Yakitori2026`
-- シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される
+- シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される（yagen のみ提出率検証のため直近14日の平日分）
 - ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive はシード再実行でリセットされる
-- シードを再実行するとレポート・コメントは全削除して再投入する（ユーザーは upsert のため削除しない）
+- シードを再実行するとレポート・コメント・休日は全削除して再投入する（ユーザーは upsert のため削除しない）
 - `CLERK_SECRET_KEY` は必須。未設定の場合はエラーで終了する。シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
 
 ### Prisma Studio（GUIでDBを確認）
