@@ -42,8 +42,9 @@ test.describe("提出状況", () => {
 
   test("週末ヘッダーが色分けされる（土=青・日=赤）", async ({ page }) => {
     await page.goto("/reports/status");
-    expect(await page.locator("thead th.text-blue-500").count()).toBeGreaterThan(0);
-    expect(await page.locator("thead th.text-red-500").count()).toBeGreaterThan(0);
+    // count() は auto-wait されないため、not.toHaveCount(0) でリトライ待ちする
+    await expect(page.locator("thead th.text-blue-500")).not.toHaveCount(0);
+    await expect(page.locator("thead th.text-red-500")).not.toHaveCount(0);
   });
 
   test("期間切替: 1W=7列・1M=30列に変わりハイライトされる", async ({ page }) => {
