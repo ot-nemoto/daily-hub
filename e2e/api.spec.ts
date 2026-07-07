@@ -64,6 +64,7 @@ test.describe("REST API（外部連携）", () => {
     const res2 = await request.get(`/api/reports?date=${today}&authorId=${tsukune.authorId}`, {
       headers: auth(TSUKUNE_KEY),
     });
+    expect(res2.status()).toBe(200);
     const { reports: filtered } = await res2.json();
     expect(filtered.length).toBeGreaterThan(0);
     expect(filtered.every((r: { authorId: string }) => r.authorId === tsukune.authorId)).toBe(true);
