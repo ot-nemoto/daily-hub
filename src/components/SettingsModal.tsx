@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 import { SettingsForm } from "@/app/settings/SettingsForm";
 
@@ -20,7 +21,11 @@ export function SettingsModal({ initialName, email, hasInitialApiKey, onClose }:
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  return (
+  // header（sticky z-10）の stacking context に閉じ込められると z-50 が効かず、
+  // 他要素（提出状況テーブルの sticky セル等）の下に潜り込むため、body 直下へ portal する。
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       role="dialog"
@@ -64,6 +69,7 @@ export function SettingsModal({ initialName, email, hasInitialApiKey, onClose }:
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
