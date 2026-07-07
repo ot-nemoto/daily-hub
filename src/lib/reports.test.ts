@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import {
   createReport,
+  deleteReportById,
   resolveOrCreateUserByName,
   updateReport,
   upsertReportForUserName,
@@ -23,7 +24,12 @@ vi.mock("@/lib/prisma", () => ({
       create: vi.fn(),
       update: vi.fn(),
       upsert: vi.fn(),
+      delete: vi.fn(),
     },
+    comment: {
+      deleteMany: vi.fn(),
+    },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -120,6 +126,33 @@ describe("updateReport", () => {
 
     await expect(updateReport(input)).rejects.toThrow(ForbiddenError);
     expect(prisma.report.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteReportById", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: コメント削除と日報削除をトランザクションで実行する", async () => {
+    vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
+
+    await deleteReportById({ id: "report-1" });
+
+    expect(prisma.comment.deleteMany).toHaveBeenCalledWith({ where: { reportId: "report-1" } });
+    expect(prisma.report.delete).toHaveBeenCalledWith({ where: { id: "report-1" } });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("異常系: 削除対象が存在しない場合（P2025）は NotFoundError に変換する", async () => {
+    const p2025 = Object.assign(new Error("Record to delete does not exist"), { code: "P2025" });
+    vi.mocked(prisma.$transaction).mockRejectedValue(p2025);
+
+    await expect(deleteReportById({ id: "missing" })).rejects.toThrow(NotFoundError);
+  });
+
+  it("異常系: その他の DB エラーはそのまま投げる", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(new Error("DB error"));
+
+    await expect(deleteReportById({ id: "report-1" })).rejects.toThrow("DB error");
   });
 });
 
