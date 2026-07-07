@@ -61,21 +61,79 @@ vi.mock("@/lib/prisma", () => ({
 
 ---
 
-## E2E テスト（Playwright MCP）
+## E2E テスト（Playwright）
+
+**ローカル専用。** CI では実行しない。devcontainer 内で dev サーバー・Playwright・ブラウザをすべて完結させて実行する。
+
+> ⚠️ **実行対象 DB の注意**: `global.setup.ts` が `prisma/seed.ts` を実行し、対象 DB の `comment`/`report` を**全削除**してから再投入する。**必ずローカル/開発用の DB に対してのみ実行すること**（共有 DB・本番相当 DB に向けて実行しない）。実行前に `DATABASE_URL` の向き先を確認する。
+
+シナリオの一覧は [`docs/e2e-scenarios.md`](e2e-scenarios.md) を参照。テストコードは `e2e/` 配下に配置する。
+
+### 構成
+
+| ファイル | 役割 |
+|---------|------|
+| `playwright.config.ts` | baseURL・`webServer`（dev サーバー自動起動）・`workers: 1`（直列）・Chromium プロジェクト |
+| `e2e/global.setup.ts` | Clerk Testing Token 準備（`clerkSetup`）→ シード投入 → ロール別ログインセッションを `e2e/.auth/*.json` に保存 |
+| `e2e/fixtures.ts` | 共通定数（シードパスワード・`storageState` パス解決） |
+| `e2e/*.spec.ts` | シナリオ本体。`test.use({ storageState: authState("<role>") })` でロール別に実行 |
+
+### 認証方針
+
+- Clerk 認証は [`@clerk/testing`](https://clerk.com/docs/testing/playwright/overview) を利用し、`clerk.signIn()` で UI を経由せずプログラム的にログインする
+- ボット検知は Testing Token（`setupClerkTestingToken`）で回避する
+- ロール別にログインセッションを `storageState` にキャッシュし、各テストは保存済みセッションから開始する
+
+### シード方針
+
+- **スイート開始前に `global.setup.ts` が1回シードを実行する**（`comment`/`report` を全削除して再投入、ユーザーを upsert）
+- データ競合を避けるため `workers: 1` で直列実行する
+- 破壊的な操作を伴うテストは、未来日付や専用データで自己完結させ他テストへ影響させない
 
 ### テストユーザー
 
-**E2E テストはシード実行済みであることを前提とする。** シードの実行方法は [`docs/development.md` — シードデータ投入](development.md#シードデータ投入) を参照。
+シード定義のユーザー（共通パスワード `Yakitori2026`）を利用する。
 
-| ユーザー | メールアドレス | パスワード | 用途 |
-|---------|-------------|---------|------|
-| bonjiri | `bonjiri@example.com` | `Yakitori2026` | 管理操作テスト（ADMIN） |
-| tsukune | `tsukune@example.com` | `Yakitori2026` | 機能テスト全般・APIキーテスト（MEMBER） |
-| tebasaki | `tebasaki@example.com` | `Yakitori2026` | ユーザー分離確認（MEMBER） |
-| nankotsu | `nankotsu@example.com` | `Yakitori2026` | VIEWER ロール動作確認・REST API 403 確認（apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`） |
-| sunagimo | `sunagimo@example.com` | `Yakitori2026` | 無効化アカウントのリダイレクト確認（isActive=false） |
-| torikawa | `torikawa@example.com` | `Yakitori2026` | ロール変更・無効化テストの対象ユーザー（MEMBER） |
+| ユーザー | メールアドレス | 用途 |
+|---------|-------------|------|
+| bonjiri | `bonjiri@example.com` | 管理操作テスト（ADMIN） |
+| tsukune | `tsukune@example.com` | 機能テスト全般・APIキーテスト（MEMBER） |
+| tebasaki | `tebasaki@example.com` | ユーザー分離確認（MEMBER） |
+| nankotsu | `nankotsu@example.com` | VIEWER ロール動作確認・REST API 403 確認（apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`） |
+| sunagimo | `sunagimo@example.com` | 無効化アカウントのリダイレクト確認（isActive=false） |
+| torikawa | `torikawa@example.com` | ロール変更・無効化テストの対象ユーザー（MEMBER） |
 
-### 実施方法
+### 実行
 
-テスト対象の URL と [`docs/e2e-scenarios.md`](e2e-scenarios.md) のシナリオをモデルに渡して実施する。
+```bash
+npm run test:e2e          # 通常テスト（@screenshot 撮影は除外・シード込み）
+npm run test:e2e:screens  # 撮影のみ（主要画面のスクリーンショットを保存）
+npm run test:e2e:all      # 通常 + 撮影をすべて実行
+npm run test:e2e:ui       # UI モードで実行
+npx playwright test daily.spec.ts   # 特定ファイルのみ
+```
+
+> 初回のみ `npx playwright install --with-deps chromium` でブラウザを導入する。
+
+### スクリーンショット（撮影専用テスト）
+
+`e2e/visual.spec.ts` は `@screenshot` タグ付きの**撮影専用**テストで、主要画面を `test-results/screens/` に PNG 保存する（`assert` を持たない）。通常の `test:e2e`（`--grep-invert @screenshot`）からは除外され、`test:e2e:screens`（`--grep @screenshot`）で明示的に実行する。
+
+| ファイル | 保存先 |
+|---------|-------|
+| 日次ビュー（デフォルト） | `test-results/screens/daily-default.png` |
+| 日次ビュー（3フィールド固定順） | `test-results/screens/daily-all-fields.png` |
+| 月次ビュー | `test-results/screens/monthly.png` |
+
+### レポート
+
+`test:e2e` 実行後に HTML レポート（`playwright-report/`）が生成される。`npx playwright show-report` で開ける（失敗時はトレース・スクリーンショット付き）。
+
+### コード化状況
+
+現状コード化済みの範囲（段階的に拡張中）:
+
+- 認証・リダイレクト、ヘッダー
+- 日次ビュー・月次ビュー（表示フィールド複数選択を含む）
+
+未コード化の領域（詳細・編集モーダル／コメント／作成／設定／APIキー／管理／休日／提出状況／REST API）は [`docs/e2e-scenarios.md`](e2e-scenarios.md) を参照し、順次追加する。

@@ -15,7 +15,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test --grep-invert @screenshot",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:all": "playwright test",
+    "test:e2e:screens": "playwright test --grep @screenshot"
   },
   "dependencies": {
     "@clerk/backend": "^3.8.4",
@@ -31,6 +35,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
+    "@clerk/testing": "^2.2.3",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
