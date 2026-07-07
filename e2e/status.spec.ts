@@ -87,9 +87,8 @@ test.describe("提出状況", () => {
   test("休日登録セルに「休」バッジが表示される（#16）", async ({ page }) => {
     await page.goto("/reports/status");
     const yagenRow = page.locator("tbody tr").filter({ hasText: "yagen" });
-    const holiday = yagenRow.locator("span.bg-red-100");
-    await expect(holiday.first()).toBeVisible();
-    await expect(holiday.first()).toHaveText("休");
+    // スタイル変更に強いよう表示テキストで検証する
+    await expect(yagenRow.getByText("休").first()).toBeVisible();
   });
 
   test("初期表示で右端（今日の列）まで自動スクロールされる", async ({ page }) => {
