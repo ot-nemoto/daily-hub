@@ -86,6 +86,7 @@ test.describe("REST API（外部連携）", () => {
     const check = await request.get(`/api/reports?date=${FUTURE.del}`, {
       headers: auth(TSUKUNE_KEY),
     });
+    expect(check.status()).toBe(200);
     const { reports } = await check.json();
     expect(reports.find((r: { id: string }) => r.id === id)).toBeFalsy();
 
