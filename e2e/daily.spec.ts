@@ -1,15 +1,6 @@
-import { authState, expect, test } from "./fixtures";
+import { authState, expect, test, todayStr } from "./fixtures";
 
 test.use({ storageState: authState("tsukune") });
-
-// シードは「今日」を基準に日報を投入するため、今日の日付文字列を作る
-function todayStr(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 test.describe("日次ビュー", () => {
   test("初期表示は今日の日付で自分・他ユーザーの日報が表示される", async ({ page }) => {
