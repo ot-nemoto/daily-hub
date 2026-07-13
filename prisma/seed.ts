@@ -360,8 +360,8 @@ async function main() {
   console.log(
     `  ${YAGEN_EMAIL}    (MEMBER, active)   — 提出状況の休日表示・提出率検証用（提出率100%）`,
   );
-  // API キー・パスワードの実値はログに出さない（値は docs/testing.md を参照）
-  console.log("\nAPI キー・パスワードは docs/testing.md を参照してください。");
+  // API キー・パスワードの実値はログに出さない（値は本シード prisma/seed.ts の定数定義を参照）
+  console.log("\nAPI キー・パスワードの実値はログに出力しない（prisma/seed.ts の定数定義を参照）。");
 }
 
 main()
