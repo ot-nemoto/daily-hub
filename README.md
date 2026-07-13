@@ -16,7 +16,7 @@
 - 他メンバーの日報閲覧・コメント
 - 日次ビュー：指定日付の全ユーザー日報を一覧（ユーザー絞り込み可）
 - 月次ビュー：期間を選択して日報を一覧（ユーザー切り替え可）
-- 外部API：APIキーを使ってスクリプトや外部ツールから日報を投稿
+- 外部API：APIキーを使ってスクリプトや外部ツールから日報を投稿（→ [docs/api.md](docs/api.md)）
 
 ## ドキュメント
 
@@ -32,46 +32,6 @@
 | [docs/schema.md](docs/schema.md) | DBスキーマ・Prismaモデル定義 |
 | [docs/auth.md](docs/auth.md) | 認証フロー・保護ルート |
 | [docs/development.md](docs/development.md) | ローカルセットアップ・Prisma操作・デプロイ手順 |
-
-## 外部APIから日報を投稿する
-
-スクリプトや外部ツールから日報を投稿できます。
-
-**1. APIキーを発行する**
-
-`/settings`（個人設定）を開き、「APIキー」セクションで「生成する」をクリック。
-
-**2. 日報を投稿する**
-
-```bash
-curl -X POST https://<your-domain>/api/reports \
-  -H "Authorization: Bearer <your-api-key>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "date": "2026-04-12",
-    "workContent": "作業内容",
-    "tomorrowPlan": "明日の予定",
-    "notes": "所感（省略可）"
-  }'
-```
-
-成功すると `201` と作成された日報の ID が返ります。
-
-```json
-{ "id": "cm..." }
-```
-
-| ステータス | 意味 |
-|---|---|
-| 201 | 作成成功 |
-| 401 | APIキーが無効またはアカウントが無効 |
-| 403 | VIEWER ロールのため投稿不可 |
-| 409 | 同日の日報が既に存在する |
-| 422 | 入力値が不正 |
-
-エンドポイントの詳細は [docs/api.md](docs/api.md) を参照。
-
----
 
 ## クイックスタート
 
