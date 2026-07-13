@@ -119,8 +119,8 @@ applyTo: "**"
 
 1. **UI/UX 変更**
    - 対象例: `src/app/**`, `src/components/**` の画面表示・操作フロー・入力制約・文言変更
-   - 必須更新: `docs/e2e-scenarios.md`
-   - 指摘条件: 上記コード変更があるのに `docs/e2e-scenarios.md` の差分がない
+   - 必須更新: `docs/ui.md`
+   - 指摘条件: 上記コード変更があるのに `docs/ui.md` の差分がない
 
 2. **外部 REST API 仕様変更**
    - 対象例: `src/app/api/**/route.ts` の新規追加・エンドポイント変更

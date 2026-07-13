@@ -25,17 +25,13 @@
 | ファイル | 内容 |
 |----------|------|
 | [docs/product.md](docs/product.md) | プロダクト定義・目的 |
-| [docs/requirements.md](docs/requirements.md) | 機能要件・非機能要件・画面一覧 |
-| [docs/architecture.md](docs/architecture.md) | 技術スタック・ディレクトリ構成・実装方針 |
+| [docs/architecture.md](docs/architecture.md) | 技術スタック・実装方針・非機能要件 |
+| [docs/ui.md](docs/ui.md) | 機能要件・画面一覧・遷移・UI規約 |
 | [docs/api.md](docs/api.md) | 外部 REST API エンドポイント定義 |
 | [docs/actions.md](docs/actions.md) | Server Actions 定義 |
 | [docs/schema.md](docs/schema.md) | DBスキーマ・Prismaモデル定義 |
-| [docs/ui.md](docs/ui.md) | 画面一覧・遷移・UIコンポーネント仕様 |
 | [docs/auth.md](docs/auth.md) | 認証フロー・保護ルート |
 | [docs/development.md](docs/development.md) | ローカルセットアップ・Prisma操作・デプロイ手順 |
-| [docs/tasks.md](docs/tasks.md) | フェーズ別マイルストーン |
-| [docs/testing.md](docs/testing.md) | 自動テスト方針・カバレッジ規約・実行手順 |
-| [docs/e2e-scenarios.md](docs/e2e-scenarios.md) | E2Eテストシナリオ・手動テスト観点 |
 
 ## 外部APIから日報を投稿する
 

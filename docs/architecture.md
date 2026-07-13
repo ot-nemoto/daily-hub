@@ -17,51 +17,43 @@
 | 開発サーバー | Turbopack | Next.js 16 デフォルト、HMR が高速 |
 | パッケージ管理 | npm | devcontainerのデフォルト環境に合わせる |
 
-## ディレクトリ構成
+## 非機能要件
 
-```
-daily-hub/
-├── .github/
-│   └── workflows/
-│       └── release.yml # master push 時に自動リリース
-├── docs/               # 設計ドキュメント
-├── prisma/
-│   ├── schema.prisma   # DBスキーマ定義
-│   ├── seed.ts         # 開発用シードデータ
-│   └── migrations/     # マイグレーションファイル
-├── prisma.config.ts    # Prisma 7 設定（datasource URL）
-├── src/
-│   ├── app/            # Next.js App Router
-│   │   ├── (auth)/
-│   │   │   └── login/[[...rest]]/page.tsx  # Clerk SignIn コンポーネント
-│   │   ├── auth-error/
-│   │   │   └── page.tsx            # 認証エラー（isActive=false 等）
-│   │   ├── reports/
-│   │   │   ├── new/page.tsx
-│   │   │   ├── daily/page.tsx
-│   │   │   ├── monthly/page.tsx
-│   │   │   └── [id]/
-│   │   │       ├── page.tsx        # 詳細
-│   │   │       └── edit/page.tsx   # 編集
-│   │   ├── api/
-│   │   │   └── reports/
-│   │   │       └── route.ts        # POST(作成) ※APIキー認証（Phase 11）
+### パフォーマンス
 
-│   │   ├── settings/
-│   │   │   └── page.tsx            # 個人設定（名前変更）（Phase 9）
-│   │   └── admin/                  # 管理画面ページ（Phase 7）
-│   │       └── users/
-│   │           └── page.tsx        # ユーザー一覧
-│   ├── components/     # 再利用UIコンポーネント
-│   ├── lib/
-│   │   ├── prisma.ts   # Prismaクライアントシングルトン
-│   │   └── auth.ts     # getSession()（Clerk + DB統合）
-│   └── types/          # 共通型定義
-├── CLAUDE.md
-├── biome.json          # Biome 設定
-├── vitest.config.ts    # Vitest 設定
-└── package.json
-```
+| # | 要件 |
+|---|------|
+| NFR-1 | 日次ビューの表示は 1 秒以内（チームメンバー 20 名以下想定） |
+| NFR-2 | 月次ビューは最大 31 件の日報を一覧表示できる |
+
+### セキュリティ
+
+| # | 要件 |
+|---|------|
+| SEC-1 | 他ユーザーの日報を編集・削除できない（サーバー側で検証） |
+| SEC-2 | 他ユーザーのコメントを削除できない（サーバー側で検証） |
+| SEC-3 | パスワード管理は Clerk に委任する（DB にパスワードを保存しない） |
+| SEC-4 | セッションは Clerk が管理する（Clerk JWT + DB ユーザー突合で認証） |
+
+> 実装方針は下記「セキュリティ方針」を参照。
+
+### 可用性・運用
+
+| # | 要件 |
+|---|------|
+| OPS-1 | ローカル環境（devcontainer）で動作する |
+| OPS-2 | 将来的にセルフホスト（VPS/コンテナ）でのデプロイが可能な構成にする |
+| OPS-3 | データはDBに永続化し、アプリ再起動後も保持される |
+
+### アクセシビリティ（未対応）
+
+現時点では対応必須としない。
+
+| # | 要件 |
+|---|------|
+| A11Y-1 | ダイアログ・モーダルに `role="dialog"` / `aria-modal` / `aria-labelledby` を付与する |
+| A11Y-2 | キーボード操作（Escキーで閉じる、フォーカス移動）に対応する |
+| A11Y-3 | スクリーンリーダーで主要操作（日報作成・編集・管理画面操作）が完結できるようにする |
 
 ## 認証フロー
 
