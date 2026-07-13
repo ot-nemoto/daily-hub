@@ -1,83 +1,13 @@
 # schema.md — DBスキーマ定義
 
-## Prisma スキーマ（`prisma/schema.prisma`）
+## Prisma スキーマ
 
-```prisma
-// Prisma 7: generator provider は "prisma-client"、output でクライアント生成先を指定
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
-}
+スキーマ定義の本体は [`prisma/schema.prisma`](../prisma/schema.prisma) を唯一の正とする（本ドキュメントには複製しない）。以下は Prisma 7 でスキーマを編集する際の gotcha。
 
-// Prisma 7: datasource に URL は書かない。URL は prisma.config.ts で管理する
-datasource db {
-  provider = "postgresql"
-}
+- `generator client` の `provider` は `"prisma-client"`、`output` でクライアント生成先（`src/generated/prisma`）を指定する
+- `datasource` に接続 URL は書かない。URL は `prisma.config.ts`（CLI）と `src/lib/prisma.ts`（ランタイム）で管理する（詳細は [architecture.md](architecture.md) の「Prisma 7 の接続構成」を参照）
 
-enum Role {
-  ADMIN   // 管理画面フルアクセス
-  MEMBER  // 日報作成・編集・コメント（デフォルト）
-  VIEWER  // 閲覧・コメントのみ（Phase 7c）
-}
-
-model User {
-  id        String   @id @default(cuid())
-  clerkId   String?  @unique @map("clerk_id")              // Phase 10: Clerk ユーザーID（初回ログイン時に紐付け）
-  apiKey    String?  @unique @map("api_key")               // Phase 11: 外部API用キー（nullable）
-  name      String
-  email     String   @unique
-  role      Role     @default(MEMBER)                      // Phase 7a
-  isActive  Boolean  @default(true) @map("is_active")      // Phase 7a: false でログイン不可
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  reports  Report[]
-  comments Comment[]
-  dayOffs  DayOff[]
-}
-
-model Report {
-  id           String   @id @default(cuid())
-  date         DateTime                                    // 日付部分のみ使用（時刻は 00:00:00 UTC で統一）
-  workContent  String   @map("work_content")               // 作業内容
-  tomorrowPlan String   @map("tomorrow_plan")              // 明日の予定
-  notes        String   @default("")                       // 感想・課題・問題点（任意）
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  authorId String  @map("author_id")
-  author   User    @relation(fields: [authorId], references: [id])
-  comments Comment[]
-
-  @@unique([authorId, date]) // 1ユーザー1日1件制約 + 月次ビュー用インデックスを兼ねる
-  @@index([date])            // 日次ビュー用
-}
-
-model Comment {
-  id        String   @id @default(cuid())
-  body      String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  reportId String @map("report_id")
-  report   Report @relation(fields: [reportId], references: [id])
-  authorId String @map("author_id")
-  author   User   @relation(fields: [authorId], references: [id])
-
-  @@index([reportId])
-}
-
-model DayOff {
-  id        String   @id @default(cuid())
-  date      DateTime                                    // 休日の日付（時刻は 00:00:00 UTC で統一）
-  createdAt DateTime @default(now()) @map("created_at")
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@unique([userId, date]) // 1ユーザー1日1件制約
-  @@index([date])          // 日付での検索用
-}
-```
+以降のテーブル定義・リレーション図・インデックスは、スキーマから読み取れる契約情報として整理したもの。
 
 ---
 
