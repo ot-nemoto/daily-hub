@@ -44,7 +44,9 @@ next-env.d.ts
 /src/generated/prisma
 
 # Claude Code (personal settings)
-.claude/
+# 個人設定・スクラッチは除外しつつ、dev-commons から同期される共通規約のみ追跡する
+.claude/*
+!.claude/common-rules.md
 
 # Playwright
 e2e/.auth/
