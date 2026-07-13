@@ -18,12 +18,13 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
 
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-if (!clerkSecretKey) throw new Error("CLERK_SECRET_KEY is not set");
 
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const clerk = createClerkClient({ secretKey: clerkSecretKey });
+const clerk = clerkSecretKey
+  ? createClerkClient({ secretKey: clerkSecretKey })
+  : null;
 
 // テストユーザーの共通パスワード
 const SEED_PASSWORD = "Yakitori2026";
@@ -169,8 +170,12 @@ const YAGEN_NAME = "yagen";
 
 type Role = "ADMIN" | "MEMBER" | "VIEWER";
 
-/** Clerk にユーザーが存在しなければ作成し、clerkId を返す */
-async function upsertClerkUser(email: string): Promise<string> {
+/** Clerk にユーザーが存在しなければ作成し、clerkId を返す（キー未設定時はスキップして null） */
+async function upsertClerkUser(email: string): Promise<string | null> {
+  if (!clerk) {
+    console.warn("  CLERK_SECRET_KEY が未設定のため Clerk ユーザー作成をスキップします");
+    return null;
+  }
   const { data: existing } = await clerk.users.getUserList({ emailAddress: [email] });
   if (existing.length > 0) return existing[0].id;
   const created = await clerk.users.createUser({
@@ -192,8 +197,8 @@ async function upsertUser(params: {
   const clerkId = await upsertClerkUser(email);
   return prisma.user.upsert({
     where: { email },
-    update: { name, role, isActive, clerkId, apiKey: apiKey ?? null },
-    create: { email, name, role, isActive, clerkId, apiKey: apiKey ?? null },
+    update: { name, role, isActive, apiKey: apiKey ?? null, ...(clerkId ? { clerkId } : {}) },
+    create: { email, name, role, isActive, apiKey: apiKey ?? null, ...(clerkId ? { clerkId } : {}) },
   });
 }
 
@@ -360,8 +365,8 @@ async function main() {
   console.log(
     `  ${YAGEN_EMAIL}    (MEMBER, active)   — 提出状況の休日表示・提出率検証用（提出率100%）`,
   );
-  // API キー・パスワードの実値はログに出さない（値は docs/testing.md を参照）
-  console.log("\nAPI キー・パスワードは docs/testing.md を参照してください。");
+  // API キー・パスワードの実値はログに出さない（値は本シード prisma/seed.ts の定数定義を参照）
+  console.log("\nAPI キー・パスワードの実値はログに出力しない（prisma/seed.ts の定数定義を参照）。");
 }
 
 main()

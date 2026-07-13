@@ -154,7 +154,7 @@ npx prisma studio
 
 ## E2E テスト（ローカル専用）
 
-Playwright による E2E テストは **devcontainer 内で完結** して実行する。方針の詳細は [`docs/testing.md` — E2E テスト](testing.md) を参照。
+Playwright による E2E テストは **devcontainer 内で完結** して実行する。
 
 ```bash
 # 初回のみ: ブラウザ導入
@@ -208,7 +208,7 @@ npx prisma generate
 
 ## テスト
 
-詳細なテスト方針・カバレッジ規約は [`docs/testing.md`](testing.md) を参照。
+テスト方針・カバレッジ規約・完了条件は共通規約（`.claude/common-rules.md` の「テストルール」）を正とする。ユニットテストの対象ディレクトリは `CLAUDE.md`「テスト対象」を参照。
 
 ## デプロイ（Vercel）
 
