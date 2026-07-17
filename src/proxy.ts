@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   "/auth-error",
   "/api/reports(.*)",
   "/api/comments(.*)",
+  "/api/day-off(.*)",
   "/api/admin/(.*)",
 ]);
 
