@@ -12,6 +12,11 @@ export function unauthorized() {
   return jsonError("Unauthorized", 401);
 }
 
+/** ADMIN 以外による admin エンドポイントへのアクセス（403）レスポンス。 */
+export function adminForbidden() {
+  return jsonError("このエンドポイントは ADMIN のみ使用できます", 403);
+}
+
 /**
  * lib が throw する型付きエラーを HTTP ステータスにマッピングする。
  * 既知の業務エラー以外（DB 障害等）は 500 とし、呼び出し側で再 throw する想定。

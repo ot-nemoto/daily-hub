@@ -29,6 +29,19 @@ export const reportUpdateBodySchema = z.object(
   { error: "リクエストボディが不正です" },
 );
 
+/**
+ * admin バッチ登録の1件（`userName` で対象ユーザーを解決）。
+ * ユーザー未存在は lib（`resolveOrCreateUserByName`）が自動作成する。
+ */
+export const reportAdminBatchItemSchema = reportCreateBodySchema.extend({
+  userName: z.string({ error: "userName は必須です" }).min(1, { error: "userName は必須です" }),
+});
+
+/** admin バッチ登録 body（1件以上の配列）。 */
+export const reportAdminBatchBodySchema = z
+  .array(reportAdminBatchItemSchema)
+  .min(1, { error: "1件以上の日報を指定してください" });
+
 /** 日報のレスポンス形式（`date` は YYYY-MM-DD）。 */
 export const reportResponseSchema = z.object({
   id: z.string(),

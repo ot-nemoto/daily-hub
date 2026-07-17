@@ -3,12 +3,20 @@ import { prisma } from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "./errors";
 
+/** 全ユーザーを name 昇順で取得する（admin 一覧用）。 */
+export async function getUsers() {
+  return prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true, isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
 export async function updateUserAdmin(input: {
   id: string;
   currentUserId: string;
   role?: Role;
   isActive?: boolean;
-}): Promise<{ id: string }> {
+}) {
   const { id, currentUserId, role, isActive } = input;
 
   if (role === undefined && isActive === undefined) {
@@ -29,14 +37,16 @@ export async function updateUserAdmin(input: {
     throw new NotFoundError("User not found");
   }
 
-  const updated = await prisma.user.update({
+  // 更新後ユーザーを serialize 用のフィールドで返し、呼び出し側（REST の PATCH）が
+  // 再取得せず整形できるようにする。
+  return prisma.user.update({
     where: { id },
     data: {
       ...(role !== undefined && { role }),
       ...(isActive !== undefined && { isActive }),
     },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
-  return { id: updated.id };
 }
 
 export async function deleteUser(input: { id: string; currentUserId: string }): Promise<void> {
