@@ -19,6 +19,7 @@ vi.mock("@/lib/prisma", () => ({
     user: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      count: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
@@ -115,6 +116,59 @@ describe("updateUserAdmin", () => {
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
+  it("異常系: 最後の有効 ADMIN を降格しようとすると ForbiddenError を投げる", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "admin-2",
+      role: "ADMIN",
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.user.count).mockResolvedValue(1);
+
+    await expect(
+      updateUserAdmin({ id: "admin-2", currentUserId: "admin-1", role: "MEMBER" as never }),
+    ).rejects.toThrow(ForbiddenError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("異常系: 最後の有効 ADMIN を無効化しようとすると ForbiddenError を投げる", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "admin-2",
+      role: "ADMIN",
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.user.count).mockResolvedValue(1);
+
+    await expect(
+      updateUserAdmin({ id: "admin-2", currentUserId: "admin-1", isActive: false }),
+    ).rejects.toThrow(ForbiddenError);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("正常系: 他に有効 ADMIN が居れば ADMIN を降格できる", async () => {
+    const updated = {
+      id: "admin-2",
+      name: "管理者2",
+      email: "a2@example.com",
+      role: "MEMBER",
+      isActive: true,
+    };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "admin-2",
+      role: "ADMIN",
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.user.count).mockResolvedValue(2);
+    vi.mocked(prisma.user.update).mockResolvedValue(updated as never);
+
+    const result = await updateUserAdmin({
+      id: "admin-2",
+      currentUserId: "admin-1",
+      role: "MEMBER" as never,
+    });
+    expect(result).toEqual(updated);
+    expect(prisma.user.update).toHaveBeenCalled();
+  });
+
   it("異常系: 存在しないユーザーで NotFoundError を投げる", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
@@ -153,6 +207,33 @@ describe("deleteUser", () => {
     );
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("異常系: 最後の有効 ADMIN の削除で ForbiddenError を投げる", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "admin-2",
+      role: "ADMIN",
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.user.count).mockResolvedValue(1);
+
+    await expect(deleteUser({ id: "admin-2", currentUserId: "admin-1" })).rejects.toThrow(
+      ForbiddenError,
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("正常系: 他に有効 ADMIN が居れば ADMIN を削除できる", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "admin-2",
+      role: "ADMIN",
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.user.count).mockResolvedValue(2);
+    vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
+
+    await expect(deleteUser({ id: "admin-2", currentUserId: "admin-1" })).resolves.toBeUndefined();
+    expect(prisma.$transaction).toHaveBeenCalled();
   });
 });
 
