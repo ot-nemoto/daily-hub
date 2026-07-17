@@ -131,7 +131,7 @@ describe("createComment", () => {
 
   it("正常系: コメントを作成して id を返す", async () => {
     vi.mocked(getSession).mockResolvedValue(memberSession as never);
-    vi.mocked(libCreateComment).mockResolvedValue({ id: "comment-1" });
+    vi.mocked(libCreateComment).mockResolvedValue({ id: "comment-1" } as never);
 
     const result = await createComment(input);
 
