@@ -8,6 +8,7 @@ import {
   deleteUser,
   generateApiKey,
   getMe,
+  getUsers,
   revokeApiKey,
   updateMe,
   updateUserAdmin,
@@ -16,6 +17,7 @@ import {
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
+      findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -26,12 +28,37 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+describe("getUsers", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: 全ユーザーを name 昇順で取得する", async () => {
+    const rows = [
+      { id: "u1", name: "Alice", email: "a@example.com", role: "ADMIN", isActive: true },
+    ];
+    vi.mocked(prisma.user.findMany).mockResolvedValue(rows as never);
+
+    const result = await getUsers();
+    expect(result).toBe(rows);
+    expect(prisma.user.findMany).toHaveBeenCalledWith({
+      select: { id: true, name: true, email: true, role: true, isActive: true },
+      orderBy: { name: "asc" },
+    });
+  });
+});
+
 describe("updateUserAdmin", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: ロールを変更できる", async () => {
+  it("正常系: ロールを変更し更新後ユーザーを返す", async () => {
+    const updated = {
+      id: "user-1",
+      name: "太郎",
+      email: "u@example.com",
+      role: "MEMBER",
+      isActive: true,
+    };
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
-    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue(updated as never);
 
     const result = await updateUserAdmin({
       id: "user-1",
@@ -39,16 +66,24 @@ describe("updateUserAdmin", () => {
       role: "MEMBER" as never,
     });
 
-    expect(result).toEqual({ id: "user-1" });
+    expect(result).toEqual(updated);
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
       data: { role: "MEMBER" },
+      select: { id: true, name: true, email: true, role: true, isActive: true },
     });
   });
 
-  it("正常系: isActive を変更できる", async () => {
+  it("正常系: isActive を変更し更新後ユーザーを返す", async () => {
+    const updated = {
+      id: "user-1",
+      name: "太郎",
+      email: "u@example.com",
+      role: "MEMBER",
+      isActive: false,
+    };
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
-    vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue(updated as never);
 
     const result = await updateUserAdmin({
       id: "user-1",
@@ -56,10 +91,11 @@ describe("updateUserAdmin", () => {
       isActive: false,
     });
 
-    expect(result).toEqual({ id: "user-1" });
+    expect(result).toEqual(updated);
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
       data: { isActive: false },
+      select: { id: true, name: true, email: true, role: true, isActive: true },
     });
   });
 

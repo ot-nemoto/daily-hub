@@ -21,7 +21,7 @@ describe("updateUserAdmin", () => {
 
   it("正常系: ロールを変更して空オブジェクトを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" });
+    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" } as never);
 
     const result = await updateUserAdmin({ id: "user-1", role: "MEMBER" as never });
 
@@ -37,7 +37,7 @@ describe("updateUserAdmin", () => {
 
   it("正常系: isActive を変更して空オブジェクトを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" });
+    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" } as never);
 
     const result = await updateUserAdmin({ id: "user-1", isActive: false });
 
