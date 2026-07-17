@@ -33,7 +33,10 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       return jsonError("指定されたユーザーが見つかりません", statusForError(error));
     }
     if (error instanceof ForbiddenError) {
-      return jsonError("自分自身のロール・有効状態は変更できません", statusForError(error));
+      return jsonError(
+        "自分自身または最後の管理者のロール・有効状態は変更できません",
+        statusForError(error),
+      );
     }
     throw error;
   }
@@ -53,7 +56,7 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
       return jsonError("指定されたユーザーが見つかりません", statusForError(error));
     }
     if (error instanceof ForbiddenError) {
-      return jsonError("自分自身は削除できません", statusForError(error));
+      return jsonError("自分自身または最後の管理者は削除できません", statusForError(error));
     }
     throw error;
   }
