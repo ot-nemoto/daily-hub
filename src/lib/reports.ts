@@ -112,7 +112,7 @@ export async function updateReport(input: {
   workContent: string;
   tomorrowPlan: string;
   notes: string;
-}): Promise<{ id: string }> {
+}) {
   const { id, authorId, workContent, tomorrowPlan, notes } = input;
 
   const existing = await prisma.report.findUnique({
@@ -126,12 +126,12 @@ export async function updateReport(input: {
     throw new ForbiddenError("Forbidden");
   }
 
-  const updated = await prisma.report.update({
+  // author を含めて返し、呼び出し側（REST の PATCH）が再取得せず整形できるようにする。
+  return prisma.report.update({
     where: { id },
     data: { workContent, tomorrowPlan, notes },
-    select: { id: true },
+    include: { author: { select: { name: true } } },
   });
-  return { id: updated.id };
 }
 
 /** 日報を1件取得する（author 名を含む）。存在しなければ null。日次ビュー同様に共有閲覧。 */

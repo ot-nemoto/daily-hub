@@ -130,15 +130,24 @@ describe("PATCH /api/reports/[id]", () => {
     expect(res.status).toBe(404);
   });
 
-  it("正常系: 更新後の日報を返す", async () => {
+  it("正常系: updateReport の戻り値を整形して返す（再取得しない）", async () => {
     authOk();
-    vi.mocked(updateReport).mockResolvedValue({ id: "r1" });
-    vi.mocked(getReportById).mockResolvedValue(MOCK_REPORT as never);
+    vi.mocked(updateReport).mockResolvedValue(MOCK_REPORT as never);
     const res = await PATCH(
       makeRequest("PATCH", { body: UPDATE_BODY, apiKey: VALID_API_KEY }),
       ctx,
     );
     expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual({
+      id: "r1",
+      date: "2026-06-01",
+      authorId: "u1",
+      authorName: "太郎",
+      workContent: "w",
+      tomorrowPlan: "t",
+      notes: "n",
+    });
     expect(updateReport).toHaveBeenCalledWith({
       id: "r1",
       authorId: "u1",
@@ -146,6 +155,7 @@ describe("PATCH /api/reports/[id]", () => {
       tomorrowPlan: "予定",
       notes: "メモ",
     });
+    expect(getReportById).not.toHaveBeenCalled();
   });
 });
 
@@ -155,6 +165,13 @@ describe("DELETE /api/reports/[id]", () => {
   it("Authorization ヘッダーなしで 401 を返す", async () => {
     const res = await DELETE(makeRequest("DELETE"), ctx);
     expect(res.status).toBe(401);
+  });
+
+  it("VIEWER ロールで 403 を返す（PATCH と揃える）", async () => {
+    authOk({ ...MEMBER, role: "VIEWER" });
+    const res = await DELETE(makeRequest("DELETE", { apiKey: VALID_API_KEY }), ctx);
+    expect(res.status).toBe(403);
+    expect(deleteReportByAuthor).not.toHaveBeenCalled();
   });
 
   it("正常系: 204 を返す", async () => {

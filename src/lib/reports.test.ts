@@ -98,13 +98,14 @@ describe("updateReport", () => {
 
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: 日報を更新して id を返す", async () => {
+  it("正常系: 日報を更新し author を含めて返す", async () => {
+    const updated = { id: "report-1", author: { name: "山田太郎" } };
     vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-1" } as never);
-    vi.mocked(prisma.report.update).mockResolvedValue({ id: "report-1" } as never);
+    vi.mocked(prisma.report.update).mockResolvedValue(updated as never);
 
     const result = await updateReport(input);
 
-    expect(result).toEqual({ id: "report-1" });
+    expect(result).toEqual(updated);
     expect(prisma.report.update).toHaveBeenCalledWith({
       where: { id: "report-1" },
       data: {
@@ -112,7 +113,7 @@ describe("updateReport", () => {
         tomorrowPlan: input.tomorrowPlan,
         notes: input.notes,
       },
-      select: { id: true },
+      include: { author: { select: { name: true } } },
     });
   });
 
