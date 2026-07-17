@@ -4,7 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "./errors";
-import { deleteUser, generateApiKey, revokeApiKey, updateMe, updateUserAdmin } from "./users";
+import {
+  deleteUser,
+  generateApiKey,
+  getMe,
+  revokeApiKey,
+  updateMe,
+  updateUserAdmin,
+} from "./users";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -116,21 +123,24 @@ describe("deleteUser", () => {
 describe("updateMe", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: 名前を更新できる", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
-    vi.mocked(prisma.user.update).mockResolvedValue({
+  it("正常系: 名前を更新し role・isActive を含めて返す", async () => {
+    const updated = {
       id: "user-1",
       name: "新しい名前",
       email: "user@example.com",
-    } as never);
+      role: "MEMBER",
+      isActive: true,
+    };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue(updated as never);
 
     const result = await updateMe({ id: "user-1", name: "新しい名前" });
 
-    expect(result).toEqual({ id: "user-1", name: "新しい名前", email: "user@example.com" });
+    expect(result).toEqual(updated);
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
       data: { name: "新しい名前" },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, role: true, isActive: true },
     });
   });
 
@@ -139,6 +149,34 @@ describe("updateMe", () => {
 
     await expect(updateMe({ id: "no-user", name: "名前" })).rejects.toThrow(NotFoundError);
     expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("getMe", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: 本人のプロフィールを取得する", async () => {
+    const me = {
+      id: "user-1",
+      name: "太郎",
+      email: "user@example.com",
+      role: "MEMBER",
+      isActive: true,
+    };
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(me as never);
+
+    const result = await getMe("user-1");
+
+    expect(result).toEqual(me);
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      select: { id: true, name: true, email: true, role: true, isActive: true },
+    });
+  });
+
+  it("存在しない場合は null を返す", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    expect(await getMe("missing")).toBeNull();
   });
 });
 
