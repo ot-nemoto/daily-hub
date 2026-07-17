@@ -73,7 +73,7 @@ describe("updateReport", () => {
 
   it("正常系: 日報を更新して空オブジェクトを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(memberSession as never);
-    vi.mocked(libUpdateReport).mockResolvedValue({ id: "report-1" });
+    vi.mocked(libUpdateReport).mockResolvedValue({ id: "report-1" } as never);
 
     const result = await updateReport(input);
 

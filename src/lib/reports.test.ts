@@ -6,7 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import {
   createReport,
+  deleteReportByAuthor,
   deleteReportById,
+  getReportById,
   resolveOrCreateUserByName,
   updateReport,
   upsertReportForUserName,
@@ -96,13 +98,14 @@ describe("updateReport", () => {
 
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: 日報を更新して id を返す", async () => {
+  it("正常系: 日報を更新し author を含めて返す", async () => {
+    const updated = { id: "report-1", author: { name: "山田太郎" } };
     vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-1" } as never);
-    vi.mocked(prisma.report.update).mockResolvedValue({ id: "report-1" } as never);
+    vi.mocked(prisma.report.update).mockResolvedValue(updated as never);
 
     const result = await updateReport(input);
 
-    expect(result).toEqual({ id: "report-1" });
+    expect(result).toEqual(updated);
     expect(prisma.report.update).toHaveBeenCalledWith({
       where: { id: "report-1" },
       data: {
@@ -110,7 +113,7 @@ describe("updateReport", () => {
         tomorrowPlan: input.tomorrowPlan,
         notes: input.notes,
       },
-      select: { id: true },
+      include: { author: { select: { name: true } } },
     });
   });
 
@@ -221,5 +224,56 @@ describe("upsertReportForUserName", () => {
     const result = await upsertReportForUserName(baseInput);
 
     expect(result).toEqual({ id: "report-1", status: "updated" });
+  });
+});
+
+describe("getReportById", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("author を含めて日報を取得する", async () => {
+    const report = { id: "report-1", author: { name: "太郎" } };
+    vi.mocked(prisma.report.findUnique).mockResolvedValue(report as never);
+
+    const result = await getReportById("report-1");
+    expect(result).toEqual(report);
+    expect(prisma.report.findUnique).toHaveBeenCalledWith({
+      where: { id: "report-1" },
+      include: { author: { select: { name: true } } },
+    });
+  });
+
+  it("存在しない場合は null を返す", async () => {
+    vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
+    expect(await getReportById("missing")).toBeNull();
+  });
+});
+
+describe("deleteReportByAuthor", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("正常系: 所有者の日報をコメントごと削除する", async () => {
+    vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-1" } as never);
+    vi.mocked(prisma.$transaction).mockResolvedValue([] as never);
+
+    await deleteReportByAuthor({ id: "report-1", authorId: "user-1" });
+    expect(prisma.comment.deleteMany).toHaveBeenCalledWith({ where: { reportId: "report-1" } });
+    expect(prisma.report.delete).toHaveBeenCalledWith({ where: { id: "report-1" } });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("存在しない日報は NotFoundError を投げる", async () => {
+    vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
+    await expect(
+      deleteReportByAuthor({ id: "missing", authorId: "user-1" }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("他ユーザーの日報は ForbiddenError を投げる", async () => {
+    vi.mocked(prisma.report.findUnique).mockResolvedValue({ authorId: "user-99" } as never);
+    await expect(
+      deleteReportByAuthor({ id: "report-1", authorId: "user-1" }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });
