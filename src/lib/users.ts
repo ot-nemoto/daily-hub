@@ -93,10 +93,15 @@ export async function revokeApiKey(input: { id: string }): Promise<void> {
   });
 }
 
-export async function updateMe(input: {
-  id: string;
-  name: string;
-}): Promise<{ id: string; name: string; email: string }> {
+/** 本人のプロフィールを取得する（GET /api/me 用）。無ければ null。 */
+export async function getMe(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
+  });
+}
+
+export async function updateMe(input: { id: string; name: string }) {
   const { id, name } = input;
 
   const user = await prisma.user.findUnique({ where: { id } });
@@ -104,10 +109,10 @@ export async function updateMe(input: {
     throw new NotFoundError("User not found");
   }
 
-  const updated = await prisma.user.update({
+  // role・isActive を含めて返し、呼び出し側（REST の PATCH）が再取得せず整形できるようにする。
+  return prisma.user.update({
     where: { id },
     data: { name },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
-  return updated;
 }
