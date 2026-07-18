@@ -187,6 +187,11 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         get: {
           operationId: "listReports",
           summary: "日報一覧を取得（date / from・to / authorId で絞り込み）",
+          description: [
+            "`date` 降順 → 同日は著者名の昇順で返す。",
+            "`date` と `from`/`to` は排他で、**`date` を指定した場合は `from`/`to` を無視する**。",
+            "`from`/`to` は両方セットで指定する（片方のみは `400`）。",
+          ].join("\n"),
           tags: ["reports"],
           parameters: [
             { name: "date", in: "query", schema: { type: "string" }, description: "YYYY-MM-DD" },
@@ -269,6 +274,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         get: {
           operationId: "listReportComments",
           summary: "日報のコメント一覧を取得",
+          description: "`createdAt` の昇順（古い順）で返す。",
           tags: ["comments"],
           parameters: [idParam],
           responses: {
@@ -309,6 +315,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         get: {
           operationId: "listDayOffs",
           summary: "自分の休日一覧を取得",
+          description: "`date` の昇順で返す。返すのは認証ユーザー本人の休日のみ。",
           tags: ["day-off"],
           responses: {
             200: listResponse("休日の一覧", "dayOffs", "DayOff"),
@@ -347,6 +354,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         get: {
           operationId: "adminListUsers",
           summary: "ユーザー一覧を取得（ADMIN）",
+          description: "`name` の昇順で全ユーザーを返す。",
           tags: ["admin"],
           responses: {
             200: listResponse("ユーザーの一覧", "users", "User"),
