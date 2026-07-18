@@ -1,11 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error"]);
+// どのパスが「公開」「CORS 対象の外部 API」かを決める分類はこのファイルの急所であり、
+// 誤ると静かに認証を無効化しうる。回帰防止のため export して proxy.test.ts で固定する。
+export const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error"]);
 
 // 外部連携用 REST API（Clerk ではなく API キー認証で保護）。CORS 対応の対象でもある。
 // /api-reference・/openapi.json は `/api/` 前置に一致しないため対象外（ログイン必須のまま）。
-const isApiRoute = createRouteMatcher([
+export const isApiRoute = createRouteMatcher([
   "/api/reports(.*)",
   "/api/comments(.*)",
   "/api/day-off(.*)",
@@ -14,7 +16,8 @@ const isApiRoute = createRouteMatcher([
 ]);
 
 // API キー認証（Authorization ヘッダ）・Cookie 不使用のため、任意オリジン許可（*）で安全。
-const CORS_HEADERS: Record<string, string> = {
+// `Access-Control-Allow-Credentials` は設定しない（* との併用はブラウザが拒否するため安全側）。
+export const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
