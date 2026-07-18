@@ -161,6 +161,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
     paths: {
       "/api/me": {
         get: {
+          operationId: "getMe",
           summary: "自分のプロフィールを取得",
           tags: ["me"],
           responses: {
@@ -170,6 +171,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           },
         },
         patch: {
+          operationId: "updateMe",
           summary: "自分の氏名を更新",
           tags: ["me"],
           requestBody: jsonBody("MeUpdateBody"),
@@ -183,6 +185,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/reports": {
         get: {
+          operationId: "listReports",
           summary: "日報一覧を取得（date / from・to / authorId で絞り込み）",
           tags: ["reports"],
           parameters: [
@@ -208,6 +211,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           },
         },
         post: {
+          operationId: "upsertReports",
           summary: "日報を作成/更新（単体または配列で一括 upsert）",
           tags: ["reports"],
           requestBody: jsonBodyRaw({
@@ -224,6 +228,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/reports/{id}": {
         get: {
+          operationId: "getReport",
           summary: "日報を1件取得",
           tags: ["reports"],
           parameters: [idParam],
@@ -234,6 +239,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           },
         },
         patch: {
+          operationId: "updateReport",
           summary: "自分の日報を更新",
           tags: ["reports"],
           parameters: [idParam],
@@ -247,6 +253,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           },
         },
         delete: {
+          operationId: "deleteReport",
           summary: "自分の日報を削除",
           tags: ["reports"],
           parameters: [idParam],
@@ -260,6 +267,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/reports/{id}/comments": {
         get: {
+          operationId: "listReportComments",
           summary: "日報のコメント一覧を取得",
           tags: ["comments"],
           parameters: [idParam],
@@ -270,6 +278,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           },
         },
         post: {
+          operationId: "createReportComment",
           summary: "日報にコメントを投稿",
           tags: ["comments"],
           parameters: [idParam],
@@ -284,6 +293,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/comments/{id}": {
         delete: {
+          operationId: "deleteComment",
           summary: "自分のコメントを削除",
           tags: ["comments"],
           parameters: [idParam],
@@ -297,6 +307,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/day-off": {
         get: {
+          operationId: "listDayOffs",
           summary: "自分の休日一覧を取得",
           tags: ["day-off"],
           responses: {
@@ -305,6 +316,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           },
         },
         post: {
+          operationId: "createDayOff",
           summary: "休日を登録",
           tags: ["day-off"],
           requestBody: jsonBody("DayOffCreateBody"),
@@ -319,6 +331,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/day-off/{id}": {
         delete: {
+          operationId: "deleteDayOff",
           summary: "自分の休日を解除",
           tags: ["day-off"],
           parameters: [idParam],
@@ -332,6 +345,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/admin/users": {
         get: {
+          operationId: "adminListUsers",
           summary: "ユーザー一覧を取得（ADMIN）",
           tags: ["admin"],
           responses: {
@@ -343,6 +357,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/admin/users/{id}": {
         patch: {
+          operationId: "adminUpdateUser",
           summary: "ユーザーのロール・有効状態を更新（ADMIN）",
           tags: ["admin"],
           parameters: [idParam],
@@ -356,6 +371,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           },
         },
         delete: {
+          operationId: "adminDeleteUser",
           summary: "ユーザーを削除（ADMIN）",
           tags: ["admin"],
           parameters: [idParam],
@@ -369,6 +385,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/admin/reports": {
         post: {
+          operationId: "adminBatchReports",
           summary: "日報をバッチ登録（ADMIN・userName で対象ユーザーを解決）",
           tags: ["admin"],
           requestBody: jsonBody("ReportAdminBatchBody"),
@@ -382,6 +399,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
       },
       "/api/admin/reports/{id}": {
         delete: {
+          operationId: "adminDeleteReport",
           summary: "日報を削除（ADMIN・所有者検証なし）",
           tags: ["admin"],
           parameters: [idParam],

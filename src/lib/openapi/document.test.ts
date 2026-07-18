@@ -17,6 +17,40 @@ const EXPECTED_PATHS: Record<string, string[]> = {
   "/api/admin/reports/{id}": ["delete"],
 };
 
+/** operationId → その operation が宣言すべきレスポンスコード（実ルートの契約）。 */
+const EXPECTED_STATUS: Record<string, string[]> = {
+  getMe: ["200", "401", "404"],
+  updateMe: ["200", "400", "401", "404"],
+  listReports: ["200", "400", "401"],
+  upsertReports: ["200", "201", "400", "401", "403"],
+  getReport: ["200", "401", "404"],
+  updateReport: ["200", "400", "401", "403", "404"],
+  deleteReport: ["204", "401", "403", "404"],
+  listReportComments: ["200", "401", "404"],
+  createReportComment: ["201", "400", "401", "404"],
+  deleteComment: ["204", "401", "403", "404"],
+  listDayOffs: ["200", "401"],
+  createDayOff: ["201", "400", "401", "403", "409"],
+  deleteDayOff: ["204", "401", "403", "404"],
+  adminListUsers: ["200", "401", "403"],
+  adminUpdateUser: ["200", "400", "401", "403", "404"],
+  adminDeleteUser: ["204", "401", "403", "404"],
+  adminBatchReports: ["200", "400", "401", "403"],
+  adminDeleteReport: ["204", "401", "403", "404"],
+};
+
+/** paths を { operationId, responses } の一覧に展開する。 */
+function eachOperation(doc: ReturnType<typeof buildOpenApiDocument>) {
+  const ops: { operationId: string; responses: Record<string, unknown> }[] = [];
+  for (const item of Object.values(doc.paths)) {
+    for (const op of Object.values(item as Record<string, unknown>)) {
+      const o = op as { operationId: string; responses: Record<string, unknown> };
+      ops.push({ operationId: o.operationId, responses: o.responses });
+    }
+  }
+  return ops;
+}
+
 /** ノードを再帰探索し、条件に合う値を集める。 */
 function collect(node: unknown, pick: (obj: Record<string, unknown>) => string[]): string[] {
   const out: string[] = [];
@@ -101,6 +135,21 @@ describe("buildOpenApiDocument", () => {
     const doc = buildOpenApiDocument();
     const found = collect(doc, (obj) => (Object.hasOwn(obj, "$schema") ? ["$schema"] : []));
     expect(found).toEqual([]);
+  });
+
+  it("全 operation が一意な operationId を持つ", () => {
+    const ids = eachOperation(buildOpenApiDocument()).map((o) => o.operationId);
+    expect(ids.every((id) => typeof id === "string" && id.length > 0)).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(ids)).toEqual(new Set(Object.keys(EXPECTED_STATUS)));
+  });
+
+  it("各 operation の宣言レスポンスコードが実ルートの契約と一致する", () => {
+    for (const { operationId, responses } of eachOperation(buildOpenApiDocument())) {
+      const expected = EXPECTED_STATUS[operationId];
+      expect(expected, `未知の operationId: ${operationId}`).toBeDefined();
+      expect(Object.keys(responses).sort(), operationId).toEqual([...expected].sort());
+    }
   });
 
   describe("servers", () => {
