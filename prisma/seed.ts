@@ -22,9 +22,7 @@ const clerkSecretKey = process.env.CLERK_SECRET_KEY;
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const clerk = clerkSecretKey
-  ? createClerkClient({ secretKey: clerkSecretKey })
-  : null;
+const clerk = clerkSecretKey ? createClerkClient({ secretKey: clerkSecretKey }) : null;
 
 // テストユーザーの共通パスワード
 const SEED_PASSWORD = "Yakitori2026";
@@ -198,7 +196,14 @@ async function upsertUser(params: {
   return prisma.user.upsert({
     where: { email },
     update: { name, role, isActive, apiKey: apiKey ?? null, ...(clerkId ? { clerkId } : {}) },
-    create: { email, name, role, isActive, apiKey: apiKey ?? null, ...(clerkId ? { clerkId } : {}) },
+    create: {
+      email,
+      name,
+      role,
+      isActive,
+      apiKey: apiKey ?? null,
+      ...(clerkId ? { clerkId } : {}),
+    },
   });
 }
 
@@ -366,7 +371,9 @@ async function main() {
     `  ${YAGEN_EMAIL}    (MEMBER, active)   — 提出状況の休日表示・提出率検証用（提出率100%）`,
   );
   // API キー・パスワードの実値はログに出さない（値は本シード prisma/seed.ts の定数定義を参照）
-  console.log("\nAPI キー・パスワードの実値はログに出力しない（prisma/seed.ts の定数定義を参照）。");
+  console.log(
+    "\nAPI キー・パスワードの実値はログに出力しない（prisma/seed.ts の定数定義を参照）。",
+  );
 }
 
 main()
