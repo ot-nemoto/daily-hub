@@ -109,34 +109,34 @@ describe("GET /api/reports", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
     });
 
-    it("date が不正形式の場合 422 を返す", async () => {
+    it("date が不正形式の場合 400 を返す", async () => {
       const res = await GET(makeGetRequest({ date: "20260601" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("date が実在しない日付の場合 422 を返す", async () => {
+    it("date が実在しない日付の場合 400 を返す", async () => {
       const res = await GET(makeGetRequest({ date: "2026-99-99" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("from だけ指定した場合 422 を返す", async () => {
+    it("from だけ指定した場合 400 を返す", async () => {
       const res = await GET(makeGetRequest({ from: "2026-06-01" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("to だけ指定した場合 422 を返す", async () => {
+    it("to だけ指定した場合 400 を返す", async () => {
       const res = await GET(makeGetRequest({ to: "2026-06-30" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("from が不正形式の場合 422 を返す", async () => {
+    it("from が不正形式の場合 400 を返す", async () => {
       const res = await GET(makeGetRequest({ from: "20260601", to: "2026-06-30" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("to が不正形式の場合 422 を返す", async () => {
+    it("to が不正形式の場合 400 を返す", async () => {
       const res = await GET(makeGetRequest({ from: "2026-06-01", to: "20260630" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
   });
 
@@ -280,24 +280,24 @@ describe("POST /api/reports", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
     });
 
-    it("date が YYYY-MM-DD 形式でない場合 422 を返す", async () => {
+    it("date が YYYY-MM-DD 形式でない場合 400 を返す", async () => {
       const res = await POST(makeRequest({ ...VALID_BODY, date: "20260412" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("date が存在しない日付の場合 422 を返す", async () => {
+    it("date が存在しない日付の場合 400 を返す", async () => {
       const res = await POST(makeRequest({ ...VALID_BODY, date: "2026-99-99" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("workContent が空の場合 422 を返す", async () => {
+    it("workContent が空の場合 400 を返す", async () => {
       const res = await POST(makeRequest({ ...VALID_BODY, workContent: "" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("tomorrowPlan が空の場合 422 を返す", async () => {
+    it("tomorrowPlan が空の場合 400 を返す", async () => {
       const res = await POST(makeRequest({ ...VALID_BODY, tomorrowPlan: "" }, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
     it("notes が省略された場合でも登録できる（デフォルト空文字）", async () => {
@@ -308,21 +308,21 @@ describe("POST /api/reports", () => {
       expect(upsertReportByAuthorId).toHaveBeenCalledWith(expect.objectContaining({ notes: "" }));
     });
 
-    it("不正な JSON で 422 を返す", async () => {
+    it("不正な JSON で 400 を返す", async () => {
       const req = new NextRequest("http://localhost/api/reports", {
         method: "POST",
         headers: { authorization: `Bearer ${VALID_API_KEY}`, "content-type": "application/json" },
         body: "invalid-json",
       });
       const res = await POST(req);
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
       const json = await res.json();
       expect(json.error).toBe("リクエストボディが不正な JSON です");
     });
 
-    it("空配列で 422 を返す", async () => {
+    it("空配列で 400 を返す", async () => {
       const res = await POST(makeRequest([], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
   });
 
@@ -403,9 +403,9 @@ describe("POST /api/reports", () => {
       expect(res.status).toBe(200);
     });
 
-    it("配列内の date が不正形式の場合 422 を返す", async () => {
+    it("配列内の date が不正形式の場合 400 を返す", async () => {
       const res = await POST(makeRequest([{ ...VALID_BODY, date: "20260412" }], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
   });
 });

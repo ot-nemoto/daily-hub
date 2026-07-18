@@ -16,7 +16,7 @@
 - 他メンバーの日報閲覧・コメント
 - 日次ビュー：指定日付の全ユーザー日報を一覧（ユーザー絞り込み可）
 - 月次ビュー：期間を選択して日報を一覧（ユーザー切り替え可）
-- 外部API：APIキーを使ってスクリプトや外部ツールから日報を投稿（→ [docs/api.md](docs/api.md)）
+- 外部API：APIキーを使ってスクリプトや外部ツールから日報・コメント・休日・プロフィールを操作（→ [API リファレンス](#api-リファレンス)）
 
 ## ドキュメント
 
@@ -27,11 +27,21 @@
 | [docs/product.md](docs/product.md) | プロダクト定義・目的 |
 | [docs/architecture.md](docs/architecture.md) | 技術スタック・実装方針・非機能要件 |
 | [docs/ui.md](docs/ui.md) | 機能要件・画面一覧・遷移・UI規約 |
-| [docs/api.md](docs/api.md) | 外部 REST API エンドポイント定義 |
 | [docs/actions.md](docs/actions.md) | Server Actions 定義 |
 | [docs/schema.md](docs/schema.md) | DBスキーマ・Prismaモデル定義 |
 | [docs/auth.md](docs/auth.md) | 認証フロー・保護ルート |
 | [docs/development.md](docs/development.md) | ローカルセットアップ・Prisma操作・デプロイ手順 |
+
+### API リファレンス
+
+外部 REST API の仕様は**アプリが配信する OpenAPI を唯一の正**とする（Markdown の API 定義は持たない）。
+
+| URL | 内容 |
+|-----|------|
+| `/api-reference` | API リファレンス UI（Stoplight Elements）。**ログイン必須** |
+| `/openapi.json` | OpenAPI 3.1 ドキュメント。**ログイン必須** |
+
+認証・共通仕様・クイックスタートは spec の `info.description` に含まれる。
 
 ## クイックスタート
 

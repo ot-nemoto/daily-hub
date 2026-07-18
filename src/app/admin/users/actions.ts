@@ -26,7 +26,9 @@ export async function updateUserAdmin(input: {
     revalidatePath("/admin/users");
     return {};
   } catch (e) {
-    if (e instanceof ForbiddenError) return { error: e.message };
+    if (e instanceof ForbiddenError) {
+      return { error: "自分自身または最後の管理者のロール・有効状態は変更できません" };
+    }
     if (e instanceof NotFoundError) return { error: "ユーザーが見つかりません" };
     throw e;
   }
@@ -41,7 +43,7 @@ export async function deleteUser(input: { id: string }): Promise<{ error?: strin
     revalidatePath("/admin/users");
     return {};
   } catch (e) {
-    if (e instanceof ForbiddenError) return { error: e.message };
+    if (e instanceof ForbiddenError) return { error: "自分自身または最後の管理者は削除できません" };
     if (e instanceof NotFoundError) return { error: "ユーザーが見つかりません" };
     throw e;
   }

@@ -21,7 +21,7 @@ describe("updateUserAdmin", () => {
 
   it("正常系: ロールを変更して空オブジェクトを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" });
+    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" } as never);
 
     const result = await updateUserAdmin({ id: "user-1", role: "MEMBER" as never });
 
@@ -37,7 +37,7 @@ describe("updateUserAdmin", () => {
 
   it("正常系: isActive を変更して空オブジェクトを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
-    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" });
+    vi.mocked(libUpdateUserAdmin).mockResolvedValue({ id: "user-1" } as never);
 
     const result = await updateUserAdmin({ id: "user-1", isActive: false });
 
@@ -62,7 +62,9 @@ describe("updateUserAdmin", () => {
 
     const result = await updateUserAdmin({ id: "admin-1", role: "MEMBER" as never });
 
-    expect(result).toMatchObject({ error: "Cannot demote yourself from ADMIN" });
+    expect(result).toMatchObject({
+      error: "自分自身または最後の管理者のロール・有効状態は変更できません",
+    });
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
@@ -105,7 +107,7 @@ describe("deleteUser", () => {
 
     const result = await deleteUser({ id: "admin-1" });
 
-    expect(result).toMatchObject({ error: "Cannot delete yourself" });
+    expect(result).toMatchObject({ error: "自分自身または最後の管理者は削除できません" });
   });
 
   it("異常系: NotFoundError で error を返す", async () => {

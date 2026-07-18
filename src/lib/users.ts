@@ -3,12 +3,30 @@ import { prisma } from "@/lib/prisma";
 
 import { ForbiddenError, NotFoundError } from "./errors";
 
+/**
+ * 対象ユーザーが「唯一の有効 ADMIN」かを判定する（最後の管理者保護用）。
+ * 有効 ADMIN が 1 人だけで、それが対象自身のとき true。
+ */
+async function isLastActiveAdmin(target: { role: Role; isActive: boolean }): Promise<boolean> {
+  if (target.role !== "ADMIN" || !target.isActive) return false;
+  const activeAdmins = await prisma.user.count({ where: { role: "ADMIN", isActive: true } });
+  return activeAdmins <= 1;
+}
+
+/** 全ユーザーを name 昇順で取得する（admin 一覧用）。 */
+export async function getUsers() {
+  return prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true, isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
 export async function updateUserAdmin(input: {
   id: string;
   currentUserId: string;
   role?: Role;
   isActive?: boolean;
-}): Promise<{ id: string }> {
+}) {
   const { id, currentUserId, role, isActive } = input;
 
   if (role === undefined && isActive === undefined) {
@@ -29,14 +47,22 @@ export async function updateUserAdmin(input: {
     throw new NotFoundError("User not found");
   }
 
-  const updated = await prisma.user.update({
+  // 最後の有効 ADMIN を降格・無効化しようとした場合は禁止（0 admin を防ぐ）
+  const removesAdmin = (role !== undefined && role !== "ADMIN") || isActive === false;
+  if (removesAdmin && (await isLastActiveAdmin(existing))) {
+    throw new ForbiddenError("Cannot remove the last active admin");
+  }
+
+  // 更新後ユーザーを serialize 用のフィールドで返し、呼び出し側（REST の PATCH）が
+  // 再取得せず整形できるようにする。
+  return prisma.user.update({
     where: { id },
     data: {
       ...(role !== undefined && { role }),
       ...(isActive !== undefined && { isActive }),
     },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
-  return { id: updated.id };
 }
 
 export async function deleteUser(input: { id: string; currentUserId: string }): Promise<void> {
@@ -50,6 +76,11 @@ export async function deleteUser(input: { id: string; currentUserId: string }): 
   const existing = await prisma.user.findUnique({ where: { id } });
   if (!existing) {
     throw new NotFoundError("User not found");
+  }
+
+  // 最後の有効 ADMIN の削除は禁止（0 admin を防ぐ）
+  if (await isLastActiveAdmin(existing)) {
+    throw new ForbiddenError("Cannot delete the last active admin");
   }
 
   // FK制約の順序でカスケード削除
@@ -93,10 +124,15 @@ export async function revokeApiKey(input: { id: string }): Promise<void> {
   });
 }
 
-export async function updateMe(input: {
-  id: string;
-  name: string;
-}): Promise<{ id: string; name: string; email: string }> {
+/** 本人のプロフィールを取得する（GET /api/me 用）。無ければ null。 */
+export async function getMe(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
+  });
+}
+
+export async function updateMe(input: { id: string; name: string }) {
   const { id, name } = input;
 
   const user = await prisma.user.findUnique({ where: { id } });
@@ -104,10 +140,10 @@ export async function updateMe(input: {
     throw new NotFoundError("User not found");
   }
 
-  const updated = await prisma.user.update({
+  // role・isActive を含めて返し、呼び出し側（REST の PATCH）が再取得せず整形できるようにする。
+  return prisma.user.update({
     where: { id },
     data: { name },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
-  return updated;
 }

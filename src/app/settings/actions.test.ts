@@ -24,7 +24,7 @@ describe("updateMe", () => {
       id: "user-1",
       name: "新しい名前",
       email: "user@example.com",
-    });
+    } as never);
 
     const result = await updateMe({ name: "新しい名前" });
 
