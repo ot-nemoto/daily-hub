@@ -41,11 +41,21 @@ const EXPECTED_STATUS: Record<string, string[]> = {
 
 /** paths を { operationId, responses } の一覧に展開する。 */
 function eachOperation(doc: ReturnType<typeof buildOpenApiDocument>) {
-  const ops: { operationId: string; responses: Record<string, unknown> }[] = [];
+  return eachOperationFull(doc).map(({ operationId, responses }) => ({ operationId, responses }));
+}
+
+/** paths を operation 全体（description 含む）の一覧に展開する。 */
+function eachOperationFull(doc: ReturnType<typeof buildOpenApiDocument>) {
+  const ops: { operationId: string; description?: string; responses: Record<string, unknown> }[] =
+    [];
   for (const item of Object.values(doc.paths)) {
     for (const op of Object.values(item as Record<string, unknown>)) {
-      const o = op as { operationId: string; responses: Record<string, unknown> };
-      ops.push({ operationId: o.operationId, responses: o.responses });
+      const o = op as {
+        operationId: string;
+        description?: string;
+        responses: Record<string, unknown>;
+      };
+      ops.push({ operationId: o.operationId, description: o.description, responses: o.responses });
     }
   }
   return ops;
@@ -135,6 +145,19 @@ describe("buildOpenApiDocument", () => {
     const doc = buildOpenApiDocument();
     const found = collect(doc, (obj) => (Object.hasOwn(obj, "$schema") ? ["$schema"] : []));
     expect(found).toEqual([]);
+  });
+
+  it("一覧系 operation は並び順などの挙動契約を description に持つ", () => {
+    // docs/api.md 廃止時にソート順・パラメータ排他の契約が失われた経緯があるため、
+    // spec 側（唯一の正）に残っていることを固定する。
+    const withDescription = ["listReports", "listReportComments", "listDayOffs", "adminListUsers"];
+    const ops = new Map(eachOperationFull(buildOpenApiDocument()).map((o) => [o.operationId, o]));
+    for (const id of withDescription) {
+      const description = ops.get(id)?.description;
+      expect(description, `${id} の description`).toBeTruthy();
+    }
+    // date / from・to の排他（date 優先）は listReports の description で明示する
+    expect(ops.get("listReports")?.description).toContain("from");
   });
 
   it("全 operation が一意な operationId を持つ", () => {
