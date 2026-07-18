@@ -98,3 +98,5 @@ export function serializeUser(u: SerializableUser) {
     isActive: u.isActive,
   };
 }
+
+export const __fmt_probe   =    {  a:1,   b:2 };
