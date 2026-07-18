@@ -1,6 +1,6 @@
 {
   "name": "daily-hub",
-  "version": "0.26.1",
+  "version": "0.26.2",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -21,8 +21,8 @@
     "test:e2e:shots": "SHOTS=1 playwright test"
   },
   "dependencies": {
-    "@clerk/backend": "^3.8.4",
-    "@clerk/nextjs": "^7.5.13",
+    "@clerk/backend": "^3.11.6",
+    "@clerk/nextjs": "^7.5.19",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "next": "16.2.10",
@@ -33,8 +33,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.2",
-    "@clerk/testing": "^2.2.3",
+    "@biomejs/biome": "^2.5.4",
+    "@clerk/testing": "^2.2.10",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
@@ -48,7 +48,7 @@
     "dotenv": "^17.4.2",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
-    "tsx": "^4.23.0",
+    "tsx": "^4.23.1",
     "typescript": "^6",
     "vitest": "^4.1.10"
   }
