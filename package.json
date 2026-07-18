@@ -12,6 +12,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "ci": "biome ci .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
