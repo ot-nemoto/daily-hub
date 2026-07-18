@@ -90,12 +90,23 @@ Client (React)
   → Prisma Client
   → Neon PostgreSQL
 
-# 外部API連携（Phase 11〜）
+# 外部API連携（REST API）
 External Client
-  → REST API Route (POST /api/reports) ※Authorization: Bearer <api-key>
+  → REST API Route (/api/*) ※Authorization: Bearer <api-key>
+  → lib（Zod 検証済みの入力・所有者/ロール検証）
   → Prisma Client
   → Neon PostgreSQL
 ```
+
+対象リソースは日報・コメント・休日・プロフィール（`/api/me`）・admin（ユーザー管理／日報バッチ）。
+ルートは「薄いアダプタ」に徹し、業務ロジック・所有者検証は `src/lib/` に置いて Server Actions と共有する。
+
+## 外部 REST API の契約
+
+- **Zod スキーマ（`src/lib/schemas/`）を単一の正とする**。ルートの入力検証と OpenAPI の両方をここから導出し、手書きの spec は持たない
+- `buildOpenApiDocument()`（`src/lib/openapi/document.ts`）が **OpenAPI 3.1** を生成し、`/openapi.json` が実行時に配信する（`info.version` は `package.json`、`servers` はアクセス元 origin）
+- **API リファレンス（`/api-reference`・Stoplight Elements）と `/openapi.json` が仕様の唯一の正**。エンドポイントごとのフィールド契約は Markdown に二重記載しない
+- 両ルートは**ログイン必須**（Clerk 保護）。外部公開はしない
 
 ## 状態管理方針
 
@@ -118,8 +129,10 @@ External Client
 
 ## セキュリティ方針
 
-- APIルートは全て `getSession()` でセッション確認してから処理
-  - **例外:** `POST /api/reports`（Phase 11〜）は外部連携用 REST API のため、`Authorization: Bearer <api-key>` ヘッダーを使ったAPIキー認証を採用する。`getSession()` ではなく `prisma.user.findUnique({ where: { apiKey } })` でユーザーを照合する。
+- 画面（Server Actions / Server Components）は `getSession()` でセッション確認してから処理
+  - **外部連携用 REST API（`/api/*`）は例外**: `Authorization: Bearer <api-key>` の**APIキー認証**を採用する。`getSession()` ではなく `getAuthenticatedUser(req)`（`prisma.user.findUnique({ where: { apiKey } })`＋`isActive` 確認）でユーザーを照合し、**操作対象は常に認証情報由来の `user.id`**（リクエストの識別子は信頼しない）
+- **CORS**: `/api/*` は任意オリジンから利用可能（`Access-Control-Allow-Origin: *`）。**`Access-Control-Allow-Credentials` を設定せず Cookie 認証も使わない**ため、他サイトからの資格情報つき窃取は成立しない。プリフライト（`OPTIONS`）は認証不要で 204 を返す
+  - `/api-reference`・`/openapi.json` は **CORS 対象外**（同一オリジン＋Cookie 利用・ログイン必須）
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
 - 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
 - 入力値は Zod でバリデーション
