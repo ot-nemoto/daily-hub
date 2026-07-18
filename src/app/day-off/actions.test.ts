@@ -32,7 +32,7 @@ describe("addDayOff", () => {
 
   it("正常系: 自分の休日を登録する", async () => {
     vi.mocked(getSession).mockResolvedValue(selfSession as never);
-    vi.mocked(createDayOff).mockResolvedValue(undefined);
+    vi.mocked(createDayOff).mockResolvedValue(undefined as never);
 
     const result = await addDayOff({ date: validDate });
 
@@ -47,7 +47,7 @@ describe("addDayOff", () => {
   it("正常系: ADMIN が他ユーザーの休日を登録する", async () => {
     vi.mocked(getSession).mockResolvedValue(adminSession as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "other-1" } as never);
-    vi.mocked(createDayOff).mockResolvedValue(undefined);
+    vi.mocked(createDayOff).mockResolvedValue(undefined as never);
 
     const result = await addDayOff({ date: validDate, userId: "other-1" });
 

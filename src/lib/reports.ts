@@ -112,7 +112,7 @@ export async function updateReport(input: {
   workContent: string;
   tomorrowPlan: string;
   notes: string;
-}): Promise<{ id: string }> {
+}) {
   const { id, authorId, workContent, tomorrowPlan, notes } = input;
 
   const existing = await prisma.report.findUnique({
@@ -126,10 +126,43 @@ export async function updateReport(input: {
     throw new ForbiddenError("Forbidden");
   }
 
-  const updated = await prisma.report.update({
+  // author を含めて返し、呼び出し側（REST の PATCH）が再取得せず整形できるようにする。
+  return prisma.report.update({
     where: { id },
     data: { workContent, tomorrowPlan, notes },
-    select: { id: true },
+    include: { author: { select: { name: true } } },
   });
-  return { id: updated.id };
+}
+
+/** 日報を1件取得する（author 名を含む）。存在しなければ null。日次ビュー同様に共有閲覧。 */
+export async function getReportById(id: string) {
+  return prisma.report.findUnique({
+    where: { id },
+    include: { author: { select: { name: true } } },
+  });
+}
+
+/**
+ * 所有者検証つきで日報を削除する（外部 API の DELETE /api/reports/{id} 用）。
+ * 他ユーザーの日報は ForbiddenError、未存在は NotFoundError。コメントを先に削除する。
+ * 所有者検証のない admin 用は `deleteReportById` を使う。
+ */
+export async function deleteReportByAuthor(input: { id: string; authorId: string }): Promise<void> {
+  const { id, authorId } = input;
+
+  const existing = await prisma.report.findUnique({
+    where: { id },
+    select: { authorId: true },
+  });
+  if (!existing) {
+    throw new NotFoundError("Report not found");
+  }
+  if (existing.authorId !== authorId) {
+    throw new ForbiddenError("Forbidden");
+  }
+
+  await prisma.$transaction([
+    prisma.comment.deleteMany({ where: { reportId: id } }),
+    prisma.report.delete({ where: { id } }),
+  ]);
 }

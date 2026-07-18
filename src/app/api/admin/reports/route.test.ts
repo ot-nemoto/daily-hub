@@ -109,39 +109,39 @@ describe("POST /api/admin/reports", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(ADMIN_USER as never);
     });
 
-    it("空配列で 422 を返す", async () => {
+    it("空配列で 400 を返す", async () => {
       const res = await POST(makeRequest([], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("配列でない場合 422 を返す", async () => {
+    it("配列でない場合 400 を返す", async () => {
       const res = await POST(makeRequest(VALID_ITEM, VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("userName が空の場合 422 を返す", async () => {
+    it("userName が空の場合 400 を返す", async () => {
       const res = await POST(makeRequest([{ ...VALID_ITEM, userName: "" }], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("date が YYYY-MM-DD 形式でない場合 422 を返す", async () => {
+    it("date が YYYY-MM-DD 形式でない場合 400 を返す", async () => {
       const res = await POST(makeRequest([{ ...VALID_ITEM, date: "20260601" }], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("date が存在しない日付の場合 422 を返す", async () => {
+    it("date が存在しない日付の場合 400 を返す", async () => {
       const res = await POST(makeRequest([{ ...VALID_ITEM, date: "2026-99-99" }], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("workContent が空の場合 422 を返す", async () => {
+    it("workContent が空の場合 400 を返す", async () => {
       const res = await POST(makeRequest([{ ...VALID_ITEM, workContent: "" }], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
 
-    it("tomorrowPlan が空の場合 422 を返す", async () => {
+    it("tomorrowPlan が空の場合 400 を返す", async () => {
       const res = await POST(makeRequest([{ ...VALID_ITEM, tomorrowPlan: "" }], VALID_API_KEY));
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(400);
     });
   });
 
