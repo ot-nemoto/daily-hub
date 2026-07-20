@@ -1,6 +1,6 @@
 {
   "name": "daily-hub",
-  "version": "0.27.1",
+  "version": "0.27.2",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -9,9 +9,8 @@
     "build": "next build",
     "vercel-build": "prisma migrate deploy && next build",
     "start": "next start",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
-    "check": "biome check --write .",
+    "lint": "biome check .",
+    "format": "biome check --write .",
     "ci": "biome ci .",
     "test": "vitest run",
     "test:watch": "vitest",
