@@ -1,6 +1,6 @@
 {
   "name": "daily-hub",
-  "version": "0.27.0",
+  "version": "0.27.1",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -12,6 +12,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "ci": "biome ci .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
