@@ -1,6 +1,6 @@
 {
   "name": "daily-hub",
-  "version": "0.27.8",
+  "version": "0.27.9",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -22,10 +22,10 @@
   },
   "dependencies": {
     "@clerk/backend": "^3.13.2",
-    "@clerk/nextjs": "^7.7.6",
+    "@clerk/nextjs": "^7.8.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
-    "next": "16.3.1",
+    "next": "16.3.2",
     "pg": "^8.23.0",
     "prisma": "^7.9.1",
     "react": "19.2.8",
@@ -33,23 +33,23 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.8",
-    "@clerk/testing": "^2.2.23",
+    "@biomejs/biome": "^2.5.9",
+    "@clerk/testing": "^2.2.28",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.4",
+    "@testing-library/user-event": "^14.6.5",
     "@types/node": "^26",
-    "@types/pg": "^8.21.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@vitejs/plugin-react": "^6.1.0",
     "dotenv": "^17.4.2",
     "jsdom": "^30.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^6",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }
