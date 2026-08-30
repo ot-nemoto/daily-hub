@@ -80,6 +80,17 @@ export function serializeDayOff(d: SerializableDayOff) {
   };
 }
 
+type SerializableHoliday = { id: string; date: Date; name: string | null };
+
+/** 祝日を外部 API レスポンス形式（`date` は YYYY-MM-DD・`name` は null 許容）に整形する。 */
+export function serializeHoliday(h: SerializableHoliday) {
+  return {
+    id: h.id,
+    date: h.date.toISOString().slice(0, 10),
+    name: h.name,
+  };
+}
+
 type SerializableUser = {
   id: string;
   name: string;

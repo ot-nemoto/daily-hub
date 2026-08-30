@@ -55,7 +55,12 @@ export function NavLinks({ role }: Props) {
         </NavLink>
       )}
       {role === "ADMIN" && (
-        <NavLink href="/admin/users" isActive={pathname.startsWith("/admin")}>
+        <NavLink href="/admin/holidays" isActive={pathname.startsWith("/admin/holidays")}>
+          祝日管理
+        </NavLink>
+      )}
+      {role === "ADMIN" && (
+        <NavLink href="/admin/users" isActive={pathname.startsWith("/admin/users")}>
           ユーザー管理
         </NavLink>
       )}

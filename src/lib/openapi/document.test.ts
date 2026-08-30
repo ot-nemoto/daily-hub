@@ -11,6 +11,8 @@ const EXPECTED_PATHS: Record<string, string[]> = {
   "/api/comments/{id}": ["delete"],
   "/api/day-off": ["get", "post"],
   "/api/day-off/{id}": ["delete"],
+  "/api/holidays": ["get", "post"],
+  "/api/holidays/{id}": ["delete"],
   "/api/admin/users": ["get"],
   "/api/admin/users/{id}": ["patch", "delete"],
   "/api/admin/reports": ["post"],
@@ -32,6 +34,9 @@ const EXPECTED_STATUS: Record<string, string[]> = {
   listDayOffs: ["200", "401"],
   createDayOff: ["201", "400", "401", "403", "409"],
   deleteDayOff: ["204", "401", "403", "404"],
+  listHolidays: ["200", "400", "401"],
+  createHoliday: ["201", "400", "401", "403", "409"],
+  deleteHoliday: ["204", "401", "403", "404"],
   adminListUsers: ["200", "401", "403"],
   adminUpdateUser: ["200", "400", "401", "403", "404"],
   adminDeleteUser: ["204", "401", "403", "404"],
@@ -150,7 +155,13 @@ describe("buildOpenApiDocument", () => {
   it("一覧系 operation は並び順などの挙動契約を description に持つ", () => {
     // docs/api.md 廃止時にソート順・パラメータ排他の契約が失われた経緯があるため、
     // spec 側（唯一の正）に残っていることを固定する。
-    const withDescription = ["listReports", "listReportComments", "listDayOffs", "adminListUsers"];
+    const withDescription = [
+      "listReports",
+      "listReportComments",
+      "listDayOffs",
+      "listHolidays",
+      "adminListUsers",
+    ];
     const ops = new Map(eachOperationFull(buildOpenApiDocument()).map((o) => [o.operationId, o]));
     for (const id of withDescription) {
       const description = ops.get(id)?.description;
