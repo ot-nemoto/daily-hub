@@ -98,7 +98,7 @@ External Client
   → Neon PostgreSQL
 ```
 
-対象リソースは日報・コメント・休日・プロフィール（`/api/me`）・admin（ユーザー管理／日報バッチ）。
+対象リソースは日報・コメント・休日・祝日・プロフィール（`/api/me`）・admin（ユーザー管理／日報バッチ）。祝日（`/api/holidays`）は取得が全ロール可・登録／削除が ADMIN のみ。
 ルートは「薄いアダプタ」に徹し、業務ロジック・所有者検証は `src/lib/` に置いて Server Actions と共有する。
 
 ## 外部 REST API の契約

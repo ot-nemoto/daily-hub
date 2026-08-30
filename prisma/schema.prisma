@@ -75,3 +75,13 @@ model DayOff {
   @@index([date])
   @@map("DayOff")
 }
+
+model Holiday {
+  id        String   @id @default(cuid())
+  date      DateTime @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("Holiday")
+}

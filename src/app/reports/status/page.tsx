@@ -80,7 +80,7 @@ export default async function StatusPage({
 
   const dates = buildDateList(fromDate, baseDate);
 
-  const [users, reports, dayOffs] = await Promise.all([
+  const [users, reports, dayOffs, holidays] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
@@ -94,16 +94,23 @@ export default async function StatusPage({
       where: { date: { gte: fromDate, lte: baseDate } },
       select: { userId: true, date: true },
     }),
+    prisma.holiday.findMany({
+      where: { date: { gte: fromDate, lte: baseDate } },
+      select: { date: true, name: true },
+    }),
   ]);
 
   // 提出済みセットを (authorId_YYYY-MM-DD) で管理
   const submitted = new Set(reports.map((r) => `${r.authorId}_${formatDate(r.date)}`));
   // 休日セットを (userId_YYYY-MM-DD) で管理
   const dayOffSet = new Set(dayOffs.map((d) => `${d.userId}_${formatDate(d.date)}`));
-  // 平日の日付リスト（提出率算出用）
+  // 祝日は全ユーザー共通。日付キーで保持し、名称はツールチップ表示に使う
+  const holidaySet = new Set(holidays.map((h) => formatDate(h.date)));
+  const holidayNames = new Map(holidays.map((h) => [formatDate(h.date), h.name]));
+  // 平日の日付リスト（提出率算出用）。土日と祝日は稼働日でないため除外する
   const weekdays = dates.filter((d) => {
     const dow = d.getUTCDay();
-    return dow !== 0 && dow !== 6;
+    return dow !== 0 && dow !== 6 && !holidaySet.has(formatDate(d));
   });
 
   return (
@@ -123,15 +130,19 @@ export default async function StatusPage({
                   ユーザー
                 </th>
                 {dates.map((d) => {
+                  const ds = formatDate(d);
                   const dow = d.getUTCDay();
                   const isSat = dow === 6;
                   const isSun = dow === 0;
+                  const isHoliday = holidaySet.has(ds);
+                  // 祝日は日曜と同じ赤扱い。名称はツールチップで表示する
+                  const colorClass =
+                    isHoliday || isSun ? "text-red-500" : isSat ? "text-blue-500" : "text-zinc-500";
                   return (
                     <th
-                      key={formatDate(d)}
-                      className={`sticky top-0 z-20 min-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center font-medium ${
-                        isSat ? "text-blue-500" : isSun ? "text-red-500" : "text-zinc-500"
-                      }`}
+                      key={ds}
+                      title={isHoliday ? (holidayNames.get(ds) ?? "祝日") : undefined}
+                      className={`sticky top-0 z-20 min-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center font-medium ${colorClass}`}
                     >
                       {formatDateLabel(d)}
                     </th>
@@ -160,19 +171,26 @@ export default async function StatusPage({
                       </div>
                     </td>
                     {dates.map((d) => {
-                      const key = `${user.id}_${formatDate(d)}`;
+                      const ds = formatDate(d);
+                      const key = `${user.id}_${ds}`;
                       const done = submitted.has(key);
                       const isDayOff = dayOffSet.has(key);
+                      const isHoliday = holidaySet.has(ds);
                       const dow = d.getUTCDay();
                       const isWeekend = dow === 0 || dow === 6;
+                      // 祝日は赤系背景、週末はグレー背景
+                      const bgClass = isHoliday ? "bg-red-50" : isWeekend ? "bg-zinc-50" : "";
                       return (
                         <td
-                          key={formatDate(d)}
-                          className={`border-r border-zinc-100 px-1 py-2 text-center ${
-                            isWeekend ? "bg-zinc-50" : ""
-                          }`}
+                          key={ds}
+                          className={`border-r border-zinc-100 px-1 py-2 text-center ${bgClass}`}
                         >
-                          {isDayOff ? (
+                          {isHoliday ? (
+                            // 全ユーザー共通の祝日は個人の休日(休)より優先して表示する
+                            <span className="inline-block rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                              祝
+                            </span>
+                          ) : isDayOff ? (
                             <span className="inline-block rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
                               休
                             </span>
