@@ -11,9 +11,13 @@ export const holidayCreateBodySchema = z.object(
     date: dateStringField(),
     name: z
       .string()
-      .max(50, { error: "name は50文字以内で入力してください" })
+      // 前後空白は保存時に normalizeName でトリムされるため、検証も trim 後の長さで行い
+      // Server Action（trim 後に長さ判定）と挙動を揃える
+      .refine((value) => value.trim().length <= 50, {
+        error: "name は50文字以内で入力してください",
+      })
       .nullish()
-      .meta({ description: "祝日の名称（任意・最大50文字）" }),
+      .meta({ description: "祝日の名称（任意・最大50文字。前後空白は除去して判定）" }),
   },
   { error: "リクエストボディが不正です" },
 );

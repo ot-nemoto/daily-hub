@@ -88,12 +88,30 @@ describe("removeHoliday", () => {
     });
   });
 
+  it("異常系: 未認証は /login へ redirect する", async () => {
+    vi.mocked(getSession).mockResolvedValue(null as never);
+
+    await removeHoliday({ date: "2026-08-11" });
+
+    expect(redirect).toHaveBeenCalledWith("/login");
+    expect(deleteHolidayByDate).not.toHaveBeenCalled();
+  });
+
   it("異常系: ADMIN 以外はエラーを返す", async () => {
     vi.mocked(getSession).mockResolvedValue(memberSession as never);
 
     const result = await removeHoliday({ date: "2026-08-11" });
 
     expect(result).toEqual({ error: "祝日を解除する権限がありません" });
+    expect(deleteHolidayByDate).not.toHaveBeenCalled();
+  });
+
+  it("異常系: 不正な日付はバリデーションエラーを返す", async () => {
+    vi.mocked(getSession).mockResolvedValue(adminSession as never);
+
+    const result = await removeHoliday({ date: "2026-13-40" });
+
+    expect(result.error).toBeTruthy();
     expect(deleteHolidayByDate).not.toHaveBeenCalled();
   });
 });

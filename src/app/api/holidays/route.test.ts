@@ -114,6 +114,39 @@ describe("POST /api/holidays", () => {
     expect(createHoliday).not.toHaveBeenCalled();
   });
 
+  it("バリデーションエラー: name が trim 後50文字超で 400", async () => {
+    authAs(ADMIN);
+
+    const res = await POST(
+      makeRequest("POST", {
+        apiKey: VALID_API_KEY,
+        body: { date: "2026-08-11", name: "あ".repeat(51) },
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(createHoliday).not.toHaveBeenCalled();
+  });
+
+  it("正常系: 前後空白込みで trim 後50文字ちょうどは 201（Server Action と対称）", async () => {
+    authAs(ADMIN);
+    vi.mocked(createHoliday).mockResolvedValue({
+      id: "h1",
+      date: new Date("2026-08-11T00:00:00.000Z"),
+      name: "あ".repeat(50),
+    } as never);
+
+    const res = await POST(
+      makeRequest("POST", {
+        apiKey: VALID_API_KEY,
+        body: { date: "2026-08-11", name: `  ${"あ".repeat(50)}  ` },
+      }),
+    );
+
+    expect(res.status).toBe(201);
+    expect(createHoliday).toHaveBeenCalled();
+  });
+
   it("正常系: 祝日を作成して 201", async () => {
     authAs(ADMIN);
     vi.mocked(createHoliday).mockResolvedValue({
