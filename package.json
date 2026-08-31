@@ -21,13 +21,13 @@
     "test:e2e:shots": "SHOTS=1 playwright test"
   },
   "dependencies": {
-    "@clerk/backend": "^3.13.2",
-    "@clerk/nextjs": "^7.8.0",
-    "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.9.1",
-    "next": "16.3.2",
+    "@clerk/backend": "^3.16.12",
+    "@clerk/nextjs": "^7.8.2",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "next": "16.3.3",
     "pg": "^8.23.0",
-    "prisma": "^7.9.1",
+    "prisma": "^7.10.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^4.4.3"
