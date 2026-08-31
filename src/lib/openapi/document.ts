@@ -3,6 +3,7 @@ import { z } from "zod";
 import { commentCreateBodySchema, commentResponseSchema } from "@/lib/schemas/comment";
 import { errorResponseSchema } from "@/lib/schemas/common";
 import { dayOffCreateBodySchema, dayOffResponseSchema } from "@/lib/schemas/day-off";
+import { holidayCreateBodySchema, holidayResponseSchema } from "@/lib/schemas/holiday";
 import { meUpdateBodySchema } from "@/lib/schemas/me";
 import {
   reportAdminBatchBodySchema,
@@ -98,7 +99,7 @@ const upsertResults = {
 };
 
 const infoDescription = [
-  "daily-hub の外部 REST API。日報・コメント・休日・プロフィール、および ADMIN 向けのユーザー管理を提供する。",
+  "daily-hub の外部 REST API。日報・コメント・休日・祝日・プロフィール、および ADMIN 向けのユーザー管理を提供する。",
   "",
   "## 認証",
   "個人設定で発行した API キーを `Authorization: Bearer <api-key>` ヘッダーに付与する。無効・未指定は `401` を返す。",
@@ -106,7 +107,7 @@ const infoDescription = [
   "## 共通仕様",
   '- エラーは一律 `{ "error": string }`（日本語メッセージ）。',
   "- 日付は `YYYY-MM-DD`、日時は ISO 8601。",
-  "- ロール別: 日報の作成・編集・削除、休日の登録・解除は `VIEWER` 不可（`403`）。コメントは全ロール可。ADMIN 系は `ADMIN` のみ（`403`）。",
+  "- ロール別: 日報の作成・編集・削除、休日の登録・解除は `VIEWER` 不可（`403`）。コメントは全ロール可。祝日の登録・削除、および ADMIN 系は `ADMIN` のみ（`403`）。祝日の取得は認証済み全ロール可。",
   "",
   "## クイックスタート",
   "```sh",
@@ -155,6 +156,8 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
         CommentCreateBody: toSchema(commentCreateBodySchema),
         DayOff: toSchema(dayOffResponseSchema),
         DayOffCreateBody: toSchema(dayOffCreateBodySchema),
+        Holiday: toSchema(holidayResponseSchema),
+        HolidayCreateBody: toSchema(holidayCreateBodySchema),
         UserAdminUpdateBody: toSchema(userAdminUpdateBodySchema),
       },
     },
@@ -347,6 +350,63 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             401: errorResponse("認証エラー"),
             403: errorResponse("VIEWER は解除できない"),
             404: errorResponse("未存在 / 他ユーザーの休日"),
+          },
+        },
+      },
+      "/api/holidays": {
+        get: {
+          operationId: "listHolidays",
+          summary: "祝日一覧を取得（from・to で絞り込み）",
+          description: [
+            "`date` の昇順で返す。祝日は全ユーザー共通のグローバル設定。",
+            "`from`/`to` はいずれも任意で、片方のみの指定も可能。",
+          ].join("\n"),
+          tags: ["holidays"],
+          parameters: [
+            {
+              name: "from",
+              in: "query",
+              schema: { type: "string" },
+              description: "YYYY-MM-DD（この日以降）",
+            },
+            {
+              name: "to",
+              in: "query",
+              schema: { type: "string" },
+              description: "YYYY-MM-DD（この日以前）",
+            },
+          ],
+          responses: {
+            200: listResponse("祝日の一覧", "holidays", "Holiday"),
+            400: errorResponse("クエリのバリデーションエラー"),
+            401: errorResponse("認証エラー"),
+          },
+        },
+        post: {
+          operationId: "createHoliday",
+          summary: "祝日を登録（ADMIN）",
+          tags: ["holidays"],
+          requestBody: jsonBody("HolidayCreateBody"),
+          responses: {
+            201: jsonResponse("登録された祝日", ref("Holiday")),
+            400: errorResponse("バリデーションエラー"),
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 以外"),
+            409: errorResponse("同日が既に登録済み"),
+          },
+        },
+      },
+      "/api/holidays/{id}": {
+        delete: {
+          operationId: "deleteHoliday",
+          summary: "祝日を削除（ADMIN）",
+          tags: ["holidays"],
+          parameters: [idParam],
+          responses: {
+            204: { description: "削除成功（ボディなし）" },
+            401: errorResponse("認証エラー"),
+            403: errorResponse("ADMIN 以外"),
+            404: errorResponse("未存在"),
           },
         },
       },

@@ -49,11 +49,20 @@ erDiagram
         String userId FK
         DateTime createdAt
     }
+    Holiday {
+        String id PK
+        DateTime date UK
+        String name "nullable"
+        DateTime createdAt
+        DateTime updatedAt
+    }
     User ||--o{ Report : "作成"
     User ||--o{ Comment : "投稿"
     Report ||--o{ Comment : "コメント"
     User ||--o{ DayOff : "休日"
 ```
+
+> `Holiday` は全ユーザー共通のグローバル祝日で、`User` とのリレーションを持たない（`DayOff` はユーザー個人の休日で `User` に紐づく点が異なる）。
 
 ---
 
@@ -111,6 +120,21 @@ erDiagram
 **制約**
 - `(userId, date)` のユニーク制約で1ユーザー1日1件を保証
 
+### Holiday
+
+全ユーザーに無条件で適用されるグローバルな祝日。`User` に紐づかず、設定は ADMIN のみ可能。
+
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | String (CUID) | 主キー |
+| date | DateTime | 祝日の日付（00:00:00 UTC で保存・ユニーク） |
+| name | String? | 祝日の名称（任意・未設定は `null`） |
+| createdAt | DateTime | 作成日時 |
+| updatedAt | DateTime | 更新日時 |
+
+**制約**
+- `date` のユニーク制約で1日1件（全ユーザー共通）を保証
+
 ---
 
 ## カスケード動作
@@ -137,4 +161,5 @@ Prisma スキーマに `onDelete` を指定していないため、全リレー�
 | Comment | `reportId` | 日報詳細のコメント取得 |
 | DayOff | `date` | 日付での休日検索 |
 | DayOff | `(userId, date)` | ユニーク制約として自動作成。ユーザー別休日取得用インデックスを兼ねる |
+| Holiday | `date` | ユニーク制約として自動作成。日付・期間での祝日検索用インデックスを兼ねる |
 
