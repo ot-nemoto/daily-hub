@@ -11,8 +11,9 @@ export const isApiRoute = createRouteMatcher([
   "/api/reports(.*)",
   "/api/comments(.*)",
   "/api/day-off(.*)",
+  "/api/holidays(.*)",
   "/api/me(.*)",
-  "/api/admin/(.*)",
+  "/api/admin(.*)",
 ]);
 
 // API キー認証（Authorization ヘッダ）・Cookie 不使用のため、任意オリジン許可（*）で安全。
@@ -40,6 +41,13 @@ export default clerkMiddleware(async (auth, request) => {
     return withCors(NextResponse.next());
   }
 
+  // 未知の API ルートは JSON 404 を返す（画面はリダイレクト）。
+  // mock バイパスより前に評価する: 後段に置くと MOCK_USER_ID 設定時に isApiRoute 未登録の
+  // /api/* が素通りしてハンドラに到達し、ローカルの curl 検証が本番挙動と乖離するため。
+  if (!isPublicRoute(request) && request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Not Found" }, { status: 404 });
+  }
+
   // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合はバイパス
   if (
     process.env.NODE_ENV !== "production" &&
@@ -52,10 +60,6 @@ export default clerkMiddleware(async (auth, request) => {
   // ロールベースの認可チェックは Edge Runtime で DB アクセスができないため
   // 各ページ・API ルートで getSession() を使って実施する
   if (!isPublicRoute(request)) {
-    // 未知の API ルートは JSON 404 を返す（画面はリダイレクト）
-    if (request.nextUrl.pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Not Found" }, { status: 404 });
-    }
     await auth.protect();
   }
 });

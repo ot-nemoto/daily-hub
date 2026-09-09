@@ -103,8 +103,10 @@ const userId = session?.user?.id;
 |------|------|------|
 | `/login` | 不要 | Clerk のサインインページ |
 | `/auth-error` | 不要 | 認証エラー表示ページ |
-| `/api/reports/**` | 不要 | 外部連携用 REST API。`/api/reports` 本体および配下のサブパスは、Clerk 認証ではなく APIキー認証（`Authorization: Bearer`）で認可する |
+| 外部連携用 REST API（`/api/reports` / `/api/comments` / `/api/day-off` / `/api/holidays` / `/api/me` / `/api/admin` の各本体・配下） | 不要 | Clerk 認証ではなく APIキー認証（`Authorization: Bearer`）で認可する。対象パスの正は `src/proxy.ts` の `isApiRoute`（未登録の `/api/*` は middleware が JSON 404 を返す） |
 | その他全パス | **必須** | 未認証なら Clerk が `/login` へリダイレクト |
+
+> ローカル開発用のモック（`MOCK_USER_ID` / `MOCK_USER_EMAIL`）は**画面ルートのみ**をバイパスする。`/api/*` には適用せず、非本番環境でも常に APIキー認証と未登録パスの JSON 404 が効く（ローカルでの API 検証を本番と同じ挙動にするため）。
 
 ### アクションレベルの認可
 
