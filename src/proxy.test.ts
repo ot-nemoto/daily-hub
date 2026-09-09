@@ -28,18 +28,27 @@ const callMiddleware = middleware as unknown as (
 
 const API_DIR = fileURLToPath(new URL("./app/api", import.meta.url));
 
+/** Route Handler のファイル名（拡張子違いを取りこぼすと登録漏れを検出できない）。 */
+const ROUTE_FILE = /^route\.(?:ts|tsx|js|jsx|mjs)$/;
+
 /**
- * `src/app/api/**\/route.ts` から実在する API ルートの URL パスを列挙する。
+ * `src/app/api/**\/route.*` から実在する API ルートの URL パスを列挙する。
  * 手動列挙にすると新規ルートの `isApiRoute` 登録漏れを検出できないため、実装から導出する。
- * 動的セグメント（`[id]`）は具体値に置換する。
+ * 動的セグメント（`[id]`）は具体値に置換し、URL に現れないルートグループ（`(group)`）は除去する。
  */
 function collectApiRoutePaths(dir = API_DIR, prefix = "/api"): string[] {
   const paths: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
-      const segment = entry.name.replace(/^\[(?:\.\.\.)?(.+)\]$/, "abc");
-      paths.push(...collectApiRoutePaths(`${dir}/${entry.name}`, `${prefix}/${segment}`));
-    } else if (entry.name === "route.ts") {
+      const isRouteGroup = /^\(.+\)$/.test(entry.name);
+      const segment = entry.name.replace(/^\[(?:\.\.\.)?.+\]$/, "abc");
+      paths.push(
+        ...collectApiRoutePaths(
+          `${dir}/${entry.name}`,
+          isRouteGroup ? prefix : `${prefix}/${segment}`,
+        ),
+      );
+    } else if (ROUTE_FILE.test(entry.name)) {
       paths.push(prefix);
     }
   }
