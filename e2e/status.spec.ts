@@ -15,12 +15,34 @@ function utcDateStr(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** N 日前（UTC 0 時）。ページの日付列と同じ基準で組み立てる */
+function daysAgoUtc(n: number): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() - n);
+  return d;
+}
+
 test.describe("提出状況", () => {
-  test("初期表示: 見出し・マトリクス表示・期間2Wハイライト", async ({ page }) => {
+  test("初期表示: 見出し・マトリクス表示・表示幅14日ハイライト・範囲は今日まで", async ({
+    page,
+  }) => {
     await page.goto("/reports/status");
     await expect(page.getByRole("heading", { name: "提出状況" })).toBeVisible();
-    await expect(page.locator("table")).toBeVisible();
-    await expect(page.getByRole("button", { name: "2W", exact: true })).toHaveClass(/bg-zinc-900/);
+    await expect(page.locator("table.border-collapse")).toBeVisible();
+    await expect(page.getByRole("button", { name: "14日", exact: true })).toHaveClass(
+      /bg-zinc-900/,
+    );
+    // 範囲表示は「左端 〜 今日」
+    const today = daysAgoUtc(0);
+    const start = daysAgoUtc(13);
+    await expect(page.getByRole("button", { name: "表示範囲" })).toHaveText(
+      `${dateLabel(start)} 〜 ${dateLabel(today)}`,
+    );
+    // 右端が今日なので未来方向と「今日」は無効
+    await expect(page.getByRole("button", { name: "次の期間" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "今日", exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "前の期間" })).toBeEnabled();
   });
 
   test("有効ユーザーのみ・名前昇順で表示される", async ({ page }) => {
@@ -49,33 +71,89 @@ test.describe("提出状況", () => {
     await expect(page.locator("thead th.text-red-500")).not.toHaveCount(0);
   });
 
-  test("期間切替: 1W=7列・1M=30列に変わりハイライトされる", async ({ page }) => {
+  test("表示幅切替: 7日=7列・30日=30列に変わりハイライトされ、右端は維持される", async ({
+    page,
+  }) => {
     await page.goto("/reports/status");
+    const todayStr = utcDateStr(daysAgoUtc(0));
 
-    await page.getByRole("button", { name: "1W", exact: true }).click();
-    await expect(page).toHaveURL(/period=1w/);
-    await expect(page.getByRole("button", { name: "1W", exact: true })).toHaveClass(/bg-zinc-900/);
+    await page.getByRole("button", { name: "7日", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${todayStr}&period=1w`));
+    await expect(page.getByRole("button", { name: "7日", exact: true })).toHaveClass(/bg-zinc-900/);
     // ユーザー列(1) + 日付7列
     await expect(page.locator("thead th")).toHaveCount(8);
 
-    await page.getByRole("button", { name: "1M", exact: true }).click();
-    await expect(page).toHaveURL(/period=1m/);
-    await expect(page.getByRole("button", { name: "1M", exact: true })).toHaveClass(/bg-zinc-900/);
+    await page.getByRole("button", { name: "30日", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${todayStr}&period=1m`));
+    await expect(page.getByRole("button", { name: "30日", exact: true })).toHaveClass(
+      /bg-zinc-900/,
+    );
     await expect(page.locator("thead th")).toHaveCount(31);
   });
 
-  test("基準日を指定すると input に反映され最新列（右端）が選択日になる", async ({ page }) => {
+  test("終了日を指定すると範囲表示に反映され最新列（右端）が選択日になる", async ({ page }) => {
     // 実行日に依存しないよう、今日から40日前を選ぶ（確実に過去）
-    const base = new Date();
-    base.setUTCHours(0, 0, 0, 0);
-    base.setUTCDate(base.getUTCDate() - 40);
+    const base = daysAgoUtc(40);
     const baseStr = utcDateStr(base);
 
-    // date input の onChange は `?base=...&period=...` を push するだけなので、URL 契約で検証する
     await page.goto(`/reports/status?base=${baseStr}&period=2w`);
-    await expect(page.locator("#base-date")).toHaveValue(baseStr);
+    await expect(page.getByRole("button", { name: "表示範囲" })).toHaveText(
+      `${dateLabel(daysAgoUtc(53))} 〜 ${dateLabel(base)}`,
+    );
     // 右端の日付ヘッダーが選択日
     await expect(page.locator("thead th").last()).toHaveText(dateLabel(base));
+    // 過去なので未来方向と「今日」が有効
+    await expect(page.getByRole("button", { name: "次の期間" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "今日", exact: true })).toBeEnabled();
+  });
+
+  test("範囲表示をクリックすると終了日入力が開き、入力で右端が移動する", async ({ page }) => {
+    await page.goto("/reports/status");
+    await page.getByRole("button", { name: "表示範囲" }).click();
+    const input = page.locator("#base-date");
+    await expect(input).toHaveValue(utcDateStr(daysAgoUtc(0)));
+
+    // date input の onChange は `?base=...&period=...` を push するだけなので、URL 契約で検証する
+    const target = utcDateStr(daysAgoUtc(40));
+    await input.fill(target);
+    await expect(page).toHaveURL(new RegExp(`base=${target}&period=2w`));
+    await expect(page.locator("thead th").last()).toHaveText(dateLabel(daysAgoUtc(40)));
+    // 入力は閉じて範囲表示に戻る
+    await expect(input).toHaveCount(0);
+  });
+
+  test("◀ ▶ で表示幅ぶんスライドし、▶ は今日を超えない", async ({ page }) => {
+    await page.goto("/reports/status");
+    const today = utcDateStr(daysAgoUtc(0));
+
+    // 14日幅で 1 回戻る → base は 14 日前
+    await page.getByRole("button", { name: "前の期間" }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${utcDateStr(daysAgoUtc(14))}&period=2w`));
+    await expect(page.locator("thead th").last()).toHaveText(dateLabel(daysAgoUtc(14)));
+    await expect(page.getByRole("button", { name: "次の期間" })).toBeEnabled();
+
+    // もう 1 回戻る → 28 日前
+    await page.getByRole("button", { name: "前の期間" }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${utcDateStr(daysAgoUtc(28))}&period=2w`));
+
+    // 進む → 14 日前
+    await page.getByRole("button", { name: "次の期間" }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${utcDateStr(daysAgoUtc(14))}&period=2w`));
+
+    // 幅を 30 日に変えてから進むと 16 日先＝今日で丸められる
+    await page.getByRole("button", { name: "30日", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${utcDateStr(daysAgoUtc(14))}&period=1m`));
+    await page.getByRole("button", { name: "次の期間" }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${today}&period=1m`));
+    await expect(page.getByRole("button", { name: "次の期間" })).toBeDisabled();
+  });
+
+  test("「今日」で右端が今日に戻り、幅は維持される", async ({ page }) => {
+    await page.goto(`/reports/status?base=${utcDateStr(daysAgoUtc(40))}&period=1w`);
+    await page.getByRole("button", { name: "今日", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${utcDateStr(daysAgoUtc(0))}&period=1w`));
+    await expect(page.getByRole("button", { name: "今日", exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "7日", exact: true })).toHaveClass(/bg-zinc-900/);
   });
 
   test("提出率列が表示され、休日除外で yagen は100%になる（#13/#17）", async ({ page }) => {
@@ -119,14 +197,6 @@ test.describe("提出状況（VIEWER アクセス）", () => {
 // ---- 祝日表示（T219）: 祝日は列見出し＋列背景で示し、セルのバッジは「休」だけに限定する ----
 
 const BONJIRI_KEY = "c1d2e3f4-a5b6-7890-abcd-ef1234567890"; // ADMIN（prisma/seed.ts と一致）
-
-/** N 日前（UTC 0 時）。ページの日付列と同じ基準で組み立てる */
-function daysAgoUtc(n: number): Date {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  d.setUTCDate(d.getUTCDate() - n);
-  return d;
-}
 
 /** 平日になるまで daysAgo を進め、除外日と重ならない最初の平日を返す（2W=直近14日内に収まる前提） */
 function pickWeekdayDaysAgo(start: number, exclude: number[] = []): number {

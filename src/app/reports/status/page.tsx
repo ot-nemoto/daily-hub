@@ -2,49 +2,22 @@ export const metadata = { title: "提出状況" };
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { type Period, StatusFilter } from "./StatusFilter";
+import {
+  DEFAULT_PERIOD,
+  formatDateLabel,
+  isPeriod,
+  PERIOD_DAYS,
+  parseYmd,
+  todayYmd,
+  toYmd,
+} from "@/lib/statusPeriod";
+import { StatusFilter } from "./StatusFilter";
 import { StatusTableScroll } from "./StatusTableScroll";
-
-const PERIOD_DAYS: Record<Period, number> = {
-  "1w": 7,
-  "2w": 14,
-  "1m": 30,
-  "1.5m": 45,
-  "2m": 60,
-  "3m": 90,
-};
-
-const DEFAULT_PERIOD: Period = "2w";
-const VALID_PERIODS = new Set<string>(Object.keys(PERIOD_DAYS));
-
-function todayUTC(): Date {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  return d;
-}
 
 function addDays(base: Date, delta: number): Date {
   const d = new Date(base);
   d.setUTCDate(d.getUTCDate() + delta);
   return d;
-}
-
-function parseDate(value: string | undefined): Date | null {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const d = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value) return null;
-  return d;
-}
-
-function formatDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function formatDateLabel(d: Date): string {
-  const m = d.getUTCMonth() + 1;
-  const day = d.getUTCDate();
-  const dow = ["日", "月", "火", "水", "木", "金", "土"][d.getUTCDay()];
-  return `${m}/${day}(${dow})`;
 }
 
 // from〜to の日付リストを古い順（左）→新しい順（右）で生成する
@@ -68,12 +41,10 @@ export default async function StatusPage({
   await getSession({ redirectOnInactive: true });
 
   const params = await searchParams;
-  const today = todayUTC();
+  const today = todayYmd();
 
-  const baseDate = parseDate(params.base) ?? today;
-  const period: Period = VALID_PERIODS.has(params.period ?? "")
-    ? (params.period as Period)
-    : DEFAULT_PERIOD;
+  const baseDate = parseYmd(params.base) ?? new Date(`${today}T00:00:00.000Z`);
+  const period = isPeriod(params.period) ? params.period : DEFAULT_PERIOD;
 
   const days = PERIOD_DAYS[period];
   const fromDate = addDays(baseDate, -(days - 1));
@@ -101,23 +72,23 @@ export default async function StatusPage({
   ]);
 
   // 提出済みセットを (authorId_YYYY-MM-DD) で管理
-  const submitted = new Set(reports.map((r) => `${r.authorId}_${formatDate(r.date)}`));
+  const submitted = new Set(reports.map((r) => `${r.authorId}_${toYmd(r.date)}`));
   // 休日セットを (userId_YYYY-MM-DD) で管理
-  const dayOffSet = new Set(dayOffs.map((d) => `${d.userId}_${formatDate(d.date)}`));
+  const dayOffSet = new Set(dayOffs.map((d) => `${d.userId}_${toYmd(d.date)}`));
   // 祝日は全ユーザー共通。日付キーで保持し、名称はツールチップ表示に使う
-  const holidaySet = new Set(holidays.map((h) => formatDate(h.date)));
-  const holidayNames = new Map(holidays.map((h) => [formatDate(h.date), h.name]));
+  const holidaySet = new Set(holidays.map((h) => toYmd(h.date)));
+  const holidayNames = new Map(holidays.map((h) => [toYmd(h.date), h.name]));
   // 平日の日付リスト（提出率算出用）。土日と祝日は稼働日でないため除外する
   const weekdays = dates.filter((d) => {
     const dow = d.getUTCDay();
-    return dow !== 0 && dow !== 6 && !holidaySet.has(formatDate(d));
+    return dow !== 0 && dow !== 6 && !holidaySet.has(toYmd(d));
   });
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="mb-4 text-lg font-bold text-zinc-900">提出状況</h1>
 
-      <StatusFilter base={formatDate(baseDate)} period={period} />
+      <StatusFilter base={toYmd(baseDate)} period={period} today={today} />
 
       {users.length === 0 ? (
         <p className="text-sm text-zinc-500">有効なユーザーがいません。</p>
@@ -130,7 +101,7 @@ export default async function StatusPage({
                   ユーザー
                 </th>
                 {dates.map((d) => {
-                  const ds = formatDate(d);
+                  const ds = toYmd(d);
                   const dow = d.getUTCDay();
                   const isSat = dow === 6;
                   const isSun = dow === 0;
@@ -160,13 +131,13 @@ export default async function StatusPage({
             <tbody className="divide-y divide-zinc-100">
               {users.map((user) => {
                 const userDayOffCount = weekdays.filter((d) =>
-                  dayOffSet.has(`${user.id}_${formatDate(d)}`),
+                  dayOffSet.has(`${user.id}_${toYmd(d)}`),
                 ).length;
                 const denominator = weekdays.length - userDayOffCount;
                 const submittedCount = weekdays.filter(
                   (d) =>
-                    submitted.has(`${user.id}_${formatDate(d)}`) &&
-                    !dayOffSet.has(`${user.id}_${formatDate(d)}`),
+                    submitted.has(`${user.id}_${toYmd(d)}`) &&
+                    !dayOffSet.has(`${user.id}_${toYmd(d)}`),
                 ).length;
                 const rate = denominator > 0 ? Math.floor((submittedCount / denominator) * 100) : 0;
                 return (
@@ -178,7 +149,7 @@ export default async function StatusPage({
                       </div>
                     </td>
                     {dates.map((d) => {
-                      const ds = formatDate(d);
+                      const ds = toYmd(d);
                       const key = `${user.id}_${ds}`;
                       const done = submitted.has(key);
                       const isDayOff = dayOffSet.has(key);

@@ -1,27 +1,51 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-
-export type Period = "1w" | "2w" | "1m" | "1.5m" | "2m" | "3m";
-
-export const PERIODS: { key: Period; label: string }[] = [
-  { key: "1w", label: "1W" },
-  { key: "2w", label: "2W" },
-  { key: "1m", label: "1M" },
-  { key: "1.5m", label: "1.5M" },
-  { key: "2m", label: "2M" },
-  { key: "3m", label: "3M" },
-];
+import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  formatDateLabel,
+  PERIODS,
+  type Period,
+  periodStart,
+  shiftPeriod,
+} from "@/lib/statusPeriod";
 
 type Props = {
+  /** 表示範囲の右端（YYYY-MM-DD） */
   base: string;
   period: Period;
+  /** 今日（YYYY-MM-DD・UTC）。未来方向へのスライド上限に使う */
+  today: string;
 };
 
-export function StatusFilter({ base, period }: Props) {
+function label(ymd: string): string {
+  return formatDateLabel(new Date(`${ymd}T00:00:00.000Z`));
+}
+
+/**
+ * 期間指定 UI。「表示幅を選び、窓を前後にスライドさせる」モデルで見せる。
+ * URL 契約は base（右端）＋ period のまま。
+ */
+export function StatusFilter({ base, period, today }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const prev = shiftPeriod(base, period, -1, today);
+  const next = shiftPeriod(base, period, 1, today);
+  const isLatest = next === null;
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      try {
+        inputRef.current?.showPicker?.();
+      } catch {
+        // ユーザー操作起因と見なされない環境では開けない（フォーカスのみで続行）
+      }
+    }
+  }, [editing]);
 
   function navigate(nextBase: string, nextPeriod: Period) {
     startTransition(() => {
@@ -29,25 +53,12 @@ export function StatusFilter({ base, period }: Props) {
     });
   }
 
+  const navButtonClass =
+    "cursor-pointer rounded-md px-2 py-1 text-sm text-zinc-600 hover:bg-zinc-100 disabled:cursor-default disabled:text-zinc-300 disabled:hover:bg-transparent";
+
   return (
     <div className="mb-4 flex flex-wrap items-center gap-4">
-      {/* 基準日 */}
-      <div className="flex items-center gap-2">
-        <label htmlFor="base-date" className="text-sm text-zinc-600">
-          日付
-        </label>
-        <input
-          id="base-date"
-          type="date"
-          value={base}
-          onChange={(e) => {
-            if (e.target.value) navigate(e.target.value, period);
-          }}
-          className="cursor-pointer rounded-md border border-zinc-300 px-2 py-1 text-sm focus:border-zinc-500 focus:outline-none"
-        />
-      </div>
-
-      {/* 期間ボタン */}
+      {/* 表示幅 */}
       <div className="flex items-center gap-1">
         {PERIODS.map((p) => (
           <button
@@ -64,6 +75,67 @@ export function StatusFilter({ base, period }: Props) {
           </button>
         ))}
       </div>
+
+      {/* 表示範囲のスライド */}
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-label="前の期間"
+          onClick={() => prev && navigate(prev, period)}
+          className={navButtonClass}
+        >
+          ◀
+        </button>
+        {editing ? (
+          <input
+            ref={inputRef}
+            id="base-date"
+            type="date"
+            aria-label="終了日"
+            defaultValue={base}
+            max={today}
+            onChange={(e) => {
+              if (e.target.value) {
+                setEditing(false);
+                navigate(e.target.value, period);
+              }
+            }}
+            onBlur={() => setEditing(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setEditing(false);
+            }}
+            className="rounded-md border border-zinc-300 px-2 py-1 text-sm focus:border-zinc-500 focus:outline-none"
+          />
+        ) : (
+          <button
+            type="button"
+            aria-label="表示範囲"
+            title="クリックして終了日を指定"
+            onClick={() => setEditing(true)}
+            className="cursor-pointer rounded-md px-2 py-1 text-sm text-zinc-900 tabular-nums hover:bg-zinc-100"
+          >
+            {label(periodStart(base, period))} 〜 {label(base)}
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label="次の期間"
+          disabled={isLatest}
+          onClick={() => next && navigate(next, period)}
+          className={navButtonClass}
+        >
+          ▶
+        </button>
+      </div>
+
+      <button
+        type="button"
+        disabled={isLatest}
+        onClick={() => navigate(today, period)}
+        className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1 text-sm text-zinc-600 hover:bg-zinc-100 disabled:cursor-default disabled:border-zinc-200 disabled:text-zinc-300 disabled:hover:bg-transparent"
+      >
+        今日
+      </button>
 
       {isPending && <span className="text-xs text-zinc-400">読み込み中...</span>}
     </div>
