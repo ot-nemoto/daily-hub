@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { authState, expect, test } from "./fixtures";
 
 test.use({ storageState: authState("tsukune") });
@@ -111,6 +112,135 @@ test.describe("提出状況（VIEWER アクセス）", () => {
     const page = await context.newPage();
     await page.goto("/reports/status");
     await expect(page.getByRole("heading", { name: "提出状況" })).toBeVisible();
+    await context.close();
+  });
+});
+
+// ---- 祝日表示（T219）: 祝日は列見出し＋列背景で示し、セルのバッジは「休」だけに限定する ----
+
+const BONJIRI_KEY = "c1d2e3f4-a5b6-7890-abcd-ef1234567890"; // ADMIN（prisma/seed.ts と一致）
+
+/** N 日前（UTC 0 時）。ページの日付列と同じ基準で組み立てる */
+function daysAgoUtc(n: number): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() - n);
+  return d;
+}
+
+/** 平日になるまで daysAgo を進め、除外日と重ならない最初の平日を返す（2W=直近14日内に収まる前提） */
+function pickWeekdayDaysAgo(start: number, exclude: number[] = []): number {
+  let n = start;
+  while ([0, 6].includes(daysAgoUtc(n).getUTCDay()) || exclude.includes(n)) n++;
+  return n;
+}
+
+/** 日付ラベルに一致する列見出しの列番号（0 始まり・ユーザー列含む）を返す */
+async function columnIndex(page: Page, label: string): Promise<number> {
+  return page
+    .locator("thead th", { hasText: label })
+    .evaluate((el) => (el as HTMLTableCellElement).cellIndex);
+}
+
+test.describe("提出状況（祝日表示）", () => {
+  // シードの yagen 休日（3日前以降で最初の平日）と同じ日を祝日にし、「休」優先を検証する
+  const overlapDaysAgo = pickWeekdayDaysAgo(3);
+  const unnamedDaysAgo = pickWeekdayDaysAgo(1, [overlapDaysAgo]);
+  const longNameDaysAgo = pickWeekdayDaysAgo(unnamedDaysAgo + 1, [overlapDaysAgo]);
+  const LONG_NAME = "とても長い名称の祝日（省略表示の確認用）";
+  const OVERLAP_NAME = "テスト祝日";
+
+  const holidays = [
+    { date: utcDateStr(daysAgoUtc(overlapDaysAgo)), name: OVERLAP_NAME },
+    { date: utcDateStr(daysAgoUtc(unnamedDaysAgo)), name: null },
+    { date: utcDateStr(daysAgoUtc(longNameDaysAgo)), name: LONG_NAME },
+  ];
+  const createdIds: string[] = [];
+
+  test.beforeAll(async ({ playwright, baseURL }) => {
+    const api = await playwright.request.newContext({
+      baseURL,
+      extraHTTPHeaders: { Authorization: `Bearer ${BONJIRI_KEY}` },
+    });
+    // 中断された前回実行の残骸があれば先に消す（date はユニークで 409 になるため）
+    const dates = holidays.map((h) => h.date).sort();
+    const existing = await api.get(`/api/holidays?from=${dates[0]}&to=${dates.at(-1)}`);
+    for (const h of (await existing.json()).holidays as { id: string; date: string }[]) {
+      if (holidays.some((x) => x.date === h.date)) await api.delete(`/api/holidays/${h.id}`);
+    }
+    for (const h of holidays) {
+      const res = await api.post("/api/holidays", { data: h });
+      expect(res.status()).toBe(201);
+      createdIds.push((await res.json()).id);
+    }
+    await api.dispose();
+  });
+
+  test.afterAll(async ({ playwright, baseURL }) => {
+    const api = await playwright.request.newContext({
+      baseURL,
+      extraHTTPHeaders: { Authorization: `Bearer ${BONJIRI_KEY}` },
+    });
+    for (const id of createdIds) await api.delete(`/api/holidays/${id}`);
+    await api.dispose();
+  });
+
+  test("列見出しに祝日名が表示され、名称なしは「祝日」になる", async ({ page }) => {
+    await page.goto("/reports/status");
+    const overlapTh = page.locator("thead th", { hasText: dateLabel(daysAgoUtc(overlapDaysAgo)) });
+    await expect(overlapTh).toHaveClass(/text-red-500/);
+    await expect(overlapTh).toHaveAttribute("title", OVERLAP_NAME);
+    await expect(overlapTh.locator("span")).toHaveText(OVERLAP_NAME);
+
+    const unnamedTh = page.locator("thead th", { hasText: dateLabel(daysAgoUtc(unnamedDaysAgo)) });
+    await expect(unnamedTh).toHaveAttribute("title", "祝日");
+    await expect(unnamedTh.locator("span")).toHaveText("祝日");
+  });
+
+  test("長い祝日名は省略表示され、ツールチップで全文を確認できる", async ({ page }) => {
+    await page.goto("/reports/status");
+    const th = page.locator("thead th", { hasText: dateLabel(daysAgoUtc(longNameDaysAgo)) });
+    await expect(th).toHaveAttribute("title", LONG_NAME);
+    const nameSpan = th.locator("span");
+    await expect(nameSpan).toHaveClass(/truncate/);
+    // 実際に省略されている（内容幅が表示幅を超えている）
+    await expect.poll(() => nameSpan.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  });
+
+  test("祝日セルに「祝」バッジは出ず、列背景が赤系になる", async ({ page }) => {
+    await page.goto("/reports/status");
+    await expect(page.locator("tbody").getByText("祝", { exact: true })).toHaveCount(0);
+
+    const idx = await columnIndex(page, dateLabel(daysAgoUtc(unnamedDaysAgo)));
+    const cells = page.locator(`tbody tr td:nth-child(${idx + 1})`);
+    await expect(cells.first()).toHaveClass(/bg-red-50/);
+    await expect(cells).toHaveCount(await page.locator("tbody tr").count());
+    for (const cls of await cells.evaluateAll((els) => els.map((e) => e.className))) {
+      expect(cls).toMatch(/bg-red-50/);
+    }
+  });
+
+  test("祝日に提出済みなら✓、休日登録と重なれば「休」を表示し、提出率は変わらない", async ({
+    page,
+  }) => {
+    await page.goto("/reports/status");
+    const yagenRow = page.locator("tbody tr").filter({ hasText: "yagen" });
+    // yagen は直近14日の平日すべてに日報あり → 名称なし祝日の列は ✓
+    const unnamedIdx = await columnIndex(page, dateLabel(daysAgoUtc(unnamedDaysAgo)));
+    await expect(yagenRow.locator("td").nth(unnamedIdx)).toHaveText("✓");
+    // yagen の休日登録日と重なる祝日は「休」を優先
+    const overlapIdx = await columnIndex(page, dateLabel(daysAgoUtc(overlapDaysAgo)));
+    await expect(yagenRow.locator("td").nth(overlapIdx)).toHaveText("休");
+    // 祝日は分母から除外されるため yagen は引き続き 100%
+    await expect(yagenRow.getByText("100%")).toBeVisible();
+  });
+
+  test("VIEWER(nankotsu) にも祝日名が表示される", async ({ browser }) => {
+    const context = await browser.newContext({ storageState: authState("nankotsu") });
+    const page = await context.newPage();
+    await page.goto("/reports/status");
+    const th = page.locator("thead th", { hasText: dateLabel(daysAgoUtc(overlapDaysAgo)) });
+    await expect(th.locator("span")).toHaveText(OVERLAP_NAME);
     await context.close();
   });
 });
