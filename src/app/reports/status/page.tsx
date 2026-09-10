@@ -135,16 +135,22 @@ export default async function StatusPage({
                   const isSat = dow === 6;
                   const isSun = dow === 0;
                   const isHoliday = holidaySet.has(ds);
-                  // 祝日は日曜と同じ赤扱い。名称はツールチップで表示する
+                  // 祝日は日曜と同じ赤扱い。名称は日付の下に表示し、省略時はツールチップで全文を出す
+                  const holidayName = isHoliday ? (holidayNames.get(ds) ?? "祝日") : undefined;
                   const colorClass =
                     isHoliday || isSun ? "text-red-500" : isSat ? "text-blue-500" : "text-zinc-500";
                   return (
                     <th
                       key={ds}
-                      title={isHoliday ? (holidayNames.get(ds) ?? "祝日") : undefined}
-                      className={`sticky top-0 z-20 min-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center font-medium ${colorClass}`}
+                      title={holidayName}
+                      className={`sticky top-0 z-20 min-w-[4.5rem] max-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center align-top font-medium ${colorClass}`}
                     >
                       {formatDateLabel(d)}
+                      {holidayName && (
+                        <span className="block truncate text-[10px] font-normal leading-tight">
+                          {holidayName}
+                        </span>
+                      )}
                     </th>
                   );
                 })}
@@ -178,19 +184,15 @@ export default async function StatusPage({
                       const isHoliday = holidaySet.has(ds);
                       const dow = d.getUTCDay();
                       const isWeekend = dow === 0 || dow === 6;
-                      // 祝日は赤系背景、週末はグレー背景
+                      // 祝日は赤系背景、週末はグレー背景。祝日は全ユーザー共通なので列の背景と見出しで示し、
+                      // セルのバッジは個人の休日(休)だけに限定する
                       const bgClass = isHoliday ? "bg-red-50" : isWeekend ? "bg-zinc-50" : "";
                       return (
                         <td
                           key={ds}
                           className={`border-r border-zinc-100 px-1 py-2 text-center ${bgClass}`}
                         >
-                          {isHoliday ? (
-                            // 全ユーザー共通の祝日は個人の休日(休)より優先して表示する
-                            <span className="inline-block rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
-                              祝
-                            </span>
-                          ) : isDayOff ? (
+                          {isDayOff ? (
                             <span className="inline-block rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
                               休
                             </span>
