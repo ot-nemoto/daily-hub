@@ -148,6 +148,28 @@ test.describe("提出状況", () => {
     await expect(page.getByRole("button", { name: "次の期間" })).toBeDisabled();
   });
 
+  test("未来の base を指定しても「今日」で戻れる（▶ は無効）", async ({ page }) => {
+    await page.goto("/reports/status?base=2030-01-01&period=2w");
+    await expect(page.getByRole("button", { name: "次の期間" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "今日", exact: true })).toBeEnabled();
+    await page.getByRole("button", { name: "今日", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`base=${utcDateStr(daysAgoUtc(0))}&period=2w`));
+  });
+
+  test("終了日入力は範囲外の中間値（年の打ちかけ）では確定しない", async ({ page }) => {
+    await page.goto("/reports/status");
+    await page.getByRole("button", { name: "表示範囲" }).click();
+    const input = page.locator("#base-date");
+    // キーボードで年を打っている途中に相当する値。min 未満なので遷移せず入力も閉じない
+    await input.fill("0002-08-01");
+    await expect(input).toBeVisible();
+    await expect(page).toHaveURL(/\/reports\/status$/);
+    // 有効な値になった時点で確定する
+    const target = utcDateStr(daysAgoUtc(20));
+    await input.fill(target);
+    await expect(page).toHaveURL(new RegExp(`base=${target}&period=2w`));
+  });
+
   test("「今日」で右端が今日に戻り、幅は維持される", async ({ page }) => {
     await page.goto(`/reports/status?base=${utcDateStr(daysAgoUtc(40))}&period=1w`);
     await page.getByRole("button", { name: "今日", exact: true }).click();

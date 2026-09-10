@@ -10,6 +10,12 @@ import {
   shiftPeriod,
 } from "@/lib/statusPeriod";
 
+/**
+ * 終了日入力の下限。キーボードで年を打っている途中（例: 0002-08-01）は change が発火しても
+ * `validity.rangeUnderflow` になるため、この値以上になるまで確定しない
+ */
+const MIN_BASE = "2000-01-01";
+
 type Props = {
   /** 表示範囲の右端（YYYY-MM-DD） */
   base: string;
@@ -35,6 +41,7 @@ export function StatusFilter({ base, period, today }: Props) {
   const prev = shiftPeriod(base, period, -1, today);
   const next = shiftPeriod(base, period, 1, today);
   const isLatest = next === null;
+  const isToday = base === today;
 
   useEffect(() => {
     if (editing) {
@@ -51,6 +58,13 @@ export function StatusFilter({ base, period, today }: Props) {
     startTransition(() => {
       router.push(`/reports/status?base=${nextBase}&period=${nextPeriod}`);
     });
+  }
+
+  /** 終了日入力を確定する。min〜max の範囲内で完全な日付のときだけ遷移し、それ以外は入力を維持する */
+  function commitBase(input: HTMLInputElement) {
+    if (!input.value || !input.validity.valid) return;
+    setEditing(false);
+    if (input.value !== base) navigate(input.value, period);
   }
 
   const navButtonClass =
@@ -93,16 +107,13 @@ export function StatusFilter({ base, period, today }: Props) {
             type="date"
             aria-label="終了日"
             defaultValue={base}
+            min={MIN_BASE}
             max={today}
-            onChange={(e) => {
-              if (e.target.value) {
-                setEditing(false);
-                navigate(e.target.value, period);
-              }
-            }}
+            onChange={(e) => commitBase(e.currentTarget)}
             onBlur={() => setEditing(false)}
             onKeyDown={(e) => {
               if (e.key === "Escape") setEditing(false);
+              if (e.key === "Enter") commitBase(e.currentTarget);
             }}
             className="rounded-md border border-zinc-300 px-2 py-1 text-sm focus:border-zinc-500 focus:outline-none"
           />
@@ -130,7 +141,7 @@ export function StatusFilter({ base, period, today }: Props) {
 
       <button
         type="button"
-        disabled={isLatest}
+        disabled={isToday}
         onClick={() => navigate(today, period)}
         className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1 text-sm text-zinc-600 hover:bg-zinc-100 disabled:cursor-default disabled:border-zinc-200 disabled:text-zinc-300 disabled:hover:bg-transparent"
       >
