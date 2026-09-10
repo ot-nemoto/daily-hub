@@ -163,7 +163,8 @@ test.describe("提出状況（祝日表示）", () => {
       extraHTTPHeaders: { Authorization: `Bearer ${BONJIRI_KEY}` },
     });
     // 中断された前回実行の残骸があれば先に消す（date はユニークで 409 になるため）
-    const existing = await api.get(`/api/holidays?from=${holidays[0].date}&to=${holidays[2].date}`);
+    const dates = holidays.map((h) => h.date).sort();
+    const existing = await api.get(`/api/holidays?from=${dates[0]}&to=${dates.at(-1)}`);
     for (const h of (await existing.json()).holidays as { id: string; date: string }[]) {
       if (holidays.some((x) => x.date === h.date)) await api.delete(`/api/holidays/${h.id}`);
     }

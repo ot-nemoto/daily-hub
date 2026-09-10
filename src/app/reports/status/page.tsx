@@ -143,11 +143,12 @@ export default async function StatusPage({
                     <th
                       key={ds}
                       title={holidayName}
-                      className={`sticky top-0 z-20 min-w-[4.5rem] max-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center align-top font-medium ${colorClass}`}
+                      className={`sticky top-0 z-20 min-w-[4.5rem] border-r border-zinc-100 bg-white px-1 py-2 text-center align-top font-medium ${colorClass}`}
                     >
                       {formatDateLabel(d)}
                       {holidayName && (
-                        <span className="block truncate text-[10px] font-normal leading-tight">
+                        // th の max-width は CSS 仕様上効かない（Firefox 等）ため、内側の要素で幅を固定して省略する
+                        <span className="block w-[4rem] truncate text-[10px] font-normal leading-tight">
                           {holidayName}
                         </span>
                       )}
