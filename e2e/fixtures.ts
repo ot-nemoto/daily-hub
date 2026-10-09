@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { expect, test } from "@playwright/test";
 
@@ -11,19 +12,33 @@ export function seedPassword(): string {
   return value;
 }
 
-/** seed が書き出した APIキーの受け渡し先（prisma/seed.ts の SEED_KEYS_FILE と一致させる） */
-const SEED_KEYS_FILE = "e2e/.seed-keys.json";
+// seed が書き出した APIキーの受け渡し先（prisma/seed.ts の SEED_KEYS_FILE と同じファイルを指す）。
+// cwd ではなくこのファイルの位置から解決する。
+const SEED_KEYS_FILE = join(__dirname, ".seed-keys.json");
 
 export type SeedApiKeyRole = "bonjiri" | "tsukune" | "nankotsu";
 
+const SEED_API_KEY_ROLES = ["bonjiri", "tsukune", "nankotsu"] as const;
+
 function loadSeedKeys(): Record<SeedApiKeyRole, string> {
+  let raw: string;
   try {
-    return JSON.parse(readFileSync(SEED_KEYS_FILE, "utf-8"));
+    raw = readFileSync(SEED_KEYS_FILE, "utf-8");
   } catch {
     throw new Error(
       `${SEED_KEYS_FILE} が見つかりません。SEED_ALLOW_DESTRUCTIVE=1 npx tsx prisma/seed.ts を実行してください。`,
     );
   }
+  // 壊れた JSON はそのまま SyntaxError を投げさせる（「ファイルが無い」と誤表示しない）
+  const parsed = JSON.parse(raw) as Partial<Record<SeedApiKeyRole, string>>;
+  // 欠けたキーをそのまま返すと Bearer undefined で 401 になり、原因が分かりにくい
+  const missing = SEED_API_KEY_ROLES.filter((role) => !parsed[role]);
+  if (missing.length > 0) {
+    throw new Error(
+      `${SEED_KEYS_FILE} に ${missing.join(", ")} のキーがありません。シードを再実行してください。`,
+    );
+  }
+  return parsed as Record<SeedApiKeyRole, string>;
 }
 
 let seedKeys: Record<SeedApiKeyRole, string> | undefined;
