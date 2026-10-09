@@ -14,6 +14,7 @@
  * - SEED_ALLOW_UNSEEDED_DB=1 ... 任意。シード済みでない DB に対しても実行する
  */
 import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { createClerkClient } from "@clerk/backend";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { config } from "dotenv";
@@ -64,8 +65,10 @@ const SEED_API_KEYS = {
   nankotsu: resolveApiKey("SEED_API_KEY_VIEWER"),
 };
 
-/** 解決した APIキーの受け渡し先（gitignore 済み。読み取り側は e2e/fixtures.ts の SEED_KEYS_FILE） */
-const SEED_KEYS_FILE = "e2e/.seed-keys.json";
+// 解決した APIキーの受け渡し先（gitignore 済み。読み取り側は e2e/fixtures.ts の SEED_KEYS_FILE）。
+// cwd ではなくスクリプト位置から解決する: 破壊的処理のあとに書き出すため、cwd 依存だと
+// DB を消したあとに ENOENT で落ち、E2E が古いキーを読む状態になりうる。
+const SEED_KEYS_FILE = join(__dirname, "../e2e/.seed-keys.json");
 
 // 今日を基準とした日付（UTC 00:00:00）
 function getDate(daysAgo: number): Date {
@@ -263,15 +266,16 @@ async function upsertUser(params: {
 
 async function main() {
   // 本番 DB で誤実行した場合の安全網（SEED_ALLOW_DESTRUCTIVE は .env に残りやすいため接続先をデータで判定する）。
-  // 「シード定義のユーザーが 1 件も無いのに他のユーザーが居る」DB はシード用ではない環境と判断する。
-  // 定義外ユーザーの存在自体は許容する: dev DB には E2E が作った招待ユーザーや開発者本人のアカウントが混在する。
-  const [seedUserCount, foreignUserCount] = await Promise.all([
-    prisma.user.count({ where: { email: { in: SEED_EMAILS } } }),
-    prisma.user.count({ where: { email: { notIn: SEED_EMAILS } } }),
-  ]);
-  if (seedUserCount === 0 && foreignUserCount > 0 && process.env.SEED_ALLOW_UNSEEDED_DB !== "1") {
+  // シードユーザーが 1 件も居ない DB は「このシードが作った DB ではない」= 本番・ステージングの可能性がある。
+  // 空の DB も通さない: migrate deploy 直後の本番に対して実行すると、ADMIN ユーザーと有効な
+  // APIキーを既知のパスワードで作ってしまう（削除対象が無いことは安全を意味しない）。
+  // 新規 DB の初回シードもここで止まるが、意図的な操作なのでオプトインで明示させる。
+  // 一方で定義外ユーザーの存在自体は許容する: dev DB には E2E が作った招待ユーザーや
+  // 開発者本人のアカウントが混在するため、それを理由に止めると通常の開発が回らない。
+  const seedUserCount = await prisma.user.count({ where: { email: { in: SEED_EMAILS } } });
+  if (seedUserCount === 0 && process.env.SEED_ALLOW_UNSEEDED_DB !== "1") {
     throw new Error(
-      `シード定義のユーザーが 1 件も存在せず、他のユーザーが ${foreignUserCount} 件あります（本番 DB の可能性）。\n` +
+      "シード定義のユーザーが 1 件も存在しません（本番 DB・未シードの新規 DB の可能性）。\n" +
         "意図した実行であれば SEED_ALLOW_UNSEEDED_DB=1 を設定してください。",
     );
   }
