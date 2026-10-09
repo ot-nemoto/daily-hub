@@ -52,6 +52,7 @@ next-env.d.ts
 
 # Playwright
 e2e/.auth/
+e2e/.seed-keys.json
 playwright-report/
 test-results/
 .playwright-mcp/

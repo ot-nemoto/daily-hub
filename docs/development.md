@@ -76,15 +76,19 @@ npx prisma migrate dev --name init
 npx prisma migrate deploy
 ```
 
-#### DB を完全リセットしてシードを投入し直す場合
+> **⚠️ ここまでが本番・ステージングに対して実行しうる操作。** 以降の DB リセット・シードは**ローカル専用**であり、本番・ステージングに対して実行してはならない。
+
+#### DB を完全リセットしてシードを投入し直す場合（ローカル専用）
 
 ```bash
 # DB をリセット（全テーブル削除・マイグレーション再適用）
 npx prisma migrate reset --force
 
-# シードデータを投入
-npx tsx prisma/seed.ts
+# シードデータを投入（破壊的操作のためオプトインが必須）
+SEED_ALLOW_DESTRUCTIVE=1 npx tsx prisma/seed.ts
 ```
+
+接続先を取り違えた場合の歯止めとして、シードは以下 2 段で中断する（詳細は「シードデータ投入」）。
 
 ### Prisma クライアント再生成
 
@@ -110,11 +114,22 @@ npx prisma migrate status
 
 ### シードデータ投入
 
-手動テスト前に必ず実行してデータを初期化すること。
+手動テスト前に必ず実行してデータを初期化すること。**ローカル専用**（本番・ステージングに対して実行してはならない）。
 
 ```bash
-npx tsx prisma/seed.ts
+SEED_ALLOW_DESTRUCTIVE=1 npx tsx prisma/seed.ts
 ```
+
+#### 誤実行に対する歯止め
+
+| 段 | 条件 | 回避方法 |
+|----|------|---------|
+| 1 | `SEED_ALLOW_DESTRUCTIVE=1` が未設定なら中断する | 上記のとおり明示的に付けて実行する |
+| 2 | シード定義のユーザーが 1 件も存在せず、かつ他のユーザーが存在する DB なら中断する（本番 DB の可能性） | 意図した実行であれば `SEED_ALLOW_UNSEEDED_DB=1` を併せて設定する |
+
+> 2 段目は「定義外ユーザーの存在」ではなく「シード済みでないこと」で判定する。dev DB には E2E が作った招待ユーザーや開発者本人のアカウントが混在するため、定義外ユーザーの存在自体は正常とみなす必要がある。
+
+E2E（`npx playwright test`）はグローバルセットアップがシードを実行するため、1 段目は自動で付与される。
 
 #### 投入データ
 
@@ -128,19 +143,20 @@ npx tsx prisma/seed.ts
 
 | email | 名前 | ロール | isActive | 用途 |
 |-------|------|--------|----------|------|
-| bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用）。apiKey: `c1d2e3f4-a5b6-7890-abcd-ef1234567890`（admin 系 REST API 確認用） |
-| tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー。apiKey: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`（REST API 動作確認用） |
+| bonjiri@example.com | bonjiri | ADMIN | true | 管理操作の実行者。日報なし（管理画面で「最終日報投稿日: なし」の表示確認用）。apiKey あり（admin 系 REST API 確認用） |
+| tsukune@example.com | tsukune | MEMBER | true | 日報・コメント・ユーザー分離テストのメインユーザー。apiKey あり（REST API 動作確認用） |
 | tebasaki@example.com | tebasaki | MEMBER | true | ユーザー分離テストの「他ユーザー」。日報・コメントあり |
-| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用。apiKey: `b1e3a704-e5f6-7890-abcd-ef1234567890`（REST API 403 確認用） |
+| nankotsu@example.com | nankotsu | VIEWER | true | 日報作成不可・コメントのみ可の確認用。apiKey あり（REST API 403 確認用） |
 | sunagimo@example.com | sunagimo | MEMBER | false | ログイン後 `/auth-error?reason=inactive` リダイレクト・再有効化の確認用 |
 | torikawa@example.com | torikawa | MEMBER | true | 管理画面でのロール変更・無効化テスト専用。日報1件あり |
 | yagen@example.com | yagen | MEMBER | true | 提出状況の「休」表示・提出率（休日除外）確認用。直近14日の平日すべてに日報 + 1平日を休日登録し提出率100%になる |
 
-- 初期パスワード: `Yakitori2026`
+- 初期パスワード: 環境変数 `SEED_PASSWORD` の値（`.env` に設定する）。シードは既存 Clerk ユーザーにもこの値を同期するため、変更したら次回シードで反映される
+- APIキーの実値はコードに持たない。シード実行ごとに生成し `e2e/.seed-keys.json`（gitignore 済み）に出力されるので、`curl` での動作確認時はそこから取得する。固定したい場合は `.env` に `SEED_API_KEY_ADMIN` / `SEED_API_KEY_MEMBER` / `SEED_API_KEY_VIEWER` を設定する
 - シードはテスト直前に実行することを想定しており、日報の日付は実行日を基準とした過去 7 日分で作成される（yagen のみ提出率検証のため直近14日の平日分）
 - ユーザーは upsert で投入するため、テスト中に変更されたロール・isActive はシード再実行でリセットされる
 - シードを再実行するとレポート・コメント・休日は全削除して再投入する（ユーザーは upsert のため削除しない）
-- `CLERK_SECRET_KEY` は必須。未設定の場合はエラーで終了する。シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーはスキップ）
+- `CLERK_SECRET_KEY` は必須。未設定の場合はエラーで終了する。シード実行時に Clerk ユーザーも自動作成・紐付けされる（既存ユーザーは `SEED_PASSWORD` を同期するのみ）
 
 ### Prisma Studio（GUIでDBを確認）
 

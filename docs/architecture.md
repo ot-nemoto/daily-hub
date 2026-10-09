@@ -157,7 +157,15 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/new
 # 対象ユーザーが DB に存在しない場合は console.error を出力し getSession() は null を返す
 MOCK_USER_ID=<DB の users.id>
 # MOCK_USER_EMAIL=<DB の users.email>
+
+# シード（prisma/seed.ts・ローカル専用。手順は docs/development.md 参照）
+SEED_ALLOW_DESTRUCTIVE=1                   # 破壊的操作へのオプトイン。未設定ならシードは中断
+SEED_PASSWORD=<任意の強いパスワード>         # テストユーザー共通パスワード（必須・既存 Clerk ユーザーにも同期）
+# SEED_API_KEY_ADMIN / _MEMBER / _VIEWER   # 任意。未設定なら実行ごとに生成し e2e/.seed-keys.json へ出力
+# SEED_ALLOW_UNSEEDED_DB=1                 # シード済みでない DB にも実行する
 ```
+
+> シードの APIキー・パスワードはコードに固定値を持たない（本リポジトリは public であり、コミットした値は恒久的に compromised 扱いになる）。
 
 ## Prisma 7 の接続構成
 
