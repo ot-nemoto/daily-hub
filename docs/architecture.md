@@ -159,14 +159,14 @@ MOCK_USER_ID=<DB の users.id>
 # MOCK_USER_EMAIL=<DB の users.email>
 
 # シード（prisma/seed.ts・ローカル専用。手順は docs/development.md 参照）
-# SEED_ALLOW_DESTRUCTIVE=1                 # 破壊的操作へのオプトイン。未設定ならシードは中断
 # SEED_PASSWORD=<任意の強いパスワード>       # テストユーザー共通パスワード（シード実行時は必須・既存 Clerk ユーザーにも同期）
 # SEED_API_KEY_ADMIN / _MEMBER / _VIEWER   # 任意。未設定なら実行ごとに生成し e2e/.seed-keys.json へ出力
-# SEED_ALLOW_UNSEEDED_DB=1                 # シード済みでない DB にも実行する
+# バイパスフラグ（SEED_ALLOW_DESTRUCTIVE / SEED_ALLOW_UNSEEDED_DB）は .env に置かず実行時に前置する
 ```
 
 > シードの APIキー・パスワードはコードに固定値を持たない（本リポジトリは public であり、コミットした値は恒久的に compromised 扱いになる）。`.env.example` 側も有効値では配らない（コピーしただけでガードが無効化されるため）。
 > `SEED_PASSWORD` は Clerk アプリを共有する eval-hub / link-hub のテストユーザーにも反映されるため、値の変更は 3 リポジトリ揃えて行う。
+> シードは `CLERK_SECRET_KEY` が開発インスタンス（`sk_test_`）であることを要求する。パスワード同期は既存ユーザーに無条件で書き込むため、DB 側のガードだけでは「DB は dev・Clerk は本番」の組み合わせを止められない。
 
 ## Prisma 7 の接続構成
 
