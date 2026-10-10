@@ -4,7 +4,7 @@
  *
  * - テスト直前に実行することを想定
  * - Clerk にユーザーが存在しなければ作成する
- * - 全レポート・コメント・休日を削除してから投入する
+ * - シードユーザーのレポート・コメント・休暇を削除してから投入する
  * - ユーザーは upsert（ロール・isActive をシード定義にリセット）
  *
  * 必要な環境変数（`.env.example` 参照）:
@@ -12,6 +12,8 @@
  * - SEED_PASSWORD            ... テストユーザー共通パスワード
  * - SEED_API_KEY_{ADMIN,MEMBER,VIEWER} ... 任意。未設定なら実行ごとに生成する
  * - SEED_ALLOW_UNSEEDED_DB=1 ... 任意。シード済みでない DB に対しても実行する
+ *
+ * CLERK_SECRET_KEY は開発インスタンス（sk_test_）である必要がある。
  */
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -25,11 +27,11 @@ config();
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
 
-// 全日報・コメント・休日の削除とユーザーの upsert を伴うため、明示的なオプトインを必須にする。
+// シードユーザーの日報・コメント・休暇の削除とユーザーの upsert を伴うため、明示的なオプトインを必須にする。
 // 本番を向いた .env のまま誤実行する事故に対する第一の歯止め（第二の歯止めは main() のシード済み判定）。
 if (process.env.SEED_ALLOW_DESTRUCTIVE !== "1") {
   throw new Error(
-    "このスクリプトは全日報・コメント・休日を削除します。実行するには SEED_ALLOW_DESTRUCTIVE=1 を設定してください。",
+    "このスクリプトはシードユーザーの日報・コメント・休暇を削除します。実行するには SEED_ALLOW_DESTRUCTIVE=1 を設定してください。",
   );
 }
 
@@ -43,6 +45,16 @@ function requireEnv(name: string): string {
 }
 
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+
+// Clerk アプリは eval-hub / link-hub と共有しており、upsertClerkUser は既存ユーザーの
+// パスワードを無条件で上書きする。上記 2 段のガードはどちらも Postgres しか見ないため、
+// 「DB は dev・Clerk キーは本番」の組み合わせを止められない。キーの種別で弾く。
+// オプトインフラグは設けない（.env に居座ってガードを無効化するフラグを自ら増やさない）。
+if (clerkSecretKey && !clerkSecretKey.startsWith("sk_test_")) {
+  throw new Error(
+    "CLERK_SECRET_KEY が開発インスタンス（sk_test_）ではありません。シードは開発インスタンスに対してのみ実行してください。",
+  );
+}
 
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
@@ -272,19 +284,30 @@ async function main() {
   // 新規 DB の初回シードもここで止まるが、意図的な操作なのでオプトインで明示させる。
   // 一方で定義外ユーザーの存在自体は許容する: dev DB には E2E が作った招待ユーザーや
   // 開発者本人のアカウントが混在するため、それを理由に止めると通常の開発が回らない。
-  const seedUserCount = await prisma.user.count({ where: { email: { in: SEED_EMAILS } } });
-  if (seedUserCount === 0 && process.env.SEED_ALLOW_UNSEEDED_DB !== "1") {
+  const seedUsers = await prisma.user.findMany({
+    where: { email: { in: SEED_EMAILS } },
+    select: { id: true },
+  });
+  if (seedUsers.length === 0 && process.env.SEED_ALLOW_UNSEEDED_DB !== "1") {
     throw new Error(
       "シード定義のユーザーが 1 件も存在しません（本番 DB・未シードの新規 DB の可能性）。\n" +
         "意図した実行であれば SEED_ALLOW_UNSEEDED_DB=1 を設定してください。",
     );
   }
 
-  // レポート・コメント・休日を全削除（テスト前のクリーンな状態を保証）
-  await prisma.comment.deleteMany();
-  await prisma.report.deleteMany();
-  await prisma.dayOff.deleteMany();
-  console.log("Deleted all reports, comments and day-offs");
+  // 削除はシードユーザーに絞り込む。上のガードはシードユーザー行の存在で判定するが、
+  // その行はアプリがサインイン時にも作る（src/lib/auth.ts）ため「シードが作った証拠」に
+  // ならない。ガードをすり抜けた場合の被害を、シードユーザー分だけに限定する。
+  // 他ユーザーが付けたコメントも消す必要があるため、deleteUser と同じ OR 条件を使う。
+  const seedUserIds = seedUsers.map((u) => u.id);
+  await prisma.comment.deleteMany({
+    where: {
+      OR: [{ report: { authorId: { in: seedUserIds } } }, { authorId: { in: seedUserIds } }],
+    },
+  });
+  await prisma.report.deleteMany({ where: { authorId: { in: seedUserIds } } });
+  await prisma.dayOff.deleteMany({ where: { userId: { in: seedUserIds } } });
+  console.log(`Deleted reports, comments and day-offs of ${seedUserIds.length} seed users`);
 
   // ユーザーを upsert（ロール・isActive をシード定義にリセット）
   const [bonjiri, tsukune, tebasaki, nankotsu, , torikawa, yagen] = await Promise.all([
