@@ -195,6 +195,28 @@ npm run test:e2e:ui
 
 ---
 
+## 秘密情報スキャン（gitleaks）
+
+CI（`.github/workflows/secret-scan.yml`）が PR の差分と週次の全履歴を走査する。ルール・除外はリポジトリ直下の `.gitleaks.toml` を正とする。
+
+GitHub の secret scanning / push protection も有効だが、検出対象は発行元が登録したプロバイダ固有パターン（`sk_live_…` 等）に限られる。自前の接頭辞を検出させるには custom patterns（有料）が必要なため、gitleaks で補っている。
+
+```bash
+# 全履歴（CI の schedule と同じ。10 秒程度）
+gitleaks git . --redact
+
+# PR 相当の差分のみ（コミット済みの変更を確認する。CI の pull_request と同じ）
+gitleaks git . --redact --log-opts="--no-merges origin/develop..HEAD"
+
+# 作業ツリー（未コミットの変更も含めて確認する）
+gitleaks dir . --redact
+```
+
+- `--redact` を付けて実値を出力しない習慣にする
+- **`gitleaks dir` は gitignore 済みファイルも走査する**ため、`.env`・`e2e/.auth/*.json`（Clerk セッション）・`.claude/settings.json` が必ず検出される。これらは allowlist に入れていない: 除外すると、万一これらが誤ってコミットされた場合に git スキャンでも検出できなくなるため。`dir` を使うときはこの既知の検出を読み飛ばす（`gitleaks git` には現れない）
+- 検出能力には穴がある。固定 APIキーのような「変数名 + 高エントロピー値」は検出できるが、辞書語に近いパスワードは既定ルールでは検出されない（T221 の `SEED_PASSWORD` は素通りした）。スキャナを通ったことを安全の根拠にしない
+- 誤検知は `.gitleaks.toml` の `[allowlist]` に理由をコメントで添えて追加する
+
 ## Neon の接続文字列の取得
 
 1. [Neon ダッシュボード](https://console.neon.tech) → プロジェクト → **Connection Details**
