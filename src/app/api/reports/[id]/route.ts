@@ -1,5 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, serializeReport, statusForError, unauthorized } from "@/lib/api-response";
+import {
+  jsonError,
+  serializeReport,
+  statusForError,
+  unauthorized,
+  withApiErrorHandling,
+} from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { deleteReportByAuthor, getReportById, updateReport } from "@/lib/reports";
@@ -8,7 +14,7 @@ import { reportUpdateBodySchema } from "@/lib/schemas/report";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(req: NextRequest, { params }: RouteContext) {
+export const GET = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -17,9 +23,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   if (!report) return jsonError("日報が見つかりません", 404);
 
   return NextResponse.json(serializeReport(report));
-}
+});
 
-export async function PATCH(req: NextRequest, { params }: RouteContext) {
+export const PATCH = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -44,9 +50,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
     throw error;
   }
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: RouteContext) {
+export const DELETE = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -68,4 +74,4 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
   }
 
   return new NextResponse(null, { status: 204 });
-}
+});

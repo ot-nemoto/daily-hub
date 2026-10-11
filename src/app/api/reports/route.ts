@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { jsonError, serializeReport, unauthorized } from "@/lib/api-response";
+import { jsonError, serializeReport, unauthorized, withApiErrorHandling } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { prisma } from "@/lib/prisma";
 import { upsertReportByAuthorId } from "@/lib/reports";
@@ -8,7 +8,7 @@ import { firstZodError } from "@/lib/schemas/_zod-error";
 import { dateStringField } from "@/lib/schemas/common";
 import { reportCreateBodySchema } from "@/lib/schemas/report";
 
-export async function GET(req: NextRequest) {
+export const GET = withApiErrorHandling(async (req: NextRequest) => {
   // 1. 認証
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
@@ -50,9 +50,9 @@ export async function GET(req: NextRequest) {
 
   // 5. レスポンス
   return NextResponse.json({ reports: reports.map(serializeReport) });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling(async (req: NextRequest) => {
   // 1. 認証
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
@@ -89,4 +89,4 @@ export async function POST(req: NextRequest) {
 
   const httpStatus = results.every((r) => r.status === "created") ? 201 : 200;
   return NextResponse.json({ results }, { status: httpStatus });
-}
+});

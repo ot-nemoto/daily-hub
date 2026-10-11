@@ -12,6 +12,33 @@ export function unauthorized() {
   return jsonError("Unauthorized", 401);
 }
 
+/**
+ * ルートハンドラを包み、捕捉されない例外を `500 { error }` に変換する。
+ *
+ * lib は業務エラーを型付きで throw し、ルートがそれを `statusForError()` で変換する。
+ * そこに該当しない例外（DB 障害等）は Next.js 既定の 500 になり、spec が定める
+ * `{ error }` 形式にならないため、ここで受け止める。
+ *
+ * 各ルートに try/catch を書き並べると書き漏れが起きるため共通化している
+ * （実際、導入前は 13 ルート中 3 つが try/catch を持っていなかった）。
+ *
+ * 例外の内容（接続先・スタック等）はレスポンスに含めず、ログにのみ残す。
+ */
+export function withApiErrorHandling<Args extends unknown[]>(
+  handler: (...args: Args) => Promise<Response>,
+): (...args: Args) => Promise<Response> {
+  return async (...args) => {
+    try {
+      return await handler(...args);
+    } catch (e) {
+      const req = args[0];
+      const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
+      console.error(`[api] 500 ${where}`.trimEnd(), e);
+      return jsonError("Internal Server Error", 500);
+    }
+  };
+}
+
 /** ADMIN 以外による admin エンドポイントへのアクセス（403）レスポンス。 */
 export function adminForbidden() {
   return jsonError("このエンドポイントは ADMIN のみ使用できます", 403);

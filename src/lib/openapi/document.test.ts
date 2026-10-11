@@ -21,27 +21,27 @@ const EXPECTED_PATHS: Record<string, string[]> = {
 
 /** operationId → その operation が宣言すべきレスポンスコード（実ルートの契約）。 */
 const EXPECTED_STATUS: Record<string, string[]> = {
-  getMe: ["200", "401", "404"],
-  updateMe: ["200", "400", "401", "404"],
-  listReports: ["200", "400", "401"],
-  upsertReports: ["200", "201", "400", "401", "403"],
-  getReport: ["200", "401", "404"],
-  updateReport: ["200", "400", "401", "403", "404"],
-  deleteReport: ["204", "401", "403", "404"],
-  listReportComments: ["200", "401", "404"],
-  createReportComment: ["201", "400", "401", "404"],
-  deleteComment: ["204", "401", "403", "404"],
-  listDayOffs: ["200", "401"],
-  createDayOff: ["201", "400", "401", "403", "409"],
-  deleteDayOff: ["204", "401", "403", "404"],
-  listHolidays: ["200", "400", "401"],
-  createHoliday: ["201", "400", "401", "403", "409"],
-  deleteHoliday: ["204", "401", "403", "404"],
-  adminListUsers: ["200", "401", "403"],
-  adminUpdateUser: ["200", "400", "401", "403", "404"],
-  adminDeleteUser: ["204", "401", "403", "404"],
-  adminBatchReports: ["200", "400", "401", "403"],
-  adminDeleteReport: ["204", "401", "403", "404"],
+  getMe: ["200", "401", "404", "500"],
+  updateMe: ["200", "400", "401", "404", "500"],
+  listReports: ["200", "400", "401", "500"],
+  upsertReports: ["200", "201", "400", "401", "403", "500"],
+  getReport: ["200", "401", "404", "500"],
+  updateReport: ["200", "400", "401", "403", "404", "500"],
+  deleteReport: ["204", "401", "403", "404", "500"],
+  listReportComments: ["200", "401", "404", "500"],
+  createReportComment: ["201", "400", "401", "404", "500"],
+  deleteComment: ["204", "401", "403", "404", "500"],
+  listDayOffs: ["200", "401", "500"],
+  createDayOff: ["201", "400", "401", "403", "409", "500"],
+  deleteDayOff: ["204", "401", "403", "404", "500"],
+  listHolidays: ["200", "400", "401", "500"],
+  createHoliday: ["201", "400", "401", "403", "409", "500"],
+  deleteHoliday: ["204", "401", "403", "404", "500"],
+  adminListUsers: ["200", "401", "403", "500"],
+  adminUpdateUser: ["200", "400", "401", "403", "404", "500"],
+  adminDeleteUser: ["204", "401", "403", "404", "500"],
+  adminBatchReports: ["200", "400", "401", "403", "500"],
+  adminDeleteReport: ["204", "401", "403", "404", "500"],
 };
 
 /** paths を { operationId, responses } の一覧に展開する。 */
@@ -122,6 +122,22 @@ describe("buildOpenApiDocument", () => {
         const op = item[method];
         expect(op.summary, `${method.toUpperCase()} ${path} summary`).toBeTruthy();
         expect(op.responses, `${method.toUpperCase()} ${path} responses`).toBeTruthy();
+      }
+    }
+  });
+
+  it("全 operation が 500 を定義する（サーバー側の失敗も spec に載せる）", () => {
+    const { paths } = buildOpenApiDocument();
+    for (const [path, methods] of Object.entries(EXPECTED_PATHS)) {
+      const item = paths[path as keyof typeof paths] as Record<
+        string,
+        { responses?: Record<string, { description?: string }> }
+      >;
+      for (const method of methods) {
+        expect(
+          item[method].responses?.["500"],
+          `${method.toUpperCase()} ${path} に 500 が無い`,
+        ).toBeTruthy();
       }
     }
   });

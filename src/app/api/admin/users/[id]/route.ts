@@ -5,6 +5,7 @@ import {
   serializeUser,
   statusForError,
   unauthorized,
+  withApiErrorHandling,
 } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
@@ -14,7 +15,7 @@ import { deleteUser, updateUserAdmin } from "@/lib/users";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function PATCH(req: NextRequest, { params }: RouteContext) {
+export const PATCH = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return adminForbidden();
@@ -40,9 +41,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
     throw error;
   }
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: RouteContext) {
+export const DELETE = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return adminForbidden();
@@ -62,4 +63,4 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
   }
 
   return new NextResponse(null, { status: 204 });
-}
+});

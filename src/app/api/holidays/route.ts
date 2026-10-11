@@ -5,6 +5,7 @@ import {
   serializeHoliday,
   statusForError,
   unauthorized,
+  withApiErrorHandling,
 } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { ConflictError } from "@/lib/errors";
@@ -21,7 +22,7 @@ function parseDateParam(value: string | null): Date | null | "invalid" {
   return d;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -35,9 +36,9 @@ export async function GET(req: NextRequest) {
   const range = from || to ? { from: from ?? undefined, to: to ?? undefined } : undefined;
   const holidays = await getHolidays(range);
   return NextResponse.json({ holidays: holidays.map(serializeHoliday) });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
   if (user.role !== "ADMIN") return adminForbidden();
@@ -57,4 +58,4 @@ export async function POST(req: NextRequest) {
     }
     throw error;
   }
-}
+});
