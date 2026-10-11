@@ -21,6 +21,8 @@ import { createClerkClient } from "@clerk/backend";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { config } from "dotenv";
 import { PrismaClient } from "../src/generated/prisma/client";
+// キー書式とハッシュ実装はアプリ本体と共有する（三者で食い違わせない）
+import { createApiKeyValue, hashApiKey } from "../src/lib/apiKey";
 
 config();
 
@@ -67,7 +69,7 @@ const SEED_PASSWORD = requireEnv("SEED_PASSWORD");
 
 /** 環境変数で固定されていればそれを使い、無ければ実行ごとに生成する（固定値はコードに持たない） */
 function resolveApiKey(envName: string): string {
-  return process.env[envName] ?? crypto.randomUUID();
+  return process.env[envName] ?? createApiKeyValue();
 }
 
 // REST API 動作確認用の APIキー。実値はコードに持たず、解決後の値を SEED_KEYS_FILE 経由で E2E に渡す。
@@ -262,15 +264,24 @@ async function upsertUser(params: {
 }) {
   const { email, name, role, isActive, apiKey } = params;
   const clerkId = await upsertClerkUser(email);
+  // DB には平文を保存しない。生値は SEED_KEYS_FILE 経由で E2E に渡す。
+  const apiKeyFields = apiKey
+    ? {
+        apiKeyHash: await hashApiKey(apiKey),
+        apiKeyPrefix: apiKey.slice(0, 8),
+        apiKeyCreatedAt: new Date(),
+        apiKeyLastUsedAt: null,
+      }
+    : { apiKeyHash: null, apiKeyPrefix: null, apiKeyCreatedAt: null, apiKeyLastUsedAt: null };
   return prisma.user.upsert({
     where: { email },
-    update: { name, role, isActive, apiKey: apiKey ?? null, ...(clerkId ? { clerkId } : {}) },
+    update: { name, role, isActive, ...apiKeyFields, ...(clerkId ? { clerkId } : {}) },
     create: {
       email,
       name,
       role,
       isActive,
-      apiKey: apiKey ?? null,
+      ...apiKeyFields,
       ...(clerkId ? { clerkId } : {}),
     },
   });

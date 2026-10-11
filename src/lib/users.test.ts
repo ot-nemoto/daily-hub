@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/prisma";
-
+import { hashApiKey } from "./apiKey";
 import { ForbiddenError, NotFoundError } from "./errors";
 import {
   deleteUser,
@@ -300,17 +300,27 @@ describe("getMe", () => {
 describe("generateApiKey", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: API キーを生成して返す", async () => {
+  it("正常系: dh_ prefix 付きのキーを生成し、DB にはハッシュと prefix のみ保存する", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
     vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
 
     const result = await generateApiKey({ id: "user-1" });
 
-    expect(result.apiKey).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    // dh_ + base64url(32 bytes) = 43 文字
+    expect(result.apiKey).toMatch(/^dh_[A-Za-z0-9_-]{43}$/);
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { apiKey: result.apiKey },
+      data: {
+        apiKeyHash: await hashApiKey(result.apiKey),
+        apiKeyPrefix: result.apiKey.slice(0, 8),
+        apiKeyCreatedAt: expect.any(Date),
+        apiKeyLastUsedAt: null,
+      },
     });
+    // 平文が保存されていないこと
+    expect(JSON.stringify(vi.mocked(prisma.user.update).mock.calls[0])).not.toContain(
+      result.apiKey,
+    );
   });
 
   it("異常系: 存在しないユーザーで NotFoundError を投げる", async () => {
@@ -324,14 +334,19 @@ describe("generateApiKey", () => {
 describe("revokeApiKey", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("正常系: API キーを null に更新する", async () => {
+  it("正常系: キー関連のカラムをすべて null に更新する", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as never);
     vi.mocked(prisma.user.update).mockResolvedValue({ id: "user-1" } as never);
 
     await expect(revokeApiKey({ id: "user-1" })).resolves.toBeUndefined();
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { apiKey: null },
+      data: {
+        apiKeyHash: null,
+        apiKeyPrefix: null,
+        apiKeyCreatedAt: null,
+        apiKeyLastUsedAt: null,
+      },
     });
   });
 

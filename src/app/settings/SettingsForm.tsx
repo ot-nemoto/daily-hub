@@ -10,9 +10,11 @@ type Props = {
   initialName: string;
   email: string;
   hasInitialApiKey: boolean;
+  /** 発行済みキーの先頭 8 文字（`dh_` + 5 文字）。未発行なら null */
+  initialApiKeyPrefix: string | null;
 };
 
-export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
+export function SettingsForm({ initialName, email, hasInitialApiKey, initialApiKeyPrefix }: Props) {
   const router = useRouter();
   const [nameSuccess, setNameSuccess] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -22,6 +24,8 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
   // apiKey: 生成・再生成直後のみ実値を保持（それ以外は null）
   const [hasApiKey, setHasApiKey] = useState(hasInitialApiKey);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  // 発行済みキーの識別用。実値ではなく先頭 8 文字のみ
+  const [apiKeyPrefix, setApiKeyPrefix] = useState<string | null>(initialApiKeyPrefix);
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [apiKeyPending, setApiKeyPending] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
@@ -60,6 +64,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
       } else if (result.apiKey) {
         setHasApiKey(true);
         setApiKey(result.apiKey);
+        setApiKeyPrefix(result.apiKey.slice(0, 8));
         setApiKeyVisible(true);
       }
     } catch {
@@ -79,6 +84,7 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
       } else {
         setHasApiKey(false);
         setApiKey(null);
+        setApiKeyPrefix(null);
         setApiKeyVisible(false);
         router.refresh();
       }
@@ -179,16 +185,20 @@ export function SettingsForm({ initialName, email, hasInitialApiKey }: Props) {
               </div>
             </>
           ) : (
-            // キー発行済み（実値は非保持・プレースホルダ表示）
+            // キー発行済み（実値は保持しない。識別用に先頭 8 文字だけ表示する）
             <>
               <div className="flex items-center gap-2">
                 <input
-                  type="password"
+                  type="text"
                   readOnly
-                  value="placeholder"
+                  aria-label="発行済み APIキー"
+                  value={apiKeyPrefix ? `${apiKeyPrefix}${"•".repeat(16)}` : "発行済み"}
                   className="block w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-sm text-zinc-400"
                 />
               </div>
+              <p className="text-xs text-zinc-500">
+                実値は発行直後にのみ表示されます。分からなくなった場合は再生成してください。
+              </p>
               <div className="flex gap-2">
                 <button
                   type="button"

@@ -108,6 +108,18 @@ const userId = session?.user?.id;
 
 > ローカル開発用のモック（`MOCK_USER_ID` / `MOCK_USER_EMAIL`）は**画面ルートのみ**をバイパスする。`/api/*` には適用せず、非本番環境でも常に APIキー認証と未登録パスの JSON 404 が効く（ローカルでの API 検証を本番と同じ挙動にするため）。
 
+### 外部 REST API の APIキー認証
+
+外部連携用 REST API は Clerk ではなく `Authorization: Bearer <api-key>` で認証する。
+
+- **書式**: `dh_` + base64url(32 bytes)。prefix はキー種別・発行元の識別と、自前スキャナ（gitleaks 等）でのルール化のため（GitHub secret scanning の検出対象にはならない）
+- **保存**: DB には SHA-256（hex）のみ保存し、平文は保存しない。生値は発行・再生成の直後に一度だけ返す（show-once）。設定画面では識別用に先頭 8 文字だけ表示する
+- **ソルト無しの理由**: キーは高エントロピー乱数で辞書攻撃が成立しない。ソルト付き（bcrypt / argon2 等）にすると `where` で一意に引けず全件照合になるため使わない
+- **照合**: 受け取ったキーをハッシュ化し、`apiKeyHash` の UNIQUE インデックスで引く（DB の等価比較のため timing-safe 比較は不要）
+- **ハッシュ実装**: `src/lib/apiKey.ts` が Web Crypto（`crypto.subtle.digest`）で行い Edge / Node 両対応。認証・発行・シードの三者が同じ実装を共有する。マイグレーションの SQL（`encode(sha256(convert_to(..., 'UTF8')), 'hex')`）とも同じ値になる
+- **旧書式の受け入れ**: 認証時にキー書式のチェックはしない。ハッシュ化移行した旧書式（UUID）のキーをそのまま使えるようにするため
+- 1 ユーザー 1 キー。再生成で旧キーは即時無効、失効で未発行に戻る。有効期限は持たず、`apiKeyLastUsedAt` での棚卸しで代替する
+
 ### アクションレベルの認可
 
 ルート認証（ログイン必須）とは別に、Server Actions でロールベースの認可を行う。
