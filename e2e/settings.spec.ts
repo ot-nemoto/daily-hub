@@ -87,6 +87,8 @@ test.describe("APIキー管理", () => {
     const keyInput = dialog.locator("input[readonly]");
     await expect(keyInput).toHaveAttribute("type", "text");
     await expect(keyInput).toHaveValue(/^dh_[A-Za-z0-9_-]{5}•+$/);
+    // 実値が再表示されない理由と回復手段を案内していること
+    await expect(dialog.getByText(/実値は発行直後にのみ表示されます/)).toBeVisible();
     await expect(dialog.getByRole("button", { name: "再生成" })).toBeVisible();
     await expect(dialog.getByRole("button", { name: "失効" })).toBeVisible();
     await expect(dialog.getByRole("button", { name: "表示" })).toHaveCount(0);
@@ -132,6 +134,11 @@ test.describe("APIキー管理", () => {
     // #6: 失効 → 「生成する」に戻る
     await dialog.getByRole("button", { name: "失効" }).click();
     await expect(dialog.getByRole("button", { name: "生成する" })).toBeVisible();
+
+    // 失効が永続すること（再オープンしても未発行のまま・prefix 表示も出ない）
+    dialog = await openSettings(page);
+    await expect(dialog.getByRole("button", { name: "生成する" })).toBeVisible();
+    await expect(dialog.locator("input[readonly]")).toHaveCount(0);
 
     await context.close();
   });
