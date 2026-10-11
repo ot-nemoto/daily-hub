@@ -18,7 +18,10 @@ erDiagram
     User {
         String id PK
         String clerkId UK "nullable"
-        String apiKey UK "nullable"
+        String apiKeyHash UK "nullable"
+        String apiKeyPrefix "nullable"
+        DateTime apiKeyCreatedAt "nullable"
+        DateTime apiKeyLastUsedAt "nullable"
         String name
         String email UK
         Role role "ADMIN / MEMBER / VIEWER"
@@ -74,7 +77,10 @@ erDiagram
 |--------|-----|------|
 | id | String (CUID) | 主キー |
 | clerkId | String? | Clerk ユーザーID（nullable・ユニーク）。初回ログイン時に自動紐付け |
-| apiKey | String? | 外部API用キー（nullable・ユニーク）。ユーザーが個人設定で生成・失効 |
+| apiKeyHash | String? | 外部API用キーの **SHA-256（hex）**（nullable・ユニーク）。平文は保存しない。生値は発行直後に一度だけ返す（show-once） |
+| apiKeyPrefix | String? | キー先頭 8 文字（`dh_` + ランダム部 5 文字）。どのキーかを識別するための表示用 |
+| apiKeyCreatedAt | DateTime? | キーの発行日時 |
+| apiKeyLastUsedAt | DateTime? | キーの最終使用日時。棚卸し用。**最大 1 時間古い**（毎リクエストの書き込みを避けるため）。更新失敗は握りつぶすため、さらに古くなり得る |
 | name | String | 表示名 |
 | email | String | ユニーク、Clerk 側のメールと紐付けに使用 |
 | role | Role (enum) | `ADMIN` / `MEMBER` / `VIEWER`、デフォルト `MEMBER` |

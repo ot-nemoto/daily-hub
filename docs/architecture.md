@@ -130,7 +130,7 @@ External Client
 ## セキュリティ方針
 
 - 画面（Server Actions / Server Components）は `getSession()` でセッション確認してから処理
-  - **外部連携用 REST API（`/api/*`）は例外**: `Authorization: Bearer <api-key>` の**APIキー認証**を採用する。`getSession()` ではなく `getAuthenticatedUser(req)`（`prisma.user.findUnique({ where: { apiKey } })`＋`isActive` 確認）でユーザーを照合し、**操作対象は常に認証情報由来の `user.id`**（リクエストの識別子は信頼しない）
+  - **外部連携用 REST API（`/api/*`）は例外**: `Authorization: Bearer <api-key>` の**APIキー認証**を採用する。`getSession()` ではなく `getAuthenticatedUser(req)`（キーを SHA-256 にして `prisma.user.findUnique({ where: { apiKeyHash } })`＋`isActive` 確認）でユーザーを照合し、**操作対象は常に認証情報由来の `user.id`**（リクエストの識別子は信頼しない）
 - **CORS**: `/api/*` は任意オリジンから利用可能（`Access-Control-Allow-Origin: *`）。**`Access-Control-Allow-Credentials` を設定せず Cookie 認証も使わない**ため、他サイトからの資格情報つき窃取は成立しない。プリフライト（`OPTIONS`）は認証不要で 204 を返す
   - `/api-reference`・`/openapi.json` は **CORS 対象外**（同一オリジン＋Cookie 利用・ログイン必須）
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証

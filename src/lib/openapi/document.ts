@@ -102,7 +102,7 @@ const infoDescription = [
   "daily-hub の外部 REST API。日報・コメント・休日・祝日・プロフィール、および ADMIN 向けのユーザー管理を提供する。",
   "",
   "## 認証",
-  "個人設定で発行した API キーを `Authorization: Bearer <api-key>` ヘッダーに付与する。無効・未指定は `401` を返す。",
+  "個人設定で発行した API キー（書式: `dh_` + base64url 43 文字）を `Authorization: Bearer <api-key>` ヘッダーに付与する。無効・未指定は `401` を返す。キーはハッシュ化して保存されるため、発行直後の一度しか表示されない。",
   "",
   "## 共通仕様",
   '- エラーは一律 `{ "error": string }`（日本語メッセージ）。',

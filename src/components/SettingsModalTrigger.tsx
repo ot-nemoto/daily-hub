@@ -8,9 +8,15 @@ type Props = {
   name: string;
   email: string;
   hasInitialApiKey: boolean;
+  initialApiKeyPrefix: string | null;
 };
 
-export function SettingsModalTrigger({ name, email, hasInitialApiKey }: Props) {
+export function SettingsModalTrigger({
+  name,
+  email,
+  hasInitialApiKey,
+  initialApiKeyPrefix,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -43,6 +49,7 @@ export function SettingsModalTrigger({ name, email, hasInitialApiKey }: Props) {
           initialName={name}
           email={email}
           hasInitialApiKey={hasInitialApiKey}
+          initialApiKeyPrefix={initialApiKeyPrefix}
           onClose={() => setOpen(false)}
         />
       )}

@@ -13,7 +13,7 @@ export async function Header() {
   const dbUser = session?.user
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { email: true, apiKey: true },
+        select: { email: true, apiKeyHash: true, apiKeyPrefix: true },
       })
     : null;
 
@@ -34,7 +34,8 @@ export async function Header() {
             <SettingsModalTrigger
               name={session.user.name}
               email={dbUser?.email ?? ""}
-              hasInitialApiKey={dbUser?.apiKey != null}
+              hasInitialApiKey={dbUser?.apiKeyHash != null}
+              initialApiKeyPrefix={dbUser?.apiKeyPrefix ?? null}
             />
           )}
           <SignOutButton className="shrink-0 cursor-pointer rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50" />
