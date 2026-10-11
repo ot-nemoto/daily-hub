@@ -1,0 +1,47 @@
+# gitleaks（秘密情報スキャナ）の設定。
+#
+# このファイルは **このリポジトリ所有**。カスタムルールの prefix や allowlist の対象は
+# リポジトリ固有のため、dev-commons からは配布しない（`.claude/project.md` と同じ扱い）。
+# 実行するワークフローは `.github/workflows/secret-scan.yml`。
+#
+# ローカル実行: gitleaks git .            （全履歴）
+#               gitleaks dir .            （作業ツリー）
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "ビルド生成物と、T221 (#435) で排除済みの既知の公開値"
+
+# ビルド生成物。ローカルで `gitleaks dir` を使うとハッシュ値を大量に拾うため除外する
+# （git スキャンでは gitignore 済みのため元々現れない）。
+#
+# 一方 `.env` / `e2e/.auth/*.json` / `.claude/settings.json` は意図的に除外しない。
+# これらも gitignore 済みで git スキャンには現れないが、除外すると万一コミットされた
+# 場合に検出できなくなる。`gitleaks dir` ではこれらが常に検出される（既知・読み飛ばす）。
+paths = [
+  '''^\.next/''',
+  '''^node_modules/''',
+  '''^coverage/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+]
+
+# T221 (#435) までシードにハードコードされていた固定 APIキー 3 件。
+# 公開リポジトリの履歴からは消せないため allowlist する。除外しないと週次の全履歴
+# スキャンが恒久的に失敗し、検査そのものが無視されるようになる。
+# いずれも本番 DB・本番 Clerk では未使用で、現在のシードは実行ごとに値を生成する。
+regexes = [
+  '''a1b2c3d4-e5f6-7890-abcd-ef1234567890''',
+  '''b1e3a704-e5f6-7890-abcd-ef1234567890''',
+  '''c1d2e3f4-a5b6-7890-abcd-ef1234567890''',
+]
+
+# 外部連携 APIキー（#436 で導入する dh_ prefix 付きの書式）。
+# 既定ルールは自前の接頭辞を知らないため、prefix を実際に検出へ結びつけるのはこのルール。
+# GitHub の secret scanning でこれを行うには custom patterns（有料）が必要（#436 参照）。
+[[rules]]
+id = "daily-hub-api-key"
+description = "daily-hub の外部連携 APIキー（dh_ prefix）"
+regex = '''dh_[A-Za-z0-9_-]{20,}'''
+keywords = ["dh_"]

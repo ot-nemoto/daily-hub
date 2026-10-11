@@ -1,12 +1,22 @@
 /**
- * E2Eテスト用シードスクリプト
- * 使い方: npx tsx prisma/seed.ts
+ * E2Eテスト用シードスクリプト（ローカル専用）
+ * 使い方: SEED_ALLOW_DESTRUCTIVE=1 npx tsx prisma/seed.ts
  *
  * - テスト直前に実行することを想定
  * - Clerk にユーザーが存在しなければ作成する
- * - 全レポート・コメント・休日を削除してから投入する
+ * - シードユーザーのレポート・コメント・休暇を削除してから投入する
  * - ユーザーは upsert（ロール・isActive をシード定義にリセット）
+ *
+ * 必要な環境変数（`.env.example` 参照）:
+ * - SEED_ALLOW_DESTRUCTIVE=1 ... 破壊的操作へのオプトイン（未設定なら中断）
+ * - SEED_PASSWORD            ... テストユーザー共通パスワード
+ * - SEED_API_KEY_{ADMIN,MEMBER,VIEWER} ... 任意。未設定なら実行ごとに生成する
+ * - SEED_ALLOW_UNSEEDED_DB=1 ... 任意。シード済みでない DB に対しても実行する
+ *
+ * CLERK_SECRET_KEY は開発インスタンス（sk_test_）である必要がある。
  */
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { createClerkClient } from "@clerk/backend";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { config } from "dotenv";
@@ -17,15 +27,60 @@ config();
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
 
+// シードユーザーの日報・コメント・休暇の削除とユーザーの upsert を伴うため、明示的なオプトインを必須にする。
+// 本番を向いた .env のまま誤実行する事故に対する第一の歯止め（第二の歯止めは main() のシード済み判定）。
+if (process.env.SEED_ALLOW_DESTRUCTIVE !== "1") {
+  throw new Error(
+    "このスクリプトはシードユーザーの日報・コメント・休暇を削除します。実行するには SEED_ALLOW_DESTRUCTIVE=1 を設定してください。",
+  );
+}
+
+/** 実行に必須の環境変数を取得する（未設定なら中断） */
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} が未設定です。.env を確認してください（.env.example 参照）。`);
+  }
+  return value;
+}
+
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+
+// Clerk アプリは eval-hub / link-hub と共有しており、upsertClerkUser は既存ユーザーの
+// パスワードを無条件で上書きする。上記 2 段のガードはどちらも Postgres しか見ないため、
+// 「DB は dev・Clerk キーは本番」の組み合わせを止められない。キーの種別で弾く。
+// オプトインフラグは設けない（.env に居座ってガードを無効化するフラグを自ら増やさない）。
+if (clerkSecretKey && !clerkSecretKey.startsWith("sk_test_")) {
+  throw new Error(
+    "CLERK_SECRET_KEY が開発インスタンス（sk_test_）ではありません。シードは開発インスタンスに対してのみ実行してください。",
+  );
+}
 
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 const clerk = clerkSecretKey ? createClerkClient({ secretKey: clerkSecretKey }) : null;
 
-// テストユーザーの共通パスワード
-const SEED_PASSWORD = "Yakitori2026";
+// テストユーザーの共通パスワード。手動ログインでも使うため実行ごとの生成ではなく環境変数で固定する。
+// 既存 Clerk ユーザーには upsertClerkUser が毎回同期する（値を変えたら次回シードで反映される）。
+const SEED_PASSWORD = requireEnv("SEED_PASSWORD");
+
+/** 環境変数で固定されていればそれを使い、無ければ実行ごとに生成する（固定値はコードに持たない） */
+function resolveApiKey(envName: string): string {
+  return process.env[envName] ?? crypto.randomUUID();
+}
+
+// REST API 動作確認用の APIキー。実値はコードに持たず、解決後の値を SEED_KEYS_FILE 経由で E2E に渡す。
+const SEED_API_KEYS = {
+  bonjiri: resolveApiKey("SEED_API_KEY_ADMIN"),
+  tsukune: resolveApiKey("SEED_API_KEY_MEMBER"),
+  nankotsu: resolveApiKey("SEED_API_KEY_VIEWER"),
+};
+
+// 解決した APIキーの受け渡し先（gitignore 済み。読み取り側は e2e/fixtures.ts の SEED_KEYS_FILE）。
+// cwd ではなくスクリプト位置から解決する: 破壊的処理のあとに書き出すため、cwd 依存だと
+// DB を消したあとに ENOENT で落ち、E2E が古いキーを読む状態になりうる。
+const SEED_KEYS_FILE = join(__dirname, "../e2e/.seed-keys.json");
 
 // 今日を基準とした日付（UTC 00:00:00）
 function getDate(daysAgo: number): Date {
@@ -37,17 +92,15 @@ function getDate(daysAgo: number): Date {
 
 // ---- bonjiri: 管理操作の実行者（ADMIN） ----
 // 日報なし → 管理画面で「最終日報投稿日: なし」の表示確認用
-// apiKey を固定値で設定（admin 系 REST API の動作確認用）
+// apiKey あり（admin 系 REST API の動作確認用）
 const BONJIRI_EMAIL = "bonjiri@example.com";
 const BONJIRI_NAME = "bonjiri";
-const BONJIRI_APIKEY = "c1d2e3f4-a5b6-7890-abcd-ef1234567890";
 
 // ---- tsukune: 日報・コメント・ユーザー分離テストのメインユーザー（MEMBER） ----
 // 今日を含む過去7日の日報あり。複数ユーザーからのコメントあり。
-// apiKey を固定値で設定（REST API 動作確認用）
+// apiKey あり（REST API 動作確認用）
 const TSUKUNE_EMAIL = "tsukune@example.com";
 const TSUKUNE_NAME = "tsukune";
-const TSUKUNE_APIKEY = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const TSUKUNE_REPORTS = [
   {
     daysAgo: 0,
@@ -143,10 +196,9 @@ const TEBASAKI_REPORTS = [
 ];
 
 // ---- nankotsu: 日報作成不可・コメントのみ可（VIEWER） ----
-// apiKey を固定値で設定（REST API 403 確認用）
+// apiKey あり（REST API 403 確認用）
 const NANKOTSU_EMAIL = "nankotsu@example.com";
 const NANKOTSU_NAME = "nankotsu";
-const NANKOTSU_APIKEY = "b1e3a704-e5f6-7890-abcd-ef1234567890";
 
 // ---- sunagimo: ログイン後 /auth-error?reason=inactive リダイレクトの確認用 ----
 const SUNAGIMO_EMAIL = "sunagimo@example.com";
@@ -166,16 +218,33 @@ const TARGET_REPORTS = [
 const YAGEN_EMAIL = "yagen@example.com";
 const YAGEN_NAME = "yagen";
 
+/** シード定義に含まれる全ユーザーの email（定義外ユーザーの検出に使う） */
+const SEED_EMAILS = [
+  BONJIRI_EMAIL,
+  TSUKUNE_EMAIL,
+  TEBASAKI_EMAIL,
+  NANKOTSU_EMAIL,
+  SUNAGIMO_EMAIL,
+  TORIKAWA_EMAIL,
+  YAGEN_EMAIL,
+];
+
 type Role = "ADMIN" | "MEMBER" | "VIEWER";
 
-/** Clerk にユーザーが存在しなければ作成し、clerkId を返す（キー未設定時はスキップして null） */
+/**
+ * Clerk にユーザーが存在しなければ作成し、clerkId を返す（キー未設定時はスキップして null）。
+ * 既存ユーザーにはパスワードを同期する（作成時のみでは SEED_PASSWORD を変えても旧値が残るため）。
+ */
 async function upsertClerkUser(email: string): Promise<string | null> {
   if (!clerk) {
     console.warn("  CLERK_SECRET_KEY が未設定のため Clerk ユーザー作成をスキップします");
     return null;
   }
   const { data: existing } = await clerk.users.getUserList({ emailAddress: [email] });
-  if (existing.length > 0) return existing[0].id;
+  if (existing.length > 0) {
+    await clerk.users.updateUser(existing[0].id, { password: SEED_PASSWORD });
+    return existing[0].id;
+  }
   const created = await clerk.users.createUser({
     emailAddress: [email],
     password: SEED_PASSWORD,
@@ -208,11 +277,37 @@ async function upsertUser(params: {
 }
 
 async function main() {
-  // レポート・コメント・休日を全削除（テスト前のクリーンな状態を保証）
-  await prisma.comment.deleteMany();
-  await prisma.report.deleteMany();
-  await prisma.dayOff.deleteMany();
-  console.log("Deleted all reports, comments and day-offs");
+  // 本番 DB で誤実行した場合の安全網（SEED_ALLOW_DESTRUCTIVE は .env に残りやすいため接続先をデータで判定する）。
+  // シードユーザーが 1 件も居ない DB は「このシードが作った DB ではない」= 本番・ステージングの可能性がある。
+  // 空の DB も通さない: migrate deploy 直後の本番に対して実行すると、ADMIN ユーザーと有効な
+  // APIキーを既知のパスワードで作ってしまう（削除対象が無いことは安全を意味しない）。
+  // 新規 DB の初回シードもここで止まるが、意図的な操作なのでオプトインで明示させる。
+  // 一方で定義外ユーザーの存在自体は許容する: dev DB には E2E が作った招待ユーザーや
+  // 開発者本人のアカウントが混在するため、それを理由に止めると通常の開発が回らない。
+  const seedUsers = await prisma.user.findMany({
+    where: { email: { in: SEED_EMAILS } },
+    select: { id: true },
+  });
+  if (seedUsers.length === 0 && process.env.SEED_ALLOW_UNSEEDED_DB !== "1") {
+    throw new Error(
+      "シード定義のユーザーが 1 件も存在しません（本番 DB・未シードの新規 DB の可能性）。\n" +
+        "意図した実行であれば SEED_ALLOW_UNSEEDED_DB=1 を設定してください。",
+    );
+  }
+
+  // 削除はシードユーザーに絞り込む。上のガードはシードユーザー行の存在で判定するが、
+  // その行はアプリがサインイン時にも作る（src/lib/auth.ts）ため「シードが作った証拠」に
+  // ならない。ガードをすり抜けた場合の被害を、シードユーザー分だけに限定する。
+  // 他ユーザーが付けたコメントも消す必要があるため、deleteUser と同じ OR 条件を使う。
+  const seedUserIds = seedUsers.map((u) => u.id);
+  await prisma.comment.deleteMany({
+    where: {
+      OR: [{ report: { authorId: { in: seedUserIds } } }, { authorId: { in: seedUserIds } }],
+    },
+  });
+  await prisma.report.deleteMany({ where: { authorId: { in: seedUserIds } } });
+  await prisma.dayOff.deleteMany({ where: { userId: { in: seedUserIds } } });
+  console.log(`Deleted reports, comments and day-offs of ${seedUserIds.length} seed users`);
 
   // ユーザーを upsert（ロール・isActive をシード定義にリセット）
   const [bonjiri, tsukune, tebasaki, nankotsu, , torikawa, yagen] = await Promise.all([
@@ -221,14 +316,14 @@ async function main() {
       name: BONJIRI_NAME,
       role: "ADMIN",
       isActive: true,
-      apiKey: BONJIRI_APIKEY,
+      apiKey: SEED_API_KEYS.bonjiri,
     }),
     upsertUser({
       email: TSUKUNE_EMAIL,
       name: TSUKUNE_NAME,
       role: "MEMBER",
       isActive: true,
-      apiKey: TSUKUNE_APIKEY,
+      apiKey: SEED_API_KEYS.tsukune,
     }),
     upsertUser({ email: TEBASAKI_EMAIL, name: TEBASAKI_NAME, role: "MEMBER", isActive: true }),
     upsertUser({
@@ -236,13 +331,17 @@ async function main() {
       name: NANKOTSU_NAME,
       role: "VIEWER",
       isActive: true,
-      apiKey: NANKOTSU_APIKEY,
+      apiKey: SEED_API_KEYS.nankotsu,
     }),
     upsertUser({ email: SUNAGIMO_EMAIL, name: SUNAGIMO_NAME, role: "MEMBER", isActive: false }),
     upsertUser({ email: TORIKAWA_EMAIL, name: TORIKAWA_NAME, role: "MEMBER", isActive: true }),
     upsertUser({ email: YAGEN_EMAIL, name: YAGEN_NAME, role: "MEMBER", isActive: true }),
   ]);
   console.log("Upserted 7 users");
+
+  // 解決した APIキーを E2E に受け渡す（実値はログに出さない）
+  writeFileSync(SEED_KEYS_FILE, `${JSON.stringify(SEED_API_KEYS, null, 2)}\n`);
+  console.log(`Wrote API keys to ${SEED_KEYS_FILE}`);
 
   // tsukune の日報（7件: 今日〜6日前）
   const tsukuneReports = [];
@@ -370,9 +469,9 @@ async function main() {
   console.log(
     `  ${YAGEN_EMAIL}    (MEMBER, active)   — 提出状況の休日表示・提出率検証用（提出率100%）`,
   );
-  // API キー・パスワードの実値はログに出さない（値は本シード prisma/seed.ts の定数定義を参照）
+  // API キー・パスワードの実値はログに出さない
   console.log(
-    "\nAPI キー・パスワードの実値はログに出力しない（prisma/seed.ts の定数定義を参照）。",
+    `\nAPI キーの実値は ${SEED_KEYS_FILE} を参照（パスワードは環境変数 SEED_PASSWORD）。`,
   );
 }
 
