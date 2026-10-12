@@ -26,3 +26,7 @@
 - シードのテストユーザー（`bonjiri@example.com` 等）は**開発インスタンスにのみ存在する**。本番 Clerk には存在しないため本番にサインインできず、本番 DB にシードユーザー行が作られることはない
 - Clerk の開発インスタンスとテストユーザーは **eval-hub / link-hub と共有している**。`SEED_PASSWORD` の変更は 3 リポジトリに波及するため、値の変更は揃えて行う
 - `prisma/seed.ts` は `CLERK_SECRET_KEY` が `sk_test_` であることを要求する。本番インスタンスが `sk_live_` であるため、このガードは本番 Clerk への誤操作を確実に止める
+
+## Next.js の agent rules
+
+@../AGENTS.md
