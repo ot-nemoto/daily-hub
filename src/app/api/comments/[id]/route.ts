@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, statusForError, unauthorized } from "@/lib/api-response";
+import { jsonError, statusForError, unauthorized, withApiErrorHandling } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { deleteCommentByAuthor } from "@/lib/comments";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function DELETE(req: NextRequest, { params }: RouteContext) {
+export const DELETE = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -24,4 +24,4 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
   }
 
   return new NextResponse(null, { status: 204 });
-}
+});

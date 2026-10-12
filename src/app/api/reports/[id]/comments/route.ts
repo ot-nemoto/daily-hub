@@ -1,5 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, serializeComment, statusForError, unauthorized } from "@/lib/api-response";
+import {
+  jsonError,
+  serializeComment,
+  statusForError,
+  unauthorized,
+  withApiErrorHandling,
+} from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { createComment, getComments } from "@/lib/comments";
 import { NotFoundError } from "@/lib/errors";
@@ -9,7 +15,7 @@ import { commentCreateBodySchema } from "@/lib/schemas/comment";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(req: NextRequest, { params }: RouteContext) {
+export const GET = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -19,9 +25,9 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
   const comments = await getComments(id);
   return NextResponse.json({ comments: comments.map(serializeComment) });
-}
+});
 
-export async function POST(req: NextRequest, { params }: RouteContext) {
+export const POST = withApiErrorHandling(async (req: NextRequest, { params }: RouteContext) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -43,4 +49,4 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return jsonError("日報が見つかりません", statusForError(error));
     throw error;
   }
-}
+});

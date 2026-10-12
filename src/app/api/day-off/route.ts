@@ -1,20 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, serializeDayOff, statusForError, unauthorized } from "@/lib/api-response";
+import {
+  jsonError,
+  serializeDayOff,
+  statusForError,
+  unauthorized,
+  withApiErrorHandling,
+} from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { createDayOff, getDayOffs } from "@/lib/day-off";
 import { ConflictError } from "@/lib/errors";
 import { firstZodError } from "@/lib/schemas/_zod-error";
 import { dayOffCreateBodySchema } from "@/lib/schemas/day-off";
 
-export async function GET(req: NextRequest) {
+export const GET = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
   const dayOffs = await getDayOffs(user.id);
   return NextResponse.json({ dayOffs: dayOffs.map(serializeDayOff) });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -37,4 +43,4 @@ export async function POST(req: NextRequest) {
     }
     throw error;
   }
-}
+});
