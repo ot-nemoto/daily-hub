@@ -1,7 +1,18 @@
 // @vitest-environment node
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { readdirSync } from "node:fs";
+import { join, relative } from "node:path";
+import { describe, expect, it, vi } from "vitest";
+
+import { WRAPPED } from "@/lib/api-response";
+
+// ルートモジュールの import 時に実 DB・Clerk へ触れないようにする
+vi.mock("@/lib/prisma", () => ({ prisma: {} }));
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: vi.fn(),
+  clerkMiddleware: vi.fn(),
+  createRouteMatcher: vi.fn(() => () => false),
+  currentUser: vi.fn(),
+}));
 
 /**
  * 全 API ルートのハンドラが withApiErrorHandling で包まれていることを固定する。
@@ -10,18 +21,20 @@ import { describe, expect, it } from "vitest";
  * そのルートだけ Next.js 既定の 500（spec が定める `{ error }` 形式でない）に戻る。
  * ルート追加のたびに人が気づく必要がないよう、構造として検査する。
  *
+ * **判定はソースの文字列マッチではなく、モジュールを実際に読み込んで印を見る。**
+ * 文字列で「包まれている形」を探す作りは、想定した書き方を列挙することになり、
+ * 列挙から漏れた形が素通りする。過去 3 回同じ理由で穴が見つかった
+ * （`export function GET(` / `route.tsx` / `export * from "./handlers"`）。
+ * 実体で判定すれば、どの書き方で export されても結果は変わらない。
+ *
  * 検査対象は `src/app/api/` 配下のみ。`/openapi.json`・`/api-reference` は
  * 外部 API の契約（`{ error }`）の対象外で、JSON エラーを返すのが適切ではない。
  */
 const HTTP_METHODS = ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS", "HEAD"] as const;
 
-/**
- * 配下のルートファイルをすべて列挙する（追加ライブラリに依存しない）。
- *
- * 拡張子を `route.ts` に限定すると `route.tsx` 等で書いたルートが検査から漏れる。
- * このテストは「想定した形を列挙する」作りにすると漏れが素通りする性質があり、
- * ハンドラの判定（下記）と同じく、拾う側を広く取って絞り込む形にしている。
- */
+const API_DIR = join(process.cwd(), "src/app/api");
+
+/** 配下のルートファイルをすべて列挙する（追加ライブラリに依存しない） */
 function findRouteFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
@@ -31,27 +44,22 @@ function findRouteFiles(dir: string): string[] {
 }
 
 describe("API ルートのエラーハンドリング", () => {
-  it("全ハンドラが withApiErrorHandling で包まれている", () => {
-    const files = findRouteFiles(join(process.cwd(), "src/app/api"));
+  // 全ルートモジュールを動的 import するため既定の 5 秒では足りない
+  it("全ハンドラが withApiErrorHandling で包まれている", { timeout: 30_000 }, async () => {
+    const files = findRouteFiles(API_DIR);
     expect(files.length).toBeGreaterThan(0);
 
     const unwrapped: string[] = [];
     for (const file of files) {
-      const source = readFileSync(file, "utf-8");
+      const mod = (await import(file)) as Record<string, unknown>;
       for (const method of HTTP_METHODS) {
-        // export された形を網羅的に拾う（function / async function / const / 再 export）。
-        // 「包まれていない形」を列挙する作りにすると、列挙から漏れた書き方
-        // （例: `export function GET(`）が素通りする。
-        const exported =
-          new RegExp(`^export\\s+(?:async\\s+)?(?:function|const)\\s+${method}\\b`, "m").test(
-            source,
-          ) || new RegExp(`^export\\s*\\{[^}]*\\b${method}\\b[^}]*\\}`, "m").test(source);
-        if (!exported) continue;
-
-        const wrapped = new RegExp(`^export const ${method} = withApiErrorHandling\\(`, "m").test(
-          source,
-        );
-        if (!wrapped) unwrapped.push(`${file}: ${method}`);
+        const handler = mod[method];
+        if (handler === undefined) continue;
+        const marked =
+          typeof handler === "function" && (handler as unknown as Record<symbol, unknown>)[WRAPPED];
+        if (!marked) {
+          unwrapped.push(`${relative(process.cwd(), file)}: ${method}`);
+        }
       }
     }
 

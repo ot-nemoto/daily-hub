@@ -135,7 +135,7 @@ External Client
   - `/api-reference`・`/openapi.json` は **CORS 対象外**（同一オリジン＋Cookie 利用・ログイン必須）
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
 - 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
-- **外部 API のエラー分類の契約**: lib は業務エラーを型付きで throw（`NotFoundError` / `ForbiddenError` / `ConflictError`）し、ルートが `statusForError()` で 404 / 403 / 409 に変換する。それ以外の例外（DB 障害等）は `withApiErrorHandling()` が受け止め、`500 { "error": "Internal Server Error" }` を返してログにのみ詳細を残す。**`src/app/api/` 配下の全ハンドラはこのラッパーで包む**（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。`/openapi.json` と `/api-reference` は外部 API の契約（`{ error }`）の対象外で、JSON エラーを返すのが適切ではないため包まない
+- **外部 API のエラー分類の契約**: lib は業務エラーを型付きで throw（`NotFoundError` / `ForbiddenError` / `ConflictError`）し、ルートが `statusForError()` で 404 / 403 / 409 に変換する。それ以外の例外（DB 障害等）は `withApiErrorHandling()` が受け止め、`500 { "error": "Internal Server Error" }` を返してログにのみ詳細を残す。ただし `redirect()` / `notFound()` の制御フロー例外は `unstable_rethrow()` で素通しする（500 に化けさせないため）。**API ルートではこれらを使わない**: `notFound()` は本文の無い 404 を返し、spec が定める `{ error }` 形式に反する。未存在は `jsonError(..., 404)` で返す。**`src/app/api/` 配下の全ハンドラはこのラッパーで包む**（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。`/openapi.json` と `/api-reference` は外部 API の契約（`{ error }`）の対象外で、JSON エラーを返すのが適切ではないため包まない
 - 入力値は Zod でバリデーション
 - SQLインジェクション対策は Prisma のパラメータ化クエリに委任
 - 招待トークンは `crypto.randomUUID()` で生成し、使用後に `usedAt` をセットして無効化（Phase 7b）

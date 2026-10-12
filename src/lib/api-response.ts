@@ -13,6 +13,9 @@ export function unauthorized() {
   return jsonError("Unauthorized", 401);
 }
 
+/** 包まれていることを実行時に判定するための印（route-wrapping.test.ts が参照する） */
+export const WRAPPED = Symbol.for("daily-hub.withApiErrorHandling");
+
 /**
  * ルートハンドラを包み、捕捉されない例外を `500 { error }` に変換する。
  *
@@ -28,12 +31,14 @@ export function unauthorized() {
 export function withApiErrorHandling<Args extends unknown[]>(
   handler: (...args: Args) => Promise<Response>,
 ): (...args: Args) => Promise<Response> {
-  return async (...args) => {
+  const wrapped = async (...args: Args) => {
     try {
       return await handler(...args);
     } catch (e) {
-      // redirect() / notFound() 等は例外で制御フローを表現する。先に再 throw しないと
-      // 500 に化ける（現時点の API ルートでは未使用だが、後から足した人が気づけない）。
+      // redirect() / notFound() 等は例外で制御フローを表現するため、先に再 throw する。
+      // これは安全網であって推奨ではない: API ルートでこれらを使うと
+      // notFound() は本文の無い 404 を返し、spec が定める `{ error }` 形式に反する。
+      // API ルートでは jsonError(...) を使うこと。
       unstable_rethrow(e);
       const req = args[0];
       const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
@@ -41,6 +46,9 @@ export function withApiErrorHandling<Args extends unknown[]>(
       return jsonError("Internal Server Error", 500);
     }
   };
+  // 文字列マッチではなく実体で判定できるようにする。
+  // 書き方（export * / 再 export / 別ファイル定義）に依存せず検査できる。
+  return Object.defineProperty(wrapped, WRAPPED, { value: true });
 }
 
 /** ADMIN 以外による admin エンドポイントへのアクセス（403）レスポンス。 */
