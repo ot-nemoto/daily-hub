@@ -15,12 +15,18 @@ import { describe, expect, it } from "vitest";
  */
 const HTTP_METHODS = ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS", "HEAD"] as const;
 
-/** 配下の route.ts をすべて列挙する（追加ライブラリに依存しない） */
+/**
+ * 配下のルートファイルをすべて列挙する（追加ライブラリに依存しない）。
+ *
+ * 拡張子を `route.ts` に限定すると `route.tsx` 等で書いたルートが検査から漏れる。
+ * このテストは「想定した形を列挙する」作りにすると漏れが素通りする性質があり、
+ * ハンドラの判定（下記）と同じく、拾う側を広く取って絞り込む形にしている。
+ */
 function findRouteFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return findRouteFiles(path);
-    return entry.name === "route.ts" ? [path] : [];
+    return /^route\.(?:ts|tsx|js|jsx|mts|mjs)$/.test(entry.name) ? [path] : [];
   });
 }
 

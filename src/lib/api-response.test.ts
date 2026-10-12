@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { notFound, redirect } from "next/navigation";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -162,6 +163,25 @@ describe("withApiErrorHandling", () => {
 
     await expect(res.text()).resolves.not.toContain(secret);
     expect(spy).toHaveBeenCalled();
+  });
+
+  it("異常系: redirect() の制御フロー例外は 500 にせず再 throw する", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async () => {
+      redirect("/login");
+    });
+
+    // unstable_rethrow が無いと 500 レスポンスに化ける
+    await expect(handler()).rejects.toThrow();
+  });
+
+  it("異常系: notFound() の制御フロー例外は 500 にせず再 throw する", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async () => {
+      notFound();
+    });
+
+    await expect(handler()).rejects.toThrow();
   });
 
   it("異常系: Request が渡っていればメソッドとパスをログに含める", async () => {

@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
@@ -31,6 +32,9 @@ export function withApiErrorHandling<Args extends unknown[]>(
     try {
       return await handler(...args);
     } catch (e) {
+      // redirect() / notFound() 等は例外で制御フローを表現する。先に再 throw しないと
+      // 500 に化ける（現時点の API ルートでは未使用だが、後から足した人が気づけない）。
+      unstable_rethrow(e);
       const req = args[0];
       const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
       console.error(`[api] 500 ${where}`.trimEnd(), e);
