@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { adminForbidden, jsonError, unauthorized } from "@/lib/api-response";
+import { adminForbidden, jsonError, unauthorized, withApiErrorHandling } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { resolveOrCreateUserByName, upsertReportByAuthorId } from "@/lib/reports";
 import { firstZodError } from "@/lib/schemas/_zod-error";
 import { reportAdminBatchBodySchema } from "@/lib/schemas/report";
 
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling(async (req: NextRequest) => {
   // 1. 認証
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
@@ -43,4 +43,4 @@ export async function POST(req: NextRequest) {
   );
 
   return NextResponse.json({ results }, { status: 200 });
-}
+});

@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { authState, expect, test } from "./fixtures";
+import { authState, expect, seedApiKey, test } from "./fixtures";
 
 test.use({ storageState: authState("tsukune") });
 
@@ -218,8 +218,6 @@ test.describe("提出状況（VIEWER アクセス）", () => {
 
 // ---- 祝日表示（T219）: 祝日は列見出し＋列背景で示し、セルのバッジは「休」だけに限定する ----
 
-const BONJIRI_KEY = "c1d2e3f4-a5b6-7890-abcd-ef1234567890"; // ADMIN（prisma/seed.ts と一致）
-
 /** 平日になるまで daysAgo を進め、除外日と重ならない最初の平日を返す（2W=直近14日内に収まる前提） */
 function pickWeekdayDaysAgo(start: number, exclude: number[] = []): number {
   let n = start;
@@ -252,7 +250,7 @@ test.describe("提出状況（祝日表示）", () => {
   test.beforeAll(async ({ playwright, baseURL }) => {
     const api = await playwright.request.newContext({
       baseURL,
-      extraHTTPHeaders: { Authorization: `Bearer ${BONJIRI_KEY}` },
+      extraHTTPHeaders: { Authorization: `Bearer ${seedApiKey("bonjiri")}` },
     });
     // 中断された前回実行の残骸があれば先に消す（date はユニークで 409 になるため）
     const dates = holidays.map((h) => h.date).sort();
@@ -271,7 +269,7 @@ test.describe("提出状況（祝日表示）", () => {
   test.afterAll(async ({ playwright, baseURL }) => {
     const api = await playwright.request.newContext({
       baseURL,
-      extraHTTPHeaders: { Authorization: `Bearer ${BONJIRI_KEY}` },
+      extraHTTPHeaders: { Authorization: `Bearer ${seedApiKey("bonjiri")}` },
     });
     for (const id of createdIds) await api.delete(`/api/holidays/${id}`);
     await api.dispose();

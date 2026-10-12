@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { clerk, clerkSetup, setupClerkTestingToken } from "@clerk/testing/playwright";
 import { expect, test as setup } from "@playwright/test";
 
-import { authState, SEED_PASSWORD } from "./fixtures";
+import { authState, seedPassword } from "./fixtures";
 
 /** シード定義に合わせたテストユーザー（パスワードは共通） */
 const ROLES = [
@@ -23,7 +23,13 @@ setup("prepare clerk and seed", async () => {
     );
   }
   await clerkSetup({ publishableKey });
-  execSync("npx tsx prisma/seed.ts", { cwd: process.cwd(), stdio: "inherit" });
+  // シードは破壊的操作のオプトインを要求する。E2E の実行自体が明示的なオプトインに当たるため
+  // ここで付与する（本番 DB に対する歯止めは seed 側のシード定義外ユーザー検出が担う）。
+  execSync("npx tsx prisma/seed.ts", {
+    cwd: process.cwd(),
+    stdio: "inherit",
+    env: { ...process.env, SEED_ALLOW_DESTRUCTIVE: "1" },
+  });
 });
 
 // ロールごとにログインし、セッションを storageState として保存する
@@ -33,7 +39,7 @@ for (const role of ROLES) {
     await page.goto("/login");
     await clerk.signIn({
       page,
-      signInParams: { strategy: "password", identifier: role.email, password: SEED_PASSWORD },
+      signInParams: { strategy: "password", identifier: role.email, password: seedPassword() },
     });
 
     if (role.active) {

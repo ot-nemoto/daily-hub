@@ -80,11 +80,15 @@ test.describe("個人設定（tsukune）", () => {
 test.describe("APIキー管理", () => {
   test.use({ storageState: authState("tsukune") });
 
-  test("既存キーはマスク表示で「表示」ボタンがない（#1）", async ({ page }) => {
+  test("既存キーは先頭 8 文字のみ表示され「表示」ボタンがない（#1）", async ({ page }) => {
     // tsukune はシードで apiKey を持つ（read-only 検証のみ・キーは変更しない）
+    // 実値は DB にハッシュしか無いため、識別用の prefix（dh_ + 5 文字）だけが表示される
     const dialog = await openSettings(page);
     const keyInput = dialog.locator("input[readonly]");
-    await expect(keyInput).toHaveAttribute("type", "password");
+    await expect(keyInput).toHaveAttribute("type", "text");
+    await expect(keyInput).toHaveValue(/^dh_[A-Za-z0-9_-]{5}•+$/);
+    // 実値が再表示されない理由と回復手段を案内していること
+    await expect(dialog.getByText(/実値は発行直後にのみ表示されます/)).toBeVisible();
     await expect(dialog.getByRole("button", { name: "再生成" })).toBeVisible();
     await expect(dialog.getByRole("button", { name: "失効" })).toBeVisible();
     await expect(dialog.getByRole("button", { name: "表示" })).toHaveCount(0);
@@ -119,15 +123,22 @@ test.describe("APIキー管理", () => {
     await expect(keyInput).toHaveAttribute("type", "text");
     await expect(dialog.getByRole("button", { name: "隠す" })).toBeVisible();
 
-    // #5: リロード（再オープン）→ マスク表示・「表示」ボタンなし
+    // #5: リロード（再オープン）→ prefix のみ表示・「表示」「隠す」ボタンなし
     dialog = await openSettings(page);
-    await expect(dialog.locator("input[readonly]")).toHaveAttribute("type", "password");
+    const reopened = dialog.locator("input[readonly]");
+    await expect(reopened).toHaveAttribute("type", "text");
+    await expect(reopened).toHaveValue(/^dh_[A-Za-z0-9_-]{5}•+$/);
     await expect(dialog.getByRole("button", { name: "表示" })).toHaveCount(0);
     await expect(dialog.getByRole("button", { name: "隠す" })).toHaveCount(0);
 
     // #6: 失効 → 「生成する」に戻る
     await dialog.getByRole("button", { name: "失効" }).click();
     await expect(dialog.getByRole("button", { name: "生成する" })).toBeVisible();
+
+    // 失効が永続すること（再オープンしても未発行のまま・prefix 表示も出ない）
+    dialog = await openSettings(page);
+    await expect(dialog.getByRole("button", { name: "生成する" })).toBeVisible();
+    await expect(dialog.locator("input[readonly]")).toHaveCount(0);
 
     await context.close();
   });

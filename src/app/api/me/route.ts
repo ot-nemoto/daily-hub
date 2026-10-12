@@ -1,12 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jsonError, serializeUser, statusForError, unauthorized } from "@/lib/api-response";
+import {
+  jsonError,
+  serializeUser,
+  statusForError,
+  unauthorized,
+  withApiErrorHandling,
+} from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/apiAuth";
 import { NotFoundError } from "@/lib/errors";
 import { firstZodError } from "@/lib/schemas/_zod-error";
 import { meUpdateBodySchema } from "@/lib/schemas/me";
 import { getMe, updateMe } from "@/lib/users";
 
-export async function GET(req: NextRequest) {
+export const GET = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -14,9 +20,9 @@ export async function GET(req: NextRequest) {
   if (!me) return jsonError("ユーザーが見つかりません", 404);
 
   return NextResponse.json(serializeUser(me));
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiErrorHandling(async (req: NextRequest) => {
   const user = await getAuthenticatedUser(req);
   if (!user) return unauthorized();
 
@@ -32,4 +38,4 @@ export async function PATCH(req: NextRequest) {
       return jsonError("ユーザーが見つかりません", statusForError(error));
     throw error;
   }
-}
+});

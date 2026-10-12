@@ -130,11 +130,12 @@ External Client
 ## セキュリティ方針
 
 - 画面（Server Actions / Server Components）は `getSession()` でセッション確認してから処理
-  - **外部連携用 REST API（`/api/*`）は例外**: `Authorization: Bearer <api-key>` の**APIキー認証**を採用する。`getSession()` ではなく `getAuthenticatedUser(req)`（`prisma.user.findUnique({ where: { apiKey } })`＋`isActive` 確認）でユーザーを照合し、**操作対象は常に認証情報由来の `user.id`**（リクエストの識別子は信頼しない）
+  - **外部連携用 REST API（`/api/*`）は例外**: `Authorization: Bearer <api-key>` の**APIキー認証**を採用する。`getSession()` ではなく `getAuthenticatedUser(req)`（キーを SHA-256 にして `prisma.user.findUnique({ where: { apiKeyHash } })`＋`isActive` 確認）でユーザーを照合し、**操作対象は常に認証情報由来の `user.id`**（リクエストの識別子は信頼しない）
 - **CORS**: `/api/*` は任意オリジンから利用可能（`Access-Control-Allow-Origin: *`）。**`Access-Control-Allow-Credentials` を設定せず Cookie 認証も使わない**ため、他サイトからの資格情報つき窃取は成立しない。プリフライト（`OPTIONS`）は認証不要で 204 を返す
   - `/api-reference`・`/openapi.json` は **CORS 対象外**（同一オリジン＋Cookie 利用・ログイン必須）
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
 - 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
+- **外部 API のエラー分類の契約**: lib は業務エラーを型付きで throw（`NotFoundError` / `ForbiddenError` / `ConflictError`）し、ルートが `statusForError()` で 404 / 403 / 409 に変換する。それ以外の例外（DB 障害等）は `withApiErrorHandling()` が受け止め、`500 { "error": "Internal Server Error" }` を返してログにのみ詳細を残す。ただし `redirect()` / `notFound()` の制御フロー例外は `unstable_rethrow()` で素通しする（500 に化けさせないため）。**API ルートではこれらを使わない**: `notFound()` は本文の無い 404 を返し、spec が定める `{ error }` 形式に反する。未存在は `jsonError(..., 404)` で返す。**`src/app/api/` 配下の全ハンドラはこのラッパーで包む**（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。`/openapi.json` と `/api-reference` は外部 API の契約（`{ error }`）の対象外で、JSON エラーを返すのが適切ではないため包まない
 - 入力値は Zod でバリデーション
 - SQLインジェクション対策は Prisma のパラメータ化クエリに委任
 - 招待トークンは `crypto.randomUUID()` で生成し、使用後に `usedAt` をセットして無効化（Phase 7b）
@@ -157,7 +158,16 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/reports/new
 # 対象ユーザーが DB に存在しない場合は console.error を出力し getSession() は null を返す
 MOCK_USER_ID=<DB の users.id>
 # MOCK_USER_EMAIL=<DB の users.email>
+
+# シード（prisma/seed.ts・ローカル専用。手順は docs/development.md 参照）
+# SEED_PASSWORD=<任意の強いパスワード>       # テストユーザー共通パスワード（シード実行時は必須・既存 Clerk ユーザーにも同期）
+# SEED_API_KEY_ADMIN / _MEMBER / _VIEWER   # 任意。未設定なら実行ごとに生成し e2e/.seed-keys.json へ出力
+# バイパスフラグ（SEED_ALLOW_DESTRUCTIVE / SEED_ALLOW_UNSEEDED_DB）は .env に置かず実行時に前置する
 ```
+
+> シードの APIキー・パスワードはコードに固定値を持たない（本リポジトリは public であり、コミットした値は恒久的に compromised 扱いになる）。`.env.example` 側も有効値では配らない（コピーしただけでガードが無効化されるため）。
+> `SEED_PASSWORD` は Clerk アプリを共有する eval-hub / link-hub のテストユーザーにも反映されるため、値の変更は 3 リポジトリ揃えて行う。
+> シードは `CLERK_SECRET_KEY` が開発インスタンス（`sk_test_`）であることを要求する。パスワード同期は既存ユーザーに無条件で書き込むため、DB 側のガードだけでは「DB は dev・Clerk は本番」の組み合わせを止められない。
 
 ## Prisma 7 の接続構成
 

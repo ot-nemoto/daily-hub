@@ -1,6 +1,6 @@
 import type { Role } from "@/generated/prisma/client";
+import { API_KEY_DISPLAY_PREFIX_LENGTH, createApiKeyValue, hashApiKey } from "@/lib/apiKey";
 import { prisma } from "@/lib/prisma";
-
 import { ForbiddenError, NotFoundError } from "./errors";
 
 /**
@@ -94,6 +94,10 @@ export async function deleteUser(input: { id: string; currentUserId: string }): 
   ]);
 }
 
+/**
+ * APIキーを新規発行（再生成）して返す。既存キーは上書きされ無効になる。
+ * DB にはハッシュと表示用 prefix のみ保存し、生値は戻り値でのみ返す（show-once）。
+ */
 export async function generateApiKey(input: { id: string }): Promise<{ apiKey: string }> {
   const { id } = input;
 
@@ -102,10 +106,15 @@ export async function generateApiKey(input: { id: string }): Promise<{ apiKey: s
     throw new NotFoundError("User not found");
   }
 
-  const apiKey = crypto.randomUUID();
+  const apiKey = createApiKeyValue();
   await prisma.user.update({
     where: { id },
-    data: { apiKey },
+    data: {
+      apiKeyHash: await hashApiKey(apiKey),
+      apiKeyPrefix: apiKey.slice(0, API_KEY_DISPLAY_PREFIX_LENGTH),
+      apiKeyCreatedAt: new Date(),
+      apiKeyLastUsedAt: null,
+    },
   });
   return { apiKey };
 }
@@ -120,7 +129,12 @@ export async function revokeApiKey(input: { id: string }): Promise<void> {
 
   await prisma.user.update({
     where: { id },
-    data: { apiKey: null },
+    data: {
+      apiKeyHash: null,
+      apiKeyPrefix: null,
+      apiKeyCreatedAt: null,
+      apiKeyLastUsedAt: null,
+    },
   });
 }
 

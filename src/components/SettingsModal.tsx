@@ -9,10 +9,17 @@ type Props = {
   initialName: string;
   email: string;
   hasInitialApiKey: boolean;
+  initialApiKeyPrefix: string | null;
   onClose: () => void;
 };
 
-export function SettingsModal({ initialName, email, hasInitialApiKey, onClose }: Props) {
+export function SettingsModal({
+  initialName,
+  email,
+  hasInitialApiKey,
+  initialApiKeyPrefix,
+  onClose,
+}: Props) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -66,6 +73,7 @@ export function SettingsModal({ initialName, email, hasInitialApiKey, onClose }:
             initialName={initialName}
             email={email}
             hasInitialApiKey={hasInitialApiKey}
+            initialApiKeyPrefix={initialApiKeyPrefix}
           />
         </div>
       </div>

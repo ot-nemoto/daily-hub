@@ -1,12 +1,9 @@
-import { expect, test } from "./fixtures";
+import { expect, type SeedApiKeyRole, seedApiKey, test } from "./fixtures";
 
-// シードで固定された各ロールの API キー（prisma/seed.ts と一致）
-const TSUKUNE_KEY = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"; // MEMBER
-const NANKOTSU_KEY = "b1e3a704-e5f6-7890-abcd-ef1234567890"; // VIEWER
-const BONJIRI_KEY = "c1d2e3f4-a5b6-7890-abcd-ef1234567890"; // ADMIN
-
-function auth(key: string) {
-  return { Authorization: `Bearer ${key}` };
+// APIキーはシードが実行ごとに発行するため、テスト本体から遅延取得する
+// （bonjiri=ADMIN / tsukune=MEMBER / nankotsu=VIEWER）
+function auth(role: SeedApiKeyRole) {
+  return { Authorization: `Bearer ${seedApiKey(role)}` };
 }
 
 // シードは UTC 基準で「今日」の日報を投入するため、UTC の日付文字列を作る
@@ -37,14 +34,14 @@ test.describe("REST API（外部連携）", () => {
       tomorrowPlan: "E2E予定",
       notes: "",
     };
-    const res1 = await request.post("/api/reports", { headers: auth(TSUKUNE_KEY), data: body });
+    const res1 = await request.post("/api/reports", { headers: auth("tsukune"), data: body });
     expect(res1.status()).toBe(201);
     const json1 = await res1.json();
     expect(json1.results[0].status).toBe("created");
     expect(json1.results[0].id).toBeTruthy();
 
     const res2 = await request.post("/api/reports", {
-      headers: auth(TSUKUNE_KEY),
+      headers: auth("tsukune"),
       data: { ...body, workContent: "E2E作業（更新）" },
     });
     expect(res2.status()).toBe(200);
@@ -54,7 +51,7 @@ test.describe("REST API（外部連携）", () => {
 
   test("GET /api/reports は date・authorId フィルタで対象行を返す", async ({ request }) => {
     const today = todayUtc();
-    const res = await request.get(`/api/reports?date=${today}`, { headers: auth(TSUKUNE_KEY) });
+    const res = await request.get(`/api/reports?date=${today}`, { headers: auth("tsukune") });
     expect(res.status()).toBe(200);
     const { reports } = await res.json();
     const tsukune = reports.find((r: { authorName: string }) => r.authorName === "tsukune");
@@ -62,7 +59,7 @@ test.describe("REST API（外部連携）", () => {
 
     // authorId で絞り込むと当該ユーザーの行だけが返る
     const res2 = await request.get(`/api/reports?date=${today}&authorId=${tsukune.authorId}`, {
-      headers: auth(TSUKUNE_KEY),
+      headers: auth("tsukune"),
     });
     expect(res2.status()).toBe(200);
     const { reports: filtered } = await res2.json();
@@ -73,31 +70,31 @@ test.describe("REST API（外部連携）", () => {
   test("DELETE /api/admin/reports/[id] は日報を削除し 204、再削除は 404", async ({ request }) => {
     // 削除対象を自己完結で作成
     const create = await request.post("/api/reports", {
-      headers: auth(TSUKUNE_KEY),
+      headers: auth("tsukune"),
       data: { date: FUTURE.del, workContent: "削除対象", tomorrowPlan: "x", notes: "" },
     });
     expect(create.status()).toBe(201);
     const id = (await create.json()).results[0].id;
 
-    const del = await request.delete(`/api/admin/reports/${id}`, { headers: auth(BONJIRI_KEY) });
+    const del = await request.delete(`/api/admin/reports/${id}`, { headers: auth("bonjiri") });
     expect(del.status()).toBe(204);
 
     // 実 DB から消えていることを GET で確認
     const check = await request.get(`/api/reports?date=${FUTURE.del}`, {
-      headers: auth(TSUKUNE_KEY),
+      headers: auth("tsukune"),
     });
     expect(check.status()).toBe(200);
     const { reports } = await check.json();
     expect(reports.find((r: { id: string }) => r.id === id)).toBeFalsy();
 
     // 再削除は 404
-    const del2 = await request.delete(`/api/admin/reports/${id}`, { headers: auth(BONJIRI_KEY) });
+    const del2 = await request.delete(`/api/admin/reports/${id}`, { headers: auth("bonjiri") });
     expect(del2.status()).toBe(404);
   });
 
   test("POST /api/admin/reports は userName 解決で一括登録する", async ({ request }) => {
     const res = await request.post("/api/admin/reports", {
-      headers: auth(BONJIRI_KEY),
+      headers: auth("bonjiri"),
       data: [
         {
           userName: "tsukune",
@@ -115,7 +112,7 @@ test.describe("REST API（外部連携）", () => {
   });
 
   test("GET /api/admin/users は ADMIN でユーザー一覧を返す", async ({ request }) => {
-    const res = await request.get("/api/admin/users", { headers: auth(BONJIRI_KEY) });
+    const res = await request.get("/api/admin/users", { headers: auth("bonjiri") });
     expect(res.status()).toBe(200);
     const { users } = await res.json();
     expect(users.map((u: { email: string }) => u.email)).toContain("tsukune@example.com");
@@ -132,14 +129,14 @@ test.describe("REST API（外部連携）", () => {
 
     test("VIEWER の POST /api/reports は 403", async ({ request }) => {
       const res = await request.post("/api/reports", {
-        headers: auth(NANKOTSU_KEY),
+        headers: auth("nankotsu"),
         data: { date: FUTURE.smoke, workContent: "x", tomorrowPlan: "y", notes: "" },
       });
       expect(res.status()).toBe(403);
     });
 
     test("非ADMIN の GET /api/admin/users は 403", async ({ request }) => {
-      const res = await request.get("/api/admin/users", { headers: auth(TSUKUNE_KEY) });
+      const res = await request.get("/api/admin/users", { headers: auth("tsukune") });
       expect(res.status()).toBe(403);
     });
   });

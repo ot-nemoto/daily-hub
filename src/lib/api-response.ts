@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
@@ -10,6 +11,44 @@ export function jsonError(message: string, status: number) {
 /** 認証失敗（401）レスポンス。 */
 export function unauthorized() {
   return jsonError("Unauthorized", 401);
+}
+
+/** 包まれていることを実行時に判定するための印（route-wrapping.test.ts が参照する） */
+export const WRAPPED = Symbol.for("daily-hub.withApiErrorHandling");
+
+/**
+ * ルートハンドラを包み、捕捉されない例外を `500 { error }` に変換する。
+ *
+ * lib は業務エラーを型付きで throw し、ルートがそれを `statusForError()` で変換する。
+ * そこに該当しない例外（DB 障害等）は Next.js 既定の 500 になり、spec が定める
+ * `{ error }` 形式にならないため、ここで受け止める。
+ *
+ * 各ルートに try/catch を書き並べると書き漏れが起きるため共通化している
+ * （実際、導入前は 13 ルート中 3 つが try/catch を持っていなかった）。
+ *
+ * 例外の内容（接続先・スタック等）はレスポンスに含めず、ログにのみ残す。
+ */
+export function withApiErrorHandling<Args extends unknown[]>(
+  handler: (...args: Args) => Promise<Response>,
+): (...args: Args) => Promise<Response> {
+  const wrapped = async (...args: Args) => {
+    try {
+      return await handler(...args);
+    } catch (e) {
+      // redirect() / notFound() 等は例外で制御フローを表現するため、先に再 throw する。
+      // これは安全網であって推奨ではない: API ルートでこれらを使うと
+      // notFound() は本文の無い 404 を返し、spec が定める `{ error }` 形式に反する。
+      // API ルートでは jsonError(...) を使うこと。
+      unstable_rethrow(e);
+      const req = args[0];
+      const where = req instanceof Request ? `${req.method} ${new URL(req.url).pathname}` : "";
+      console.error(`[api] 500 ${where}`.trimEnd(), e);
+      return jsonError("Internal Server Error", 500);
+    }
+  };
+  // 文字列マッチではなく実体で判定できるようにする。
+  // 書き方（export * / 再 export / 別ファイル定義）に依存せず検査できる。
+  return Object.defineProperty(wrapped, WRAPPED, { value: true });
 }
 
 /** ADMIN 以外による admin エンドポイントへのアクセス（403）レスポンス。 */
