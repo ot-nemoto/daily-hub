@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { notFound, redirect } from "next/navigation";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -162,6 +163,31 @@ describe("withApiErrorHandling", () => {
 
     await expect(res.text()).resolves.not.toContain(secret);
     expect(spy).toHaveBeenCalled();
+  });
+
+  // Next.js は digest で制御フロー例外を識別する。toThrow() だけだと、
+  // 例外を包み直して再 throw する実装（new Error(..., { cause: e })）でも通ってしまい、
+  // 本番ではリダイレクトが 500 に化ける。digest まで固定する。
+  it("異常系: redirect() の制御フロー例外は digest を保ったまま再 throw する", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async () => {
+      redirect("/login");
+    });
+
+    await expect(handler()).rejects.toMatchObject({
+      digest: expect.stringContaining("NEXT_REDIRECT"),
+    });
+  });
+
+  it("異常系: notFound() の制御フロー例外は digest を保ったまま再 throw する", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async () => {
+      notFound();
+    });
+
+    await expect(handler()).rejects.toMatchObject({
+      digest: expect.stringContaining("NEXT_HTTP_ERROR_FALLBACK"),
+    });
   });
 
   it("異常系: Request が渡っていればメソッドとパスをログに含める", async () => {
