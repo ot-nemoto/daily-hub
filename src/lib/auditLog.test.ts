@@ -58,6 +58,34 @@ describe("buildAuditRecord", () => {
     expect(r.ip).toBe("198.51.100.7");
   });
 
+  // 本文の内容は記録しないが、バイト数は残す。バッチ更新
+  // （POST /api/admin/reports は userName で対象を指定する）が空振りだったのか
+  // 大量更新だったのかを、本文を持たずに区別できるようにするため。
+  it("正常系: content-length をバイト数として記録する", () => {
+    const r = buildAuditRecord(
+      req("https://example.com/api/admin/reports", {
+        method: "POST",
+        headers: { "content-length": "4096" },
+      }),
+      200,
+    );
+
+    expect(r.bytes).toBe(4096);
+  });
+
+  it("境界値: content-length が無ければ null", () => {
+    expect(buildAuditRecord(req(), 200).bytes).toBeNull();
+  });
+
+  it("異常系: content-length が数値でなければ null", () => {
+    const r = buildAuditRecord(
+      req("https://example.com/api/me", { headers: { "content-length": "abc" } }),
+      200,
+    );
+
+    expect(r.bytes).toBeNull();
+  });
+
   it("境界値: クエリが無ければ空文字", () => {
     expect(buildAuditRecord(req(), 200).query).toBe("");
   });

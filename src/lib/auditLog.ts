@@ -37,6 +37,14 @@ function clientIp(req: Request): string | null {
   return first || req.headers.get("x-real-ip") || null;
 }
 
+/** リクエスト本文のバイト数。欠落・不正な値は null にする。 */
+function contentLength(req: Request): number | null {
+  const raw = req.headers.get("content-length");
+  if (raw === null) return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
 /** 監査ログ 1 件の形。保存先を決めるときの契約になる。 */
 export type AuditRecord = {
   type: "audit";
@@ -47,6 +55,7 @@ export type AuditRecord = {
   query: string;
   status: number;
   ip: string | null;
+  bytes: number | null;
 };
 
 export function buildAuditRecord(req: Request, status: number): AuditRecord {
@@ -62,6 +71,10 @@ export function buildAuditRecord(req: Request, status: number): AuditRecord {
     query: url.search,
     status,
     ip: clientIp(req),
+    // 本文の内容は記録しないが、バイト数は残す。バッチ更新
+    // （POST /api/admin/reports は userName で対象を指定する）が
+    // 空振りだったのか大量更新だったのかを、本文を持たずに区別できる。
+    bytes: contentLength(req),
   };
 }
 

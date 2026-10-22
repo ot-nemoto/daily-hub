@@ -17,6 +17,11 @@ export async function getAuthenticatedUser(req: NextRequest) {
     where: { apiKeyHash: await hashApiKey(apiKey) },
     select: { id: true, role: true, isActive: true, apiKeyLastUsedAt: true },
   });
+  // isActive の判定より前に記録する。無効化済みユーザーの未失効キーが使われた場合、
+  // サーバーは「誰のキーか」を知っている。401 を返すとしてもそれを記録しないと、
+  // 退職者の漏洩キーと当てずっぽうの総当たりがログ上で区別できなくなる。
+  if (user) setAuditUserId(req, user.id);
+
   if (!user?.isActive) return null;
 
   const now = new Date();
@@ -29,9 +34,6 @@ export async function getAuthenticatedUser(req: NextRequest) {
       await prisma.user.update({ where: { id: user.id }, data: { apiKeyLastUsedAt: now } });
     } catch {}
   }
-
-  // 監査ログのラッパーへ受け渡す（ラッパーは認証ユーザーを知らない）
-  setAuditUserId(req, user.id);
 
   return { id: user.id, role: user.role, isActive: user.isActive };
 }

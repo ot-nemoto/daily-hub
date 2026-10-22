@@ -224,6 +224,26 @@ describe("監査ログへの userId 受け渡し", () => {
     expect(buildAuditRecord(req, 200).userId).toBe("user-uuid");
   });
 
+  // 退職者の未失効キーが漏洩した場合と、当てずっぽうの総当たりを
+  // ログ上で区別できるようにする。サーバーは「誰のキーか」を知っている。
+  it("異常系: 無効化済みユーザーのキーでも userId を記録する（401 は変わらない）", async () => {
+    // @ts-expect-error モックのため一部フィールドのみ
+    mockFindUnique.mockResolvedValue({
+      id: "deactivated-user",
+      role: "MEMBER",
+      isActive: false,
+      apiKeyLastUsedAt: new Date(),
+    });
+    const req = new Request("https://example.com/api/reports", {
+      headers: { authorization: "Bearer deactivated-key" },
+    });
+
+    const result = await getAuthenticatedUser(req as unknown as NextRequest);
+
+    expect(result).toBeNull();
+    expect(buildAuditRecord(req, 401).userId).toBe("deactivated-user");
+  });
+
   it("異常系: 認証が通らなければ userId は null のまま", async () => {
     mockFindUnique.mockResolvedValue(null);
     const req = new Request("https://example.com/api/reports", {
