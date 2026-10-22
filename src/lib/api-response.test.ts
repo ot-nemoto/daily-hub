@@ -41,6 +41,14 @@ describe("jsonError / unauthorized", () => {
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "Unauthorized" });
   });
+
+  // RFC 9110 は 401 応答に WWW-Authenticate を含めることを求める。
+  // 全 API ルートがこのヘルパーを経由するため、ここで固定すれば全ルートに効く。
+  it("unauthorized は WWW-Authenticate: Bearer を付ける", () => {
+    const res = unauthorized();
+
+    expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
+  });
 });
 
 describe("serializeReport", () => {
