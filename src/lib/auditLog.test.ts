@@ -1,7 +1,7 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildAuditRecord, logAudit, setAuditUserId } from "./auditLog";
+import { buildAuditRecord, logAudit, resetAuditThrottle, setAuditUserId } from "./auditLog";
 
 function req(
   url = "https://example.com/api/reports",
@@ -188,5 +188,108 @@ describe("logAudit", () => {
 
     expect(() => logAudit(req(), 200)).not.toThrow();
     expect(err).toHaveBeenCalled();
+  });
+});
+
+// 404 を返す経路（proxy.ts とキャッチオール）は認証より前・認証なしで通るため、
+// キーを持たない誰でも記録を 1 行ずつ増やせる。レート制限が無いと、
+// 本物の痕跡を大量のノイズで埋められる。
+describe("未認証リクエストの記録抑制", () => {
+  beforeEach(() => {
+    resetAuditThrottle();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  function floodUnauthenticated(count: number, ip = "203.0.113.1") {
+    return Array.from({ length: count }, () =>
+      logAudit(req("https://example.com/api/unknown", { headers: { "x-forwarded-for": ip } }), 404),
+    );
+  }
+
+  it("正常系: 窓内の上限（30 件）までは記録する", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    floodUnauthenticated(30);
+
+    expect(spy).toHaveBeenCalledTimes(30);
+  });
+
+  // 上限 30 件 ＋ 抑制開始の印 1 件 = 31 件
+  it("異常系: 上限を超えた分は記録しない", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    floodUnauthenticated(100);
+
+    expect(spy).toHaveBeenCalledTimes(31);
+  });
+
+  // 抑制の開始を 1 件だけ印付きで記録することで、
+  // 「その IP が洪水を起こしている」信号自体は失わない。
+  it("正常系: 上限に達した 1 件に throttled の印が付く", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    floodUnauthenticated(100);
+
+    const records = spy.mock.calls.map((c) => JSON.parse(c[0] as string));
+    expect(records.filter((r) => r.throttled === true)).toHaveLength(1);
+    // 印が付くのは最後（上限に達した 1 件）
+    expect(records.at(-1)?.throttled).toBe(true);
+  });
+
+  it("正常系: 窓が切り替わると再び記録できる", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    floodUnauthenticated(100);
+    spy.mockClear();
+
+    vi.advanceTimersByTime(60 * 1000);
+    floodUnauthenticated(5);
+
+    expect(spy).toHaveBeenCalledTimes(5);
+  });
+
+  it("正常系: 抑制されていなければ throttled は付かない", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    floodUnauthenticated(1);
+
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).not.toHaveProperty("throttled");
+  });
+
+  it("正常系: IP ごとに独立して数える", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    floodUnauthenticated(100, "203.0.113.1");
+    floodUnauthenticated(5, "198.51.100.2");
+
+    expect(spy).toHaveBeenCalledTimes(31 + 5);
+  });
+
+  // 認証済みの記録はキーの発行数で上界があるため抑制しない。
+  it("正常系: 認証済みの記録は抑制しない", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    for (let i = 0; i < 100; i += 1) {
+      const r = req("https://example.com/api/reports", {
+        headers: { "x-forwarded-for": "203.0.113.1" },
+      });
+      setAuditUserId(r, "user-1");
+      logAudit(r, 200);
+    }
+
+    expect(spy).toHaveBeenCalledTimes(100);
+  });
+
+  // IP が取れない場合はまとめて数えると正当な記録まで落ちる。
+  it("境界値: IP が取れない場合は抑制しない", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    for (let i = 0; i < 100; i += 1) logAudit(req("https://example.com/api/unknown"), 404);
+
+    expect(spy).toHaveBeenCalledTimes(100);
   });
 });
