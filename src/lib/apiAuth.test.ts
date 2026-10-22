@@ -13,6 +13,7 @@ vi.mock("./prisma", () => ({
 
 import { getAuthenticatedUser } from "./apiAuth";
 import { hashApiKey } from "./apiKey";
+import { buildAuditRecord } from "./auditLog";
 import { prisma } from "./prisma";
 
 const mockFindUnique = vi.mocked(prisma.user.findUnique);
@@ -200,5 +201,37 @@ describe("getAuthenticatedUser", () => {
       expect(result).toBeNull();
       expect(mockUpdate).not.toHaveBeenCalled();
     });
+  });
+});
+
+// 監査ログのラッパーは認証ユーザーを知らないため、getAuthenticatedUser が
+// Request インスタンスをキーに受け渡す。その経路を固定する。
+describe("監査ログへの userId 受け渡し", () => {
+  it("正常系: 認証が通ったユーザーが監査レコードに載る", async () => {
+    // @ts-expect-error モックのため一部フィールドのみ
+    mockFindUnique.mockResolvedValue({
+      id: "user-uuid",
+      role: "MEMBER",
+      isActive: true,
+      apiKeyLastUsedAt: new Date(),
+    });
+    const req = new Request("https://example.com/api/reports", {
+      headers: { authorization: "Bearer valid-key" },
+    });
+
+    await getAuthenticatedUser(req as unknown as NextRequest);
+
+    expect(buildAuditRecord(req, 200).userId).toBe("user-uuid");
+  });
+
+  it("異常系: 認証が通らなければ userId は null のまま", async () => {
+    mockFindUnique.mockResolvedValue(null);
+    const req = new Request("https://example.com/api/reports", {
+      headers: { authorization: "Bearer invalid-key" },
+    });
+
+    await getAuthenticatedUser(req as unknown as NextRequest);
+
+    expect(buildAuditRecord(req, 401).userId).toBeNull();
   });
 });

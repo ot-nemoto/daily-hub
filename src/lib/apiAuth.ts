@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { hashApiKey } from "@/lib/apiKey";
+import { setAuditUserId } from "@/lib/auditLog";
 import { prisma } from "@/lib/prisma";
 
 // 棚卸し用途には時間単位の粒度で足りるため、毎リクエストの書き込みを避ける
@@ -28,6 +29,9 @@ export async function getAuthenticatedUser(req: NextRequest) {
       await prisma.user.update({ where: { id: user.id }, data: { apiKeyLastUsedAt: now } });
     } catch {}
   }
+
+  // 監査ログのラッパーへ受け渡す（ラッパーは認証ユーザーを知らない）
+  setAuditUserId(req, user.id);
 
   return { id: user.id, role: user.role, isActive: user.isActive };
 }

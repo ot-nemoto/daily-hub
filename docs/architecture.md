@@ -136,6 +136,14 @@ External Client
 - 日報の編集・コメントの削除は `authorId === session.user.id` をサーバー側で検証
 - 管理者 API は `session.user.role === "ADMIN"` をサーバー側で検証（Phase 7a）
 - **外部 API のエラー分類の契約**: lib は業務エラーを型付きで throw（`NotFoundError` / `ForbiddenError` / `ConflictError`）し、ルートが `statusForError()` で 404 / 403 / 409 に変換する。それ以外の例外（DB 障害等）は `withApiErrorHandling()` が受け止め、`500 { "error": "Internal Server Error" }` を返してログにのみ詳細を残す。ただし `redirect()` / `notFound()` の制御フロー例外は `unstable_rethrow()` で素通しする（500 に化けさせないため）。**API ルートではこれらを使わない**: `notFound()` は本文の無い 404 を返し、spec が定める `{ error }` 形式に反する。未存在は `jsonError(..., 404)` で返す。**`src/app/api/` 配下の全ハンドラはこのラッパーで包む**（`src/app/api/route-wrapping.test.ts` が包み漏れを検査する）。`/openapi.json` と `/api-reference` は外部 API の契約（`{ error }`）の対象外で、JSON エラーを返すのが適切ではないため包まない
+- **外部 API の操作ログ（監査ログ）の契約**: `withApiErrorHandling()` が**全リクエストについて** 1 行 1 JSON を標準出力に書く（`src/lib/auditLog.ts`）。本リポジトリは public でエンドポイント・パラメータ構造が既知であり、「誰のキーで・いつ・何を操作したか」を追えないと異常アクセスを検知できないため
+  - **記録する**: `type` / `at` / `userId` / `method` / `path` / `query` / `status` / `ip`。GET の成功も記録する（漏洩キーによる日報の列挙・持ち出しは GET で行われるため、書き込みだけでは痕跡が残らない）。401 / 403 も記録する（総当たりの検知。`userId` は `null` になるため IP に依存する）
+  - **記録しない**: APIキー（ハッシュ・prefix も含めない。`userId` で足りる）、リクエスト/レスポンスボディ（日報本文・コメント本文）
+  - `query` はクエリ文字列をそのまま残す（`?from=...&to=...` の形が列挙の検知に効く）。**APIキーをクエリで受け取ってはならない**（この契約が崩れる）
+  - ユーザーの受け渡しは `WeakMap<Request, string>`。ラッパーは認証ユーザーを知らず、解決は各ハンドラ内の `getAuthenticatedUser(req)` が行うため、`Request` インスタンスをキーに渡す。これにより記録処理を各ルートに散らさない
+  - **出力の失敗でリクエストを落とさない**（fail-open）。`apiKeyLastUsedAt` の更新と同じ方針。監査ログを fail-closed にする考え方もあるが、「ログが出せないと日報が保存できない」方が害が大きいと判断した
+  - 制御フロー例外（`redirect()` / `notFound()`）の再 throw 時は記録しない（ステータスが確定しないため）
+  - **保持期間と保存先は未決**。Vercel の Runtime Logs は Hobby で 1 時間しか保持されないため、現時点では「後から調べられる」状態ではない。1 行 1 JSON にしているのは、保存先を Log Drain / DB のどちらに決めてもルート側を触らずに移行できるようにするため
 - 入力値は Zod でバリデーション
 - SQLインジェクション対策は Prisma のパラメータ化クエリに委任
 - 招待トークンは `crypto.randomUUID()` で生成し、使用後に `usedAt` をセットして無効化（Phase 7b）
