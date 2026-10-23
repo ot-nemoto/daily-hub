@@ -58,6 +58,21 @@ const listResponse = (description: string, key: string, itemName: string) =>
 /** `{ error }` を返す 4xx レスポンス定義。 */
 const errorResponse = (description: string) => jsonResponse(description, ref("Error"));
 
+/**
+ * 401 レスポンス定義。RFC 9110 が求める `WWW-Authenticate` チャレンジを宣言する。
+ * 配信 spec を仕様の唯一の正とするため、実装が返すヘッダは spec にも載せる。
+ */
+const unauthorizedResponse = () => ({
+  ...errorResponse("認証エラー"),
+  headers: {
+    "WWW-Authenticate": {
+      description: "認証方式（RFC 6750 の Bearer）",
+      schema: { type: "string" },
+      example: "Bearer",
+    },
+  },
+});
+
 /** 参照名でリクエストボディを定義する。 */
 const jsonBody = (name: string) => ({
   required: true,
@@ -109,6 +124,7 @@ const infoDescription = [
   '- `500` はサーバー側の失敗（DB 障害等）。内部情報を含めないため固定文言 `{ "error": "Internal Server Error" }` を返す。',
   "- 日付は `YYYY-MM-DD`、日時は ISO 8601。",
   "- ロール別: 日報の作成・編集・削除、休日の登録・解除は `VIEWER` 不可（`403`）。コメントは全ロール可。祝日の登録・削除、および ADMIN 系は `ADMIN` のみ（`403`）。祝日の取得は認証済み全ロール可。",
+  "- CORS: `/api/*` は任意オリジンから利用できる（`Access-Control-Allow-Origin: *`）。API キー認証で Cookie を使わないためオリジン制限は不要。プリフライト `OPTIONS` は認証不要で `204` を返す。",
   "",
   "## クイックスタート",
   "```sh",
@@ -170,7 +186,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["me"],
           responses: {
             200: jsonResponse("プロフィール", ref("User")),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             404: errorResponse("ユーザーが存在しない"),
             500: errorResponse("サーバーエラー"),
           },
@@ -183,7 +199,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後のプロフィール", ref("User")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             404: errorResponse("ユーザーが存在しない"),
             500: errorResponse("サーバーエラー"),
           },
@@ -218,7 +234,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: listResponse("日報の一覧", "reports", "Report"),
             400: errorResponse("クエリのバリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -233,7 +249,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
             200: jsonResponse("upsert 結果（既存を含む場合）", upsertResults),
             201: jsonResponse("upsert 結果（全件新規作成）", upsertResults),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("VIEWER は作成できない"),
             500: errorResponse("サーバーエラー"),
           },
@@ -247,7 +263,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             200: jsonResponse("日報", ref("Report")),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),
           },
@@ -261,7 +277,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後の日報", ref("Report")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("VIEWER または他ユーザーの日報"),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),
@@ -274,7 +290,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("VIEWER または他ユーザーの日報"),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),
@@ -290,7 +306,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             200: listResponse("コメントの一覧", "comments", "Comment"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             404: errorResponse("対象の日報が未存在"),
             500: errorResponse("サーバーエラー"),
           },
@@ -304,7 +320,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("作成されたコメント", ref("Comment")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             404: errorResponse("対象の日報が未存在"),
             500: errorResponse("サーバーエラー"),
           },
@@ -318,7 +334,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("他ユーザーのコメント"),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),
@@ -333,7 +349,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["day-off"],
           responses: {
             200: listResponse("休日の一覧", "dayOffs", "DayOff"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -345,7 +361,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("登録された休日", ref("DayOff")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("VIEWER は登録できない"),
             409: errorResponse("同日が既に登録済み"),
             500: errorResponse("サーバーエラー"),
@@ -360,7 +376,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             204: { description: "解除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("VIEWER は解除できない"),
             404: errorResponse("未存在 / 他ユーザーの休日"),
             500: errorResponse("サーバーエラー"),
@@ -393,7 +409,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: listResponse("祝日の一覧", "holidays", "Holiday"),
             400: errorResponse("クエリのバリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             500: errorResponse("サーバーエラー"),
           },
         },
@@ -405,7 +421,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             201: jsonResponse("登録された祝日", ref("Holiday")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 以外"),
             409: errorResponse("同日が既に登録済み"),
             500: errorResponse("サーバーエラー"),
@@ -420,7 +436,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 以外"),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),
@@ -435,7 +451,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           tags: ["admin"],
           responses: {
             200: listResponse("ユーザーの一覧", "users", "User"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 以外"),
             500: errorResponse("サーバーエラー"),
           },
@@ -451,7 +467,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("更新後のユーザー", ref("User")),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 以外 / 自分自身または最後の管理者"),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),
@@ -464,7 +480,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 以外 / 自分自身または最後の管理者"),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),
@@ -480,7 +496,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           responses: {
             200: jsonResponse("upsert 結果", upsertResults),
             400: errorResponse("バリデーションエラー"),
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 以外"),
             500: errorResponse("サーバーエラー"),
           },
@@ -494,7 +510,7 @@ export function buildOpenApiDocument(options: { version?: string; serverUrl?: st
           parameters: [idParam],
           responses: {
             204: { description: "削除成功（ボディなし）" },
-            401: errorResponse("認証エラー"),
+            401: unauthorizedResponse(),
             403: errorResponse("ADMIN 以外"),
             404: errorResponse("未存在"),
             500: errorResponse("サーバーエラー"),

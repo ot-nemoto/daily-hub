@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { logAudit } from "@/lib/auditLog";
+
 // どのパスが「公開」「CORS 対象の外部 API」かを決める分類はこのファイルの急所であり、
 // 誤ると静かに認証を無効化しうる。回帰防止のため export して proxy.test.ts で固定する。
 export const isPublicRoute = createRouteMatcher(["/login(.*)", "/auth-error"]);
@@ -45,7 +47,14 @@ export default clerkMiddleware(async (auth, request) => {
   // mock バイパスより前に評価する: 後段に置くと MOCK_USER_ID 設定時に isApiRoute 未登録の
   // /api/* が素通りしてハンドラに到達し、ローカルの curl 検証が本番挙動と乖離するため。
   if (!isPublicRoute(request) && request.nextUrl.pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Not Found" }, { status: 404 });
+    // ここはハンドラに到達しないため withApiErrorHandling の記録が効かない。
+    // 未登録パスへの連続アクセスはエンドポイント列挙の主要な痕跡なので、ここで残す。
+    // userId は null になる（IP で追う）。proxy.ts は Next 16 では Node.js ランタイムで
+    // 動くため DB は引けるが、未認証の総当たりに DB クエリを与えたくないので引かない。
+    logAudit(request, 404);
+    // 他の API 応答と同様に CORS を付ける。付けないとブラウザからは
+    // 不透明なエラーになり、{ error } の本文が読めない。
+    return withCors(NextResponse.json({ error: "Not Found" }, { status: 404 }));
   }
 
   // 非本番環境: MOCK_USER_ID / MOCK_USER_EMAIL が設定されている場合はバイパス

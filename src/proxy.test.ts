@@ -40,6 +40,11 @@ function collectApiRoutePaths(dir = API_DIR, prefix = "/api"): string[] {
   const paths: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
+      // キャッチオール（[...unmatched]）は「どれにも一致しなかったものを受ける」側であり、
+      // isApiRoute に一致させる対象ではない。下の検査から除くため収集しない。
+      // 除外は catch-all セグメントに限定する（この検査は isApiRoute の登録漏れを
+      // 検出する安全網なので、除外を広げると穴になる）。
+      if (/^\[\.\.\..+\]$/.test(entry.name)) continue;
       const isRouteGroup = /^\(.+\)$/.test(entry.name);
       const segment = entry.name.replace(/^\[(?:\.\.\.)?.+\]$/, "abc");
       paths.push(
@@ -138,6 +143,55 @@ describe("middleware の分岐順", () => {
     vi.stubEnv("MOCK_USER_ID", "mock-user-id");
     const res = await callMiddleware(req("/reports/daily"));
     expect(res?.status).toBe(200);
+  });
+});
+
+// 未登録パスはハンドラに到達しないため withApiErrorHandling の記録が効かない。
+// 連続アクセスはエンドポイント列挙の主要な痕跡なので、ここで残す必要がある。
+describe("監査ログ（ハンドラに到達しない経路）", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("未知の API ルートの 404 を記録する", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await callMiddleware(req("/api/unknown-endpoint"));
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({
+      type: "audit",
+      method: "GET",
+      path: "/api/unknown-endpoint",
+      status: 404,
+      userId: null,
+    });
+  });
+
+  // CORS プリフライトは操作ではなく、登録済みパスなら常に 204 を返すだけで
+  // 何も明かさない。件数だけ増えるため記録しない。
+  it("OPTIONS のプリフライトは記録しない", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await callMiddleware(req("/api/reports", "OPTIONS"));
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("登録済み API ルートは記録しない（ハンドラ側のラッパーが記録する）", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await callMiddleware(req("/api/reports"));
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("画面ルートは記録しない（対象は外部 REST API のみ）", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await callMiddleware(req("/reports/daily"));
+
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 

@@ -41,6 +41,14 @@ describe("jsonError / unauthorized", () => {
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "Unauthorized" });
   });
+
+  // RFC 9110 は 401 応答に WWW-Authenticate を含めることを求める。
+  // 全 API ルートがこのヘルパーを経由するため、ここで固定すれば全ルートに効く。
+  it("unauthorized は WWW-Authenticate: Bearer を付ける", () => {
+    const res = unauthorized();
+
+    expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
+  });
 });
 
 describe("serializeReport", () => {
@@ -188,6 +196,91 @@ describe("withApiErrorHandling", () => {
     await expect(handler()).rejects.toMatchObject({
       digest: expect.stringContaining("NEXT_HTTP_ERROR_FALLBACK"),
     });
+  });
+
+  it("正常系: 監査ログを 1 件出力する（ステータスはハンドラの戻り値）", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(
+      async (_req: Request) => new Response(null, { status: 204 }),
+    );
+
+    await handler(new Request("https://example.com/api/day-off/x1", { method: "DELETE" }));
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({
+      type: "audit",
+      method: "DELETE",
+      path: "/api/day-off/x1",
+      status: 204,
+    });
+  });
+
+  // 認証失敗も記録する。userId が取れないため、総当たりの検知は IP に依存する。
+  it("正常系: 401 でも記録し、userId は null になる", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async (_req: Request) => unauthorized());
+
+    await handler(
+      new Request("https://example.com/api/reports", {
+        headers: { "x-forwarded-for": "203.0.113.9" },
+      }),
+    );
+
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({
+      status: 401,
+      userId: null,
+      ip: "203.0.113.9",
+    });
+  });
+
+  // logAudit は成功応答を返した後・try 内で呼ばれる。ここで例外が漏れると
+  // ラッパーの catch に捕まり、成功済みの 200 が 500 に化ける。
+  it("異常系: 監査ログの出力が全滅しても応答のステータスを変えない", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {
+      throw new Error("stdout closed");
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {
+      throw new Error("stderr closed");
+    });
+    const handler = withApiErrorHandling(async (_req: Request) => new Response("ok"));
+
+    const res = await handler(new Request("https://example.com/api/items"));
+
+    expect(res.status).toBe(200);
+    await expect(res.text()).resolves.toBe("ok");
+  });
+
+  it("異常系: 500 に化けた場合も記録する", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async (_req: Request) => {
+      throw new Error("DB connection lost");
+    });
+
+    await handler(new Request("https://example.com/api/reports", { method: "POST" }));
+
+    expect(JSON.parse(spy.mock.calls[0][0] as string)).toMatchObject({ status: 500 });
+  });
+
+  // 制御フロー例外は再 throw するため、ステータスが確定しない。記録しない。
+  it("異常系: redirect() の再 throw 時は記録しない", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async (_req: Request) => {
+      redirect("/login");
+    });
+
+    await expect(handler(new Request("https://example.com/api/me"))).rejects.toThrow();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("異常系: Request が渡っていなければ記録しない", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const handler = withApiErrorHandling(async () => new Response("ok"));
+
+    await handler();
+
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("異常系: Request が渡っていればメソッドとパスをログに含める", async () => {
