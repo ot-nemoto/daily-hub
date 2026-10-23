@@ -108,14 +108,21 @@ const WINDOW_MS = 60 * 1000;
 const MAX_PER_IP = 30;
 
 /**
- * 追跡する IP の上限。IP を変えながらの攻撃でメモリが膨らむのを防ぐ。
+ * 追跡する鍵（`IP:ステータス`）の上限。IP を変えながらの攻撃でメモリが膨らむのを防ぐ。
  * 超えたら**抑制をやめて記録する**（fail-open）。痕跡を失うより、
  * 洪水が洪水として見える方がよい。
  */
-const MAX_TRACKED_IPS = 10_000;
+const MAX_TRACKED_KEYS = 10_000;
 
 let windowStart = 0;
-/** IP → この窓で記録した件数 */
+/**
+ * `IP:ステータス` → この窓で記録した件数。
+ *
+ * **ステータスごとに独立した予算にする。** IP だけを鍵にすると、攻撃者が安い
+ * 404（未登録パスを叩くだけ）で予算を使い切ってから総当たりを始めることで、
+ * **401 の記録を 1 件も残さずにキーを探れる**。予算を共有すると、ノイズで
+ * 埋めるどころか別の信号を完全に消せてしまう。
+ */
 const counters = new Map<string, number>();
 
 /**
@@ -131,7 +138,7 @@ const counters = new Map<string, number>();
  * 「この IP が洪水を起こしている」信号は保てる**。正確な件数は
  * プラットフォーム側のリクエストログで分かる。
  */
-function classify(ip: string | null): "record" | "throttle" | "skip" {
+function classify(ip: string | null, status: number): "record" | "throttle" | "skip" {
   // IP が取れない場合は抑制しない（鍵が無く、まとめて数えると正当な記録まで落ちる）
   if (ip === null) return "record";
 
@@ -142,10 +149,11 @@ function classify(ip: string | null): "record" | "throttle" | "skip" {
     counters.clear();
   }
 
-  if (counters.size >= MAX_TRACKED_IPS && !counters.has(ip)) return "record";
+  const key = `${ip}:${status}`;
+  if (counters.size >= MAX_TRACKED_KEYS && !counters.has(key)) return "record";
 
-  const recorded = counters.get(ip) ?? 0;
-  counters.set(ip, recorded + 1);
+  const recorded = counters.get(key) ?? 0;
+  counters.set(key, recorded + 1);
 
   if (recorded < MAX_PER_IP) return "record";
   return recorded === MAX_PER_IP ? "throttle" : "skip";
@@ -169,7 +177,7 @@ export function logAudit(req: Request, status: number) {
     const record = buildAuditRecord(req, status);
     // 認証済みの記録は抑制しない（キーの発行数で上界がある）
     if (record.userId === null) {
-      const verdict = classify(record.ip);
+      const verdict = classify(record.ip, record.status);
       if (verdict === "skip") return;
       // 抑制の開始を 1 件だけ記録に残す。「その IP が洪水を起こしている」信号を失わないため
       if (verdict === "throttle") record.throttled = true;

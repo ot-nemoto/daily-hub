@@ -260,6 +260,44 @@ describe("未認証リクエストの記録抑制", () => {
     expect(JSON.parse(spy.mock.calls[0][0] as string)).not.toHaveProperty("throttled");
   });
 
+  // 予算を IP だけで共有すると、攻撃者が安い 404（未登録パスを叩くだけ）で
+  // 使い切ってから総当たりを始めることで、401 の記録を 1 件も残さずにキーを探れる。
+  // ノイズで埋めるどころか別の信号を完全に消せてしまう。
+  it("異常系: 404 で予算を使い切っても 401 の記録は消えない", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    // 404 の予算を使い切る
+    floodUnauthenticated(100);
+    spy.mockClear();
+
+    // 同じ IP から 401 を出す
+    for (let i = 0; i < 5; i += 1) {
+      logAudit(
+        req("https://example.com/api/reports", {
+          headers: { "x-forwarded-for": "203.0.113.1" },
+        }),
+        401,
+      );
+    }
+
+    expect(spy).toHaveBeenCalledTimes(5);
+  });
+
+  it("正常系: ステータスごとに独立して数える", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    floodUnauthenticated(100); // 404: 30 件 + 印 1 件
+    for (let i = 0; i < 100; i += 1) {
+      logAudit(
+        req("https://example.com/api/reports", {
+          headers: { "x-forwarded-for": "203.0.113.1" },
+        }),
+        401,
+      );
+    } // 401: 30 件 + 印 1 件
+
+    expect(spy).toHaveBeenCalledTimes(31 + 31);
+  });
+
   it("正常系: IP ごとに独立して数える", () => {
     const spy = vi.spyOn(console, "log").mockImplementation(() => {});
 

@@ -12,8 +12,10 @@ import { jsonError, withApiErrorHandling } from "@/lib/api-response";
  * 最も現実的なので、ここを塞ぐ必要がある。ラッパーで包むため記録は自動的に効く。
  *
  * `src/proxy.ts` の 404 分岐とは担当が異なり、両方必要。
- * - 未知の接頭辞（`/api/foo`）: `isApiRoute` に一致せず `auth.protect()` に落ちる。
- *   ルーティングまで到達しないため、ここでは捕まえられない → `proxy.ts` が担当
+ * - 未知の接頭辞（`/api/foo`）: `isApiRoute` に一致しないため、`proxy.ts` の
+ *   404 分岐が**その場で応答を返して記録する**（`auth.protect()` には到達しない）。
+ *   ルーティングまで来ないため、ここでは捕まえられない → `proxy.ts` が担当。
+ *   **この分岐を「冗長」として消すと T234 の穴が再発する**
  * - 登録済み接頭辞の配下: `isApiRoute` に一致して通過する。`proxy.ts` は実在する
  *   ルートかを知れないため判定できない → ここが担当
  *
