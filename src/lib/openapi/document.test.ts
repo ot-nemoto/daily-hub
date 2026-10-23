@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { buildOpenApiDocument } from "./document";
 
+/** path item 階層には parameters・summary など operation 以外のキーも置けるため、走査時にフィルタする。 */
+const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
+
 const EXPECTED_PATHS: Record<string, string[]> = {
   "/api/me": ["get", "patch"],
   "/api/reports": ["get", "post"],
@@ -142,13 +145,47 @@ describe("buildOpenApiDocument", () => {
     }
   });
 
+  // 500 の「有無」だけを見る検査では、ボディ定義が落ちた 500・別スキーマを指す 500 を
+  // 見逃す（$ref 解決の検査は参照先が存在すれば通る）。守りたいのは「全エラーが { error }」
+  // という契約そのものなので、スキーマを完全一致で固定する。
+  it("全 4xx / 5xx のボディが共通の Error スキーマを指す", () => {
+    const { paths } = buildOpenApiDocument();
+    let checked = 0;
+    for (const [path, item] of Object.entries(paths)) {
+      for (const [method, op] of Object.entries(item as Record<string, unknown>)) {
+        if (!HTTP_METHODS.includes(method)) continue;
+        const o = op as {
+          responses?: Record<string, { content?: Record<string, { schema?: unknown }> }>;
+        };
+        for (const [status, res] of Object.entries(o.responses ?? {})) {
+          if (Number(status) < 400) continue;
+          checked += 1;
+          expect(
+            res.content?.["application/json"]?.schema,
+            `${method.toUpperCase()} ${path} の ${status}`,
+          ).toEqual({ $ref: "#/components/schemas/Error" });
+        }
+      }
+    }
+    // 走査の起点を誤ると 1 件も検査せずに通るため、0 件での成功を禁じる。
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  // 実装が返す CORS ヘッダ（src/proxy.ts の CORS_HEADERS）は spec を読む側の判断材料。
+  // proxy の実装だけに存在して spec に無い状態を防ぐ。
+  it("info.description に CORS の記載がある", () => {
+    const { info } = buildOpenApiDocument();
+    expect(info.description).toContain("Access-Control-Allow-Origin: *");
+  });
+
   // 実装（unauthorized()）が返す WWW-Authenticate を spec にも載せる。
   // 配信 spec を仕様の唯一の正とするため、片方だけ消えるのを防ぐ。
   it("401 を定義する全 operation が WWW-Authenticate ヘッダを宣言する", () => {
     const { paths } = buildOpenApiDocument();
     let checked = 0;
     for (const item of Object.values(paths)) {
-      for (const op of Object.values(item as Record<string, unknown>)) {
+      for (const [method, op] of Object.entries(item as Record<string, unknown>)) {
+        if (!HTTP_METHODS.includes(method)) continue;
         const o = op as {
           operationId: string;
           responses: Record<string, { headers?: Record<string, unknown> }>;
