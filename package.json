@@ -33,23 +33,23 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.7",
-    "@clerk/testing": "^2.2.56",
-    "@playwright/test": "^1.65.0",
+    "@biomejs/biome": "^2.6.8",
+    "@clerk/testing": "^2.3.4",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/jest-dom": "^8.0.0",
     "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.10",
+    "@testing-library/user-event": "^14.6.13",
     "@types/node": "^26",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.3.0",
     "dotenv": "^18.0.10",
-    "jsdom": "^31.0.0",
+    "jsdom": "^31.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^6",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   }
 }
